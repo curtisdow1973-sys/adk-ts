@@ -54,9 +54,7 @@ export class AiSdkLlm extends BaseLlm {
 
 	constructor(modelName: string) {
 		super(modelName);
-		// This can be extended with a provider map like in the previous example
-		// to support Anthropic, Google, etc., through the Vercel AI SDK.
-		this.vercelModel = google(modelName as any);
+		this.vercelModel = google(modelName);
 	}
 
 	protected async *generateContentAsyncImpl(
@@ -64,12 +62,10 @@ export class AiSdkLlm extends BaseLlm {
 		stream = false,
 	): AsyncGenerator<LlmResponse, void, unknown> {
 		try {
-			// 1. Transform ADK request to AI SDK format
 			const messages = this.transformMessages(request.contents || []);
 			const system = request.getSystemInstructionText();
 			const tools = this.transformTools(request.config?.tools);
 
-			// 2. Decide whether to stream or make a single call
 			if (stream) {
 				const result = streamText({
 					model: this.vercelModel,
@@ -79,7 +75,9 @@ export class AiSdkLlm extends BaseLlm {
 				});
 
 				for await (const part of result.fullStream) {
-					yield this.vercelStreamPartToLlmResponse(part);
+					const response = this.vercelStreamPartToLlmResponse(part);
+					this.setToolsDict(response, request);
+					yield response;
 				}
 			} else {
 				const result = await generateText({
@@ -89,13 +87,29 @@ export class AiSdkLlm extends BaseLlm {
 					tools,
 				});
 
-				yield this.vercelResultToLlmResponse(result);
+				const response = this.vercelResultToLlmResponse(result);
+				this.setToolsDict(response, request);
+				yield response;
 			}
 		} catch (error) {
-			yield new LlmResponse({
+			const errorResponse = new LlmResponse({
 				errorCode: "VERCEL_SDK_ERROR",
 				errorMessage: String(error),
 			});
+			this.setToolsDict(errorResponse, request);
+			yield errorResponse;
+		}
+	}
+
+	private setToolsDict(response: LlmResponse, request: LlmRequest): void {
+		if (request.toolsDict) {
+			const toolsMap = new Map();
+			for (const [key, value] of Object.entries(request.toolsDict)) {
+				toolsMap.set(key, value);
+			}
+			(response as any).toolsDict = toolsMap;
+		} else {
+			(response as any).toolsDict = new Map();
 		}
 	}
 
@@ -106,8 +120,8 @@ export class AiSdkLlm extends BaseLlm {
 		const messages: CoreMessage[] = [];
 		for (const content of contents) {
 			const role = content.role;
+
 			if (role === "tool") {
-				// Handle tool response messages
 				for (const part of content.parts || []) {
 					if (part.functionResponse) {
 						messages.push({
@@ -116,20 +130,63 @@ export class AiSdkLlm extends BaseLlm {
 								{
 									type: "tool-result",
 									toolCallId: part.functionResponse.id || "",
-									toolName: part.functionResponse.name,
-									result: part.functionResponse.response,
+									toolName: part.functionResponse.name || "unknown",
+									result:
+										part.functionResponse.response?.result ||
+										part.functionResponse.response,
 								},
 							],
 						});
 					}
 				}
+			} else if (role === "model" || role === "assistant") {
+				const textParts =
+					content.parts
+						?.filter((p) => p.text)
+						.map((p) => p.text)
+						.join("\n") || "";
+				const toolCalls =
+					content.parts
+						?.filter((p) => (p as any).functionCall)
+						.map((p) => {
+							const fc = (p as any).functionCall;
+							return {
+								type: "tool-call" as const,
+								toolCallId: fc.id || `call_${Date.now()}`,
+								toolName: fc.name,
+								args: fc.args || {},
+							};
+						}) || [];
+
+				if (textParts || toolCalls.length > 0) {
+					const messageContent: any[] = [];
+
+					if (textParts) {
+						messageContent.push({
+							type: "text",
+							text: textParts,
+						});
+					}
+
+					messageContent.push(...toolCalls);
+
+					messages.push({
+						role: "assistant",
+						content:
+							messageContent.length === 1 && messageContent[0].type === "text"
+								? messageContent[0].text
+								: messageContent,
+					});
+				}
 			} else {
-				// Handle user and assistant messages
-				messages.push({
-					role: role === "model" ? "assistant" : "user",
-					content:
-						content.parts?.map((p) => (p.text ? p.text : "")).join("\n") || "",
-				});
+				const textContent =
+					content.parts?.map((p) => (p.text ? p.text : "")).join("\n") || "";
+				if (textContent) {
+					messages.push({
+						role: "user",
+						content: textContent,
+					});
+				}
 			}
 		}
 		return messages;
@@ -220,14 +277,6 @@ export class AiSdkLlm extends BaseLlm {
 		return new LlmResponse({
 			content: { role: "model", parts },
 			finishReason,
-			// Usage metadata is typically available at the end of the stream
-			...(part.type === "finish" && {
-				usageMetadata: {
-					promptTokenCount: part.usage.promptTokens,
-					candidatesTokenCount: part.usage.completionTokens,
-					totalTokenCount: part.usage.totalTokens,
-				},
-			}),
 		});
 	}
 }
