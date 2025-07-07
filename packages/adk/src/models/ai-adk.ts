@@ -7,54 +7,74 @@ import {
 } from "ai";
 import { openai } from "@ai-sdk/openai";
 import { google } from "@ai-sdk/google";
+import { anthropic } from "@ai-sdk/anthropic";
 import { z } from "zod";
 import { BaseLlm } from "./base-llm";
 import type { LlmRequest } from "./llm-request";
 import { LlmResponse } from "./llm-response";
 import type { Content, Part } from "@google/genai";
 import type { FunctionDeclaration } from "./function-declaration";
+import { v4 as uuidv4 } from "uuid";
 
-function adkSchemaToZod(schema: any): z.ZodTypeAny {
-	switch (schema.type.toLowerCase()) {
-		case "string":
-			return z.string().describe(schema.description || "");
-		case "number":
-			return z.number().describe(schema.description || "");
-		case "integer":
-			return z
-				.number()
-				.int()
-				.describe(schema.description || "");
-		case "boolean":
-			return z.boolean().describe(schema.description || "");
-		case "array":
-			if (schema.items) {
-				return z.array(adkSchemaToZod(schema.items));
-			}
-			return z.array(z.any());
-		case "object":
-			if (schema.properties) {
-				const shape: Record<string, z.ZodTypeAny> = {};
-				for (const key in schema.properties) {
-					shape[key] = adkSchemaToZod(schema.properties[key]);
-				}
-				return z.object(shape).describe(schema.description || "");
-			}
-			return z.object({});
-		default:
-			return z.any();
-	}
-}
+type ProviderType = "openai" | "anthropic" | "google";
 
 /**
  * Vercel AI SDK integration for various models.
  */
 export class AiSdkLlm extends BaseLlm {
 	private vercelModel: LanguageModel;
+	private provider: ProviderType;
 
 	constructor(modelName: string) {
 		super(modelName);
-		this.vercelModel = google(modelName);
+
+		if (modelName.startsWith("gemini")) {
+			this.provider = "google";
+			this.vercelModel = google(modelName);
+		} else if (modelName.startsWith("claude")) {
+			this.provider = "anthropic";
+			this.vercelModel = anthropic(modelName);
+		} else if (
+			modelName.startsWith("gpt") ||
+			modelName.startsWith("o1") ||
+			modelName.startsWith("o3")
+		) {
+			this.provider = "openai";
+			this.vercelModel = openai(modelName);
+		} else {
+			throw new Error(
+				`Unsupported model provider for: ${modelName}. Please use a model name with a known prefix (e.g., 'gemini', 'claude', 'gpt', 'o1', 'o3').`,
+			);
+		}
+
+		console.log(
+			`🤖 Initialized ${this.provider} provider for model: ${modelName}`,
+		);
+	}
+
+	/**
+	 * Gets the detected provider type
+	 */
+	getProvider(): ProviderType {
+		return this.provider;
+	}
+
+	/**
+	 * Returns supported model patterns for registry registration
+	 */
+	static override supportedModels(): string[] {
+		return [
+			// OpenAI patterns
+			"gpt-.*",
+			"o1-.*",
+			"o3-.*",
+
+			// Anthropic patterns
+			"claude-.*",
+
+			// Google patterns
+			"gemini-.*",
+		];
 	}
 
 	protected async *generateContentAsyncImpl(
@@ -62,6 +82,7 @@ export class AiSdkLlm extends BaseLlm {
 		stream = false,
 	): AsyncGenerator<LlmResponse, void, unknown> {
 		try {
+			// 1. Transform ADK request to AI SDK format
 			const messages = this.transformMessages(request.contents || []);
 			const system = request.getSystemInstructionText();
 			const tools = this.transformTools(request.config?.tools);
@@ -94,13 +115,49 @@ export class AiSdkLlm extends BaseLlm {
 		} catch (error) {
 			const errorResponse = new LlmResponse({
 				errorCode: "VERCEL_SDK_ERROR",
-				errorMessage: String(error),
+				errorMessage: `${this.provider.toUpperCase()}_ERROR: ${String(error)}`,
 			});
 			this.setToolsDict(errorResponse, request);
 			yield errorResponse;
 		}
 	}
 
+	// Helper method to convert ADK schema to Zod
+	private adkSchemaToZod(schema: any): z.ZodTypeAny {
+		switch (schema.type?.toLowerCase()) {
+			case "string":
+				return z.string().describe(schema.description || "");
+			case "number":
+				return z.number().describe(schema.description || "");
+			case "integer":
+				return z
+					.number()
+					.int()
+					.describe(schema.description || "");
+			case "boolean":
+				return z.boolean().describe(schema.description || "");
+			case "array":
+				if (schema.items) {
+					return z.array(this.adkSchemaToZod(schema.items));
+				}
+				return z.array(z.any());
+			case "object":
+				if (schema.properties) {
+					const shape: Record<string, z.ZodTypeAny> = {};
+					for (const key in schema.properties) {
+						shape[key] = this.adkSchemaToZod(schema.properties[key]);
+					}
+					return z.object(shape).describe(schema.description || "");
+				}
+				return z.object({});
+			default:
+				return z.any();
+		}
+	}
+
+	/**
+	 * Set toolsDict as Map
+	 */
 	private setToolsDict(response: LlmResponse, request: LlmRequest): void {
 		if (request.toolsDict) {
 			const toolsMap = new Map();
@@ -152,7 +209,7 @@ export class AiSdkLlm extends BaseLlm {
 							const fc = (p as any).functionCall;
 							return {
 								type: "tool-call" as const,
-								toolCallId: fc.id || `call_${Date.now()}`,
+								toolCallId: fc.id || `call_${uuidv4()}`,
 								toolName: fc.name,
 								args: fc.args || {},
 							};
@@ -193,7 +250,7 @@ export class AiSdkLlm extends BaseLlm {
 	}
 
 	/**
-	 * Transforms ADK FunctionDeclarations into Vercel AI SDK tool definitions.
+	 * Transforms ADK FunctionDeclarations into Vercel AI SDK tool definitions
 	 */
 	private transformTools(toolsConfig?: any): Record<string, any> | undefined {
 		const functionDeclarations = toolsConfig?.[0]?.functionDeclarations as
@@ -209,7 +266,7 @@ export class AiSdkLlm extends BaseLlm {
 			transformedTools[decl.name] = tool({
 				description: decl.description,
 				parameters: decl.parameters
-					? adkSchemaToZod(decl.parameters)
+					? this.adkSchemaToZod(decl.parameters)
 					: z.object({}),
 			});
 		}
@@ -218,7 +275,7 @@ export class AiSdkLlm extends BaseLlm {
 	}
 
 	/**
-	 * Converts a final Vercel AI SDK result to an LlmResponse.
+	 * Converts a final Vercel AI SDK result to an LlmResponse
 	 */
 	private vercelResultToLlmResponse(result: any): LlmResponse {
 		const parts: Part[] = [];
@@ -242,15 +299,15 @@ export class AiSdkLlm extends BaseLlm {
 		return new LlmResponse({
 			content: { role: "model", parts },
 			usageMetadata: {
-				promptTokenCount: result.usage.promptTokens,
-				candidatesTokenCount: result.usage.completionTokens,
-				totalTokenCount: result.usage.totalTokens,
+				promptTokenCount: result.usage?.promptTokens || 0,
+				candidatesTokenCount: result.usage?.completionTokens || 0,
+				totalTokenCount: result.usage?.totalTokens || 0,
 			},
 		});
 	}
 
 	/**
-	 * Converts a single part from a Vercel AI SDK stream to an LlmResponse.
+	 * Converts a single part from a Vercel AI SDK stream to an LlmResponse
 	 */
 	private vercelStreamPartToLlmResponse(part: any): LlmResponse {
 		const parts: Part[] = [];
