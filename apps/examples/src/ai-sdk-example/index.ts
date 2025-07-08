@@ -25,7 +25,7 @@ async function demonstrateWeatherAgent() {
 	}
 
 	try {
-		const model = new AiSdkLlm("gemini-2.0-flash", google);
+		const model = new AiSdkLlm(google("gemini-2.0-flash"));
 
 		const weatherTool = new FunctionTool(getWeather, {
 			name: "getWeather",

@@ -19,17 +19,14 @@ export class AiSdkLlm extends BaseLlm {
 	private modelInstance: LanguageModel;
 
 	/**
-	 * Constructor accepts model name and provider function
-	 * @param modelName - Model name (e.g., "gemini-2.5-pro", "gpt-4o")
-	 * @param provider - Provider function (e.g., google, openai, anthropic)
+	 * Constructor accepts a pre-configured LanguageModel instance
+	 * @param model - Pre-configured LanguageModel from provider(modelName)
 	 */
-	constructor(modelName: string, provider: any) {
-		if (!provider || typeof provider !== "function") {
-			throw new Error("Provider function is required");
-		}
-
+	constructor(model: LanguageModel) {
+		const modelName =
+			(model as any).modelId || (model as any).model || "ai-sdk-model";
 		super(modelName);
-		this.modelInstance = provider(modelName);
+		this.modelInstance = model;
 	}
 
 	/**
