@@ -5,76 +5,38 @@ import {
 	type LanguageModel,
 	tool,
 } from "ai";
-import { openai } from "@ai-sdk/openai";
-import { google } from "@ai-sdk/google";
-import { anthropic } from "@ai-sdk/anthropic";
 import { z } from "zod";
 import { BaseLlm } from "./base-llm";
 import type { LlmRequest } from "./llm-request";
 import { LlmResponse } from "./llm-response";
 import type { Content, Part } from "@google/genai";
 import type { FunctionDeclaration } from "./function-declaration";
-import { v4 as uuidv4 } from "uuid";
-
-type ProviderType = "openai" | "anthropic" | "google";
 
 /**
- * Vercel AI SDK integration for various models.
+ * AI SDK integration that accepts a pre-configured LanguageModel.
  */
 export class AiSdkLlm extends BaseLlm {
-	private vercelModel: LanguageModel;
-	private provider: ProviderType;
+	private modelInstance: LanguageModel;
 
-	constructor(modelName: string) {
-		super(modelName);
-
-		if (modelName.startsWith("gemini")) {
-			this.provider = "google";
-			this.vercelModel = google(modelName);
-		} else if (modelName.startsWith("claude")) {
-			this.provider = "anthropic";
-			this.vercelModel = anthropic(modelName);
-		} else if (
-			modelName.startsWith("gpt") ||
-			modelName.startsWith("o1") ||
-			modelName.startsWith("o3")
-		) {
-			this.provider = "openai";
-			this.vercelModel = openai(modelName);
-		} else {
-			throw new Error(
-				`Unsupported model provider for: ${modelName}. Please use a model name with a known prefix (e.g., 'gemini', 'claude', 'gpt', 'o1', 'o3').`,
-			);
+	/**
+	 * Constructor accepts model name and provider function
+	 * @param modelName - Model name (e.g., "gemini-2.5-pro", "gpt-4o")
+	 * @param provider - Provider function (e.g., google, openai, anthropic)
+	 */
+	constructor(modelName: string, provider: any) {
+		if (!provider || typeof provider !== "function") {
+			throw new Error("Provider function is required");
 		}
 
-		console.log(
-			`🤖 Initialized ${this.provider} provider for model: ${modelName}`,
-		);
+		super(modelName);
+		this.modelInstance = provider(modelName);
 	}
 
 	/**
-	 * Gets the detected provider type
-	 */
-	getProvider(): ProviderType {
-		return this.provider;
-	}
-
-	/**
-	 * Returns supported model patterns for registry registration
+	 * Returns empty array - following Python ADK pattern
 	 */
 	static override supportedModels(): string[] {
-		return [
-			// OpenAI patterns
-			"gpt-.*",
-			"o1-.*",
-			"o3-.*",
-
-			// Anthropic patterns
-			"claude-.*",
-
-			// Google patterns
-			"gemini-.*",
-		];
+		return [];
 	}
 
 	protected async *generateContentAsyncImpl(
@@ -82,47 +44,46 @@ export class AiSdkLlm extends BaseLlm {
 		stream = false,
 	): AsyncGenerator<LlmResponse, void, unknown> {
 		try {
-			// 1. Transform ADK request to AI SDK format
+			// Transform ADK request to AI SDK format
 			const messages = this.transformMessages(request.contents || []);
 			const system = request.getSystemInstructionText();
 			const tools = this.transformTools(request.config?.tools);
 
 			if (stream) {
 				const result = streamText({
-					model: this.vercelModel,
+					model: this.modelInstance,
 					messages,
 					system,
 					tools,
 				});
 
 				for await (const part of result.fullStream) {
-					const response = this.vercelStreamPartToLlmResponse(part);
-					this.setToolsDict(response, request);
+					const response = this.streamPartToLlmResponse(part);
 					yield response;
 				}
 			} else {
 				const result = await generateText({
-					model: this.vercelModel,
+					model: this.modelInstance,
 					messages,
 					system,
 					tools,
 				});
 
-				const response = this.vercelResultToLlmResponse(result);
-				this.setToolsDict(response, request);
+				const response = this.resultToLlmResponse(result);
 				yield response;
 			}
 		} catch (error) {
 			const errorResponse = new LlmResponse({
-				errorCode: "VERCEL_SDK_ERROR",
-				errorMessage: `${this.provider.toUpperCase()}_ERROR: ${String(error)}`,
+				errorCode: "AI_SDK_ERROR",
+				errorMessage: `AI SDK Error: ${String(error)}`,
 			});
-			this.setToolsDict(errorResponse, request);
 			yield errorResponse;
 		}
 	}
 
-	// Helper method to convert ADK schema to Zod
+	/**
+	 * Convert ADK schema to Zod schema
+	 */
 	private adkSchemaToZod(schema: any): z.ZodTypeAny {
 		switch (schema.type?.toLowerCase()) {
 			case "string":
@@ -156,25 +117,11 @@ export class AiSdkLlm extends BaseLlm {
 	}
 
 	/**
-	 * Set toolsDict as Map
-	 */
-	private setToolsDict(response: LlmResponse, request: LlmRequest): void {
-		if (request.toolsDict) {
-			const toolsMap = new Map();
-			for (const [key, value] of Object.entries(request.toolsDict)) {
-				toolsMap.set(key, value);
-			}
-			(response as any).toolsDict = toolsMap;
-		} else {
-			(response as any).toolsDict = new Map();
-		}
-	}
-
-	/**
-	 * Transforms ADK Content[] to Vercel AI SDK CoreMessage[]
+	 * Transform ADK Content[] to AI SDK CoreMessage[]
 	 */
 	private transformMessages(contents: Content[]): CoreMessage[] {
 		const messages: CoreMessage[] = [];
+
 		for (const content of contents) {
 			const role = content.role;
 
@@ -202,6 +149,7 @@ export class AiSdkLlm extends BaseLlm {
 						?.filter((p) => p.text)
 						.map((p) => p.text)
 						.join("\n") || "";
+
 				const toolCalls =
 					content.parts
 						?.filter((p) => (p as any).functionCall)
@@ -209,7 +157,7 @@ export class AiSdkLlm extends BaseLlm {
 							const fc = (p as any).functionCall;
 							return {
 								type: "tool-call" as const,
-								toolCallId: fc.id || `call_${uuidv4()}`,
+								toolCallId: fc.id || `call_${Date.now()}`,
 								toolName: fc.name,
 								args: fc.args || {},
 							};
@@ -236,8 +184,10 @@ export class AiSdkLlm extends BaseLlm {
 					});
 				}
 			} else {
+				// User role
 				const textContent =
-					content.parts?.map((p) => (p.text ? p.text : "")).join("\n") || "";
+					content.parts?.map((p) => p.text || "").join("\n") || "";
+
 				if (textContent) {
 					messages.push({
 						role: "user",
@@ -246,11 +196,12 @@ export class AiSdkLlm extends BaseLlm {
 				}
 			}
 		}
+
 		return messages;
 	}
 
 	/**
-	 * Transforms ADK FunctionDeclarations into Vercel AI SDK tool definitions
+	 * Transform ADK FunctionDeclarations to AI SDK tools
 	 */
 	private transformTools(toolsConfig?: any): Record<string, any> | undefined {
 		const functionDeclarations = toolsConfig?.[0]?.functionDeclarations as
@@ -262,6 +213,7 @@ export class AiSdkLlm extends BaseLlm {
 		}
 
 		const transformedTools: Record<string, any> = {};
+
 		for (const decl of functionDeclarations) {
 			transformedTools[decl.name] = tool({
 				description: decl.description,
@@ -275,9 +227,9 @@ export class AiSdkLlm extends BaseLlm {
 	}
 
 	/**
-	 * Converts a final Vercel AI SDK result to an LlmResponse
+	 * Convert AI SDK result to LlmResponse
 	 */
-	private vercelResultToLlmResponse(result: any): LlmResponse {
+	private resultToLlmResponse(result: any): LlmResponse {
 		const parts: Part[] = [];
 
 		if (result.text) {
@@ -307,9 +259,9 @@ export class AiSdkLlm extends BaseLlm {
 	}
 
 	/**
-	 * Converts a single part from a Vercel AI SDK stream to an LlmResponse
+	 * Convert AI SDK stream part to LlmResponse
 	 */
-	private vercelStreamPartToLlmResponse(part: any): LlmResponse {
+	private streamPartToLlmResponse(part: any): LlmResponse {
 		const parts: Part[] = [];
 		let finishReason: string | undefined;
 
@@ -334,6 +286,7 @@ export class AiSdkLlm extends BaseLlm {
 		return new LlmResponse({
 			content: { role: "model", parts },
 			finishReason,
+			partial: part.type === "text-delta",
 		});
 	}
 }
