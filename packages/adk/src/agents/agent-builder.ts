@@ -12,13 +12,16 @@ import { LlmAgent } from "./llm-agent.js";
 import { LoopAgent } from "./loop-agent.js";
 import { ParallelAgent } from "./parallel-agent.js";
 import { SequentialAgent } from "./sequential-agent.js";
+import type { LanguageModel } from "ai";
+import { AiSdkLlm } from "../models/ai-adk.js";
+import { BaseLlm } from "../models/base-llm.js";
 
 /**
  * Configuration options for the AgentBuilder
  */
 export interface AgentBuilderConfig {
 	name: string;
-	model?: string;
+	model?: string | BaseLlm | LanguageModel;
 	description?: string;
 	instruction?: string;
 	tools?: BaseTool[];
@@ -86,6 +89,10 @@ export type AgentType =
  *   .withModel("gemini-2.5-flash")
  *   .withSession(sessionService, "user123", "myApp")
  *   .build();
+ *
+ * // Using an AI SDK provider directly
+ * import { google } from "@ai-sdk/google";
+ * const response = await AgentBuilder.withModel(google()).ask("Hi");
  * ```
  */
 export class AgentBuilder {
@@ -114,7 +121,7 @@ export class AgentBuilder {
 	 * @param model The model identifier (e.g., "gemini-2.5-flash")
 	 * @returns New AgentBuilder instance with model set
 	 */
-	static withModel(model: string): AgentBuilder {
+	static withModel(model: string | BaseLlm | LanguageModel): AgentBuilder {
 		return new AgentBuilder("default_agent").withModel(model);
 	}
 
@@ -123,7 +130,7 @@ export class AgentBuilder {
 	 * @param model The model identifier (e.g., "gemini-2.5-flash")
 	 * @returns This builder instance for chaining
 	 */
-	withModel(model: string): this {
+	withModel(model: string | BaseLlm | LanguageModel): this {
 		this.config.model = model;
 		return this;
 	}
@@ -334,6 +341,37 @@ export class AgentBuilder {
 	 */
 	private createAgent(): BaseAgent {
 		switch (this.agentType) {
+			case "llm": {
+				if (!this.config.model) {
+					throw new Error("Model is required for LLM agent");
+				}
+
+				let model: string | BaseLlm;
+				const configModel = this.config.model;
+
+				// For string model name
+				if (typeof configModel === "string") {
+					model = configModel;
+				} else if (
+					configModel instanceof BaseLlm ||
+					(configModel as any).generateContentAsync
+				) {
+					// For BaseLlm subclass
+					model = configModel as BaseLlm;
+				} else {
+					// For LanguageModel
+					model = new AiSdkLlm(configModel as LanguageModel);
+				}
+
+				return new LlmAgent({
+					name: this.config.name,
+					model: model,
+					description: this.config.description,
+					instruction: this.config.instruction,
+					tools: this.config.tools,
+					planner: this.config.planner,
+				});
+			}
 			case "sequential":
 				if (!this.config.subAgents) {
 					throw new Error("Sub-agents required for sequential agent");
@@ -374,16 +412,6 @@ export class AgentBuilder {
 					description: this.config.description || "",
 					nodes: this.config.nodes,
 					rootNode: this.config.rootNode,
-				});
-
-			default:
-				return new LlmAgent({
-					name: this.config.name,
-					model: this.config.model,
-					description: this.config.description,
-					instruction: this.config.instruction,
-					tools: this.config.tools,
-					planner: this.config.planner,
 				});
 		}
 	}
