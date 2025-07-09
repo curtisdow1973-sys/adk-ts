@@ -10,6 +10,7 @@ import { BaseLlm } from "./base-llm";
 import type { LlmRequest } from "./llm-request";
 import { LlmResponse } from "./llm-response";
 import { Logger } from "@adk/helpers/logger";
+import type { Part, Content } from "@google/genai";
 
 const logger = new Logger({ name: "AiSdkLlm" });
 
@@ -73,7 +74,7 @@ export class AiSdkLlm extends BaseLlm {
 				}
 
 				const toolCalls = await result.toolCalls;
-				const parts: any[] = [];
+				const parts: Part[] = [];
 
 				if (accumulatedText) {
 					parts.push({ text: accumulatedText });
@@ -111,7 +112,7 @@ export class AiSdkLlm extends BaseLlm {
 			} else {
 				const result = await generateText(requestParams);
 
-				const parts: any[] = [];
+				const parts: Part[] = [];
 				if (result.text) {
 					parts.push({ text: result.text });
 				}
@@ -192,7 +193,7 @@ export class AiSdkLlm extends BaseLlm {
 	/**
 	 * Convert ADK Content to AI SDK CoreMessage
 	 */
-	private contentToAiSdkMessage(content: any): CoreMessage | null {
+	private contentToAiSdkMessage(content: Content): CoreMessage | null {
 		const role = this.mapRole(content.role);
 
 		if (!content.parts || content.parts.length === 0) {
@@ -211,28 +212,38 @@ export class AiSdkLlm extends BaseLlm {
 			return { role: "user", content: textContent };
 		}
 
-		if (content.parts?.some((part: any) => part.functionCall)) {
-			const textParts = content.parts.filter((part: any) => part.text);
-			const functionCalls = content.parts.filter(
-				(part: any) => part.functionCall,
-			);
+		if (content.parts?.some((part) => part.functionCall)) {
+			const textParts = content.parts.filter((part) => part.text);
+			const functionCalls = content.parts.filter((part) => part.functionCall);
 
-			const contentParts: any[] = [];
+			const contentParts: (
+				| { type: "text"; text: string }
+				| {
+						type: "tool-call";
+						toolCallId: string;
+						toolName: string;
+						args: Record<string, any>;
+				  }
+			)[] = [];
 
 			for (const textPart of textParts) {
-				contentParts.push({
-					type: "text",
-					text: textPart.text,
-				});
+				if (textPart.text) {
+					contentParts.push({
+						type: "text",
+						text: textPart.text,
+					});
+				}
 			}
 
 			for (const funcPart of functionCalls) {
-				contentParts.push({
-					type: "tool-call",
-					toolCallId: funcPart.functionCall.id,
-					toolName: funcPart.functionCall.name,
-					args: funcPart.functionCall.args,
-				});
+				if (funcPart.functionCall) {
+					contentParts.push({
+						type: "tool-call",
+						toolCallId: funcPart.functionCall.id,
+						toolName: funcPart.functionCall.name,
+						args: funcPart.functionCall.args,
+					});
+				}
 			}
 
 			return {
@@ -241,13 +252,13 @@ export class AiSdkLlm extends BaseLlm {
 			};
 		}
 
-		if (content.parts?.some((part: any) => part.functionResponse)) {
+		if (content.parts?.some((part) => part.functionResponse)) {
 			const functionResponses = content.parts.filter(
-				(part: any) => part.functionResponse,
+				(part) => part.functionResponse,
 			);
 
-			const contentParts = functionResponses.map((part: any) => ({
-				type: "tool-result",
+			const contentParts = functionResponses.map((part) => ({
+				type: "tool-result" as const,
 				toolCallId: part.functionResponse.id,
 				toolName: part.functionResponse.name || "unknown",
 				result: part.functionResponse.response,
