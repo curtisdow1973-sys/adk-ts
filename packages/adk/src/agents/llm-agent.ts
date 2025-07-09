@@ -29,7 +29,7 @@ export type ToolUnion = BaseTool | ((...args: any[]) => any);
 /**
  * Configuration for LlmAgent
  */
-export interface LlmAgentConfig {
+export interface LlmAgentConfig<T extends BaseLlm = BaseLlm> {
 	/**
 	 * Name of the agent
 	 */
@@ -44,7 +44,7 @@ export interface LlmAgentConfig {
 	 * The LLM model to use
 	 * When not set, the agent will inherit the model from its ancestor
 	 */
-	model?: string | BaseLlm;
+	model?: string | T;
 
 	/**
 	 * Instructions for the LLM model, guiding the agent's behavior
@@ -134,12 +134,12 @@ export interface LlmAgentConfig {
 /**
  * LLM-based Agent
  */
-export class LlmAgent extends BaseAgent {
+export class LlmAgent<T extends BaseLlm = BaseLlm> extends BaseAgent {
 	/**
 	 * The model to use for the agent
 	 * When not set, the agent will inherit the model from its ancestor
 	 */
-	public model: string | BaseLlm;
+	public model: string | T;
 
 	/**
 	 * Instructions for the LLM model, guiding the agent's behavior
@@ -227,7 +227,7 @@ export class LlmAgent extends BaseAgent {
 	/**
 	 * Constructor for LlmAgent
 	 */
-	constructor(config: LlmAgentConfig) {
+	constructor(config: LlmAgentConfig<T>) {
 		super({
 			name: config.name,
 			description: config.description,
