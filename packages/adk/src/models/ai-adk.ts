@@ -11,9 +11,11 @@ import type { LlmRequest } from "./llm-request";
 import { LlmResponse } from "./llm-response";
 import type { Content, Part } from "@google/genai";
 import type { FunctionDeclaration } from "./function-declaration";
+import type { BaseTool } from "../tools/base/base-tool";
 
 /**
  * AI SDK integration that accepts a pre-configured LanguageModel.
+ * Enables ADK to work with any provider supported by Vercel's AI SDK.
  */
 export class AiSdkLlm extends BaseLlm {
 	private modelInstance: LanguageModel;
@@ -56,6 +58,7 @@ export class AiSdkLlm extends BaseLlm {
 
 				for await (const part of result.fullStream) {
 					const response = this.streamPartToLlmResponse(part);
+					this.ensureAdkCompatibility(response, request);
 					yield response;
 				}
 			} else {
@@ -67,14 +70,89 @@ export class AiSdkLlm extends BaseLlm {
 				});
 
 				const response = this.resultToLlmResponse(result);
+				this.ensureAdkCompatibility(response, request);
 				yield response;
 			}
 		} catch (error) {
 			const errorResponse = new LlmResponse({
 				errorCode: "AI_SDK_ERROR",
 				errorMessage: `AI SDK Error: ${String(error)}`,
+				content: {
+					role: "model",
+					parts: [{ text: `Error: ${String(error)}` }],
+				},
+				finishReason: "STOP",
 			});
+			this.ensureAdkCompatibility(errorResponse, request);
 			yield errorResponse;
+		}
+	}
+
+	/**
+	 * Ensures response structure matches ADK's AutoFlow expectations
+	 */
+	private ensureAdkCompatibility(
+		response: LlmResponse,
+		request: LlmRequest,
+	): void {
+		// Ensure basic response structure
+		if (!response.content) {
+			response.content = { role: "model", parts: [] };
+		}
+		if (!response.content.role) {
+			response.content.role = "model";
+		}
+		if (!response.content.parts || !Array.isArray(response.content.parts)) {
+			response.content.parts = [];
+		}
+		if (!response.usageMetadata) {
+			response.usageMetadata = {
+				promptTokenCount: 0,
+				candidatesTokenCount: 0,
+				totalTokenCount: 0,
+			};
+		}
+		if (!response.finishReason) {
+			response.finishReason = "STOP";
+		}
+
+		// Set up toolsDict with callable tools
+		const toolsMap = new Map<string, BaseTool>();
+		if (request.toolsDict) {
+			for (const [toolName, tool] of Object.entries(request.toolsDict)) {
+				toolsMap.set(toolName, tool);
+			}
+		}
+		(response as any).toolsDict = toolsMap;
+
+		// Set up function calls array for compatibility
+		const functionCalls: any[] = [];
+		for (const part of response.content.parts) {
+			if ((part as any).functionCall) {
+				const fc = (part as any).functionCall;
+				functionCalls.push({
+					name: fc.name,
+					args: fc.args,
+					id: fc.id,
+				});
+			}
+		}
+		(response as any).functionCalls = functionCalls;
+
+		// Set up additional compatibility properties
+		(response as any).candidates = [
+			{
+				content: response.content,
+				finishReason: response.finishReason,
+			},
+		];
+		(response as any).promptFeedback = {};
+
+		const textParts = response.content.parts
+			.filter((part) => part.text)
+			.map((part) => part.text);
+		if (textParts.length > 0) {
+			(response as any).text = textParts.join("");
 		}
 	}
 
@@ -121,10 +199,22 @@ export class AiSdkLlm extends BaseLlm {
 
 		for (const content of contents) {
 			const role = content.role;
+			const hasFunctionResponse = content.parts?.some(
+				(p) => p.functionResponse,
+			);
+			const hasFunctionCall = content.parts?.some(
+				(p) => (p as any).functionCall,
+			);
 
-			if (role === "tool") {
+			if (role === "tool" || hasFunctionResponse) {
 				for (const part of content.parts || []) {
 					if (part.functionResponse) {
+						const result =
+							part.functionResponse.response?.result ||
+							part.functionResponse.response;
+						const resultString =
+							typeof result === "string" ? result : JSON.stringify(result);
+
 						messages.push({
 							role: "tool",
 							content: [
@@ -132,15 +222,13 @@ export class AiSdkLlm extends BaseLlm {
 									type: "tool-result",
 									toolCallId: part.functionResponse.id || "",
 									toolName: part.functionResponse.name || "unknown",
-									result:
-										part.functionResponse.response?.result ||
-										part.functionResponse.response,
+									result: resultString,
 								},
 							],
 						});
 					}
 				}
-			} else if (role === "model" || role === "assistant") {
+			} else if (role === "model" || role === "assistant" || hasFunctionCall) {
 				const textParts =
 					content.parts
 						?.filter((p) => p.text)
@@ -160,10 +248,10 @@ export class AiSdkLlm extends BaseLlm {
 							};
 						}) || [];
 
-				if (textParts || toolCalls.length > 0) {
+				if (textParts.trim() || toolCalls.length > 0) {
 					const messageContent: any[] = [];
 
-					if (textParts) {
+					if (textParts.trim()) {
 						messageContent.push({
 							type: "text",
 							text: textParts,
@@ -181,15 +269,17 @@ export class AiSdkLlm extends BaseLlm {
 					});
 				}
 			} else {
-				// User role
-				const textContent =
-					content.parts?.map((p) => p.text || "").join("\n") || "";
+				// User role - but skip if this was actually a tool response
+				if (!hasFunctionResponse && !hasFunctionCall) {
+					const textContent =
+						content.parts?.map((p) => p.text || "").join("\n") || "";
 
-				if (textContent) {
-					messages.push({
-						role: "user",
-						content: textContent,
-					});
+					if (textContent.trim()) {
+						messages.push({
+							role: "user",
+							content: textContent,
+						});
+					}
 				}
 			}
 		}
@@ -229,7 +319,7 @@ export class AiSdkLlm extends BaseLlm {
 	private resultToLlmResponse(result: any): LlmResponse {
 		const parts: Part[] = [];
 
-		if (result.text) {
+		if (result.text?.trim()) {
 			parts.push({ text: result.text });
 		}
 
@@ -241,7 +331,7 @@ export class AiSdkLlm extends BaseLlm {
 						name: call.toolName,
 						args: call.args,
 					},
-				});
+				} as any);
 			}
 		}
 
@@ -252,6 +342,7 @@ export class AiSdkLlm extends BaseLlm {
 				candidatesTokenCount: result.usage?.completionTokens || 0,
 				totalTokenCount: result.usage?.totalTokens || 0,
 			},
+			finishReason: "STOP",
 		});
 	}
 
@@ -264,7 +355,9 @@ export class AiSdkLlm extends BaseLlm {
 
 		switch (part.type) {
 			case "text-delta":
-				parts.push({ text: part.textDelta });
+				if (part.textDelta) {
+					parts.push({ text: part.textDelta });
+				}
 				break;
 			case "tool-call":
 				parts.push({
@@ -273,17 +366,32 @@ export class AiSdkLlm extends BaseLlm {
 						name: part.toolName,
 						args: part.args,
 					},
-				});
+				} as any);
+				break;
+			case "step-finish":
+				if (part.text?.trim()) {
+					parts.push({ text: part.text });
+				}
 				break;
 			case "finish":
-				finishReason = part.finishReason;
+				finishReason = part.finishReason || "STOP";
+				if (part.text?.trim()) {
+					parts.push({ text: part.text });
+				}
 				break;
+			default:
+				break;
+		}
+
+		// Ensure we have at least an empty text part
+		if (parts.length === 0) {
+			parts.push({ text: "" });
 		}
 
 		return new LlmResponse({
 			content: { role: "model", parts },
 			finishReason,
-			partial: part.type === "text-delta",
+			partial: part.type === "text-delta" || part.type === "tool-call",
 		});
 	}
 }
