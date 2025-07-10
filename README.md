@@ -349,6 +349,7 @@ The `apps/examples` directory contains comprehensive examples demonstrating ADK'
 3. **Run examples**:
    ```bash
    cd apps/examples
+   pnpm install
    
    # Interactive menu to select examples
    pnpm dev
