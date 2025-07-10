@@ -44,15 +44,23 @@ class MockAgent extends BaseAgent {
 
 function createMockContext(): InvocationContext {
     return {
-        invocationId: "test-invocation",
-        agent: {} as BaseAgent,
-        branch: [],
-        endInvocation: false,
-        createChildContext: vi.fn(function (agent) {
-            const childContext = createMockContext();
-            childContext.agent = agent;
-            return childContext;
-        }),
+      invocationId: "test-invocation",
+      agent: {} as BaseAgent,
+      branch: [],
+      session: {
+        id: "ses-123",
+        userId: "user-123",
+        appName: "test-app",
+        state: {},
+        events: [],
+        lastUpdateTime: 0,
+      } as any,
+      endInvocation: false,
+      createChildContext: vi.fn(function (agent) {
+        const childContext = createMockContext();
+        childContext.agent = agent;
+        return childContext;
+      }),
     } as unknown as InvocationContext;
 }
 
