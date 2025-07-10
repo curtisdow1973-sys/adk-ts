@@ -70,7 +70,7 @@ const optionVariants = cva(
 );
 
 export function ViewOptions(props: { markdownUrl: string; githubUrl: string }) {
-  const markdownUrl = new URL(props.markdownUrl, 'https://fumadocs.dev');
+  const markdownUrl = new URL(props.markdownUrl, 'https://adk.iqai.com');
   const q = `Read ${markdownUrl}, I want to ask questions about it.`;
 
   const claude = `https://claude.ai/new?${new URLSearchParams({
