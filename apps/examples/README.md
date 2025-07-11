@@ -64,7 +64,7 @@ To explore the examples, run the following command:
 
 ## 📚 Explore Example Applications
 
-There are over 20 examples available, covering a wide range of use cases from basic agent setups to advanced multi-agent systems. Here’s some of them organized by category to help you get started:
+There are over 20 examples available, covering a wide range of use cases from basic agent setups to advanced multi-agent systems. Here are some of them organized by category to help you get started:
 
 ### 🎯 **Getting Started Examples**
 
