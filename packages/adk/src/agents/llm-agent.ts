@@ -5,7 +5,8 @@ import type { BaseCodeExecutor } from "../code-executors/base-code-executor";
 import { Event } from "../events/event";
 import { AutoFlow, type BaseLlmFlow, SingleFlow } from "../flows/llm-flows";
 import type { BaseMemoryService } from "../memory/base-memory-service";
-import type { BaseLlm } from "../models/base-llm";
+import { BaseLlm } from "../models/base-llm";
+import { AiSdkLlm } from "../models/ai-sdk";
 import { LLMRegistry } from "../models/llm-registry";
 import type { BasePlanner } from "../planners/base-planner";
 import type { BaseSessionService } from "../sessions/base-session-service";
@@ -14,6 +15,7 @@ import { FunctionTool } from "../tools/function/function-tool";
 import { BaseAgent } from "./base-agent";
 import type { InvocationContext } from "./invocation-context";
 import type { ReadonlyContext } from "./readonly-context";
+import type { LanguageModel } from "ai";
 
 /**
  * Type for instruction providers that can be functions
@@ -45,7 +47,7 @@ export interface LlmAgentConfig<T extends BaseLlm = BaseLlm> {
 	 * The LLM model to use
 	 * When not set, the agent will inherit the model from its ancestor
 	 */
-	model?: string | T;
+	model?: string | T | LanguageModel;
 
 	/**
 	 * Instructions for the LLM model, guiding the agent's behavior
@@ -145,7 +147,7 @@ export class LlmAgent<T extends BaseLlm = BaseLlm> extends BaseAgent {
 	 * The model to use for the agent
 	 * When not set, the agent will inherit the model from its ancestor
 	 */
-	public model: string | T;
+	public model: string | T | LanguageModel;
 
 	/**
 	 * Instructions for the LLM model, guiding the agent's behavior
@@ -269,13 +271,17 @@ export class LlmAgent<T extends BaseLlm = BaseLlm> extends BaseAgent {
 	 * This method is only for use by Agent Development Kit
 	 */
 	get canonicalModel(): BaseLlm {
-		if (typeof this.model !== "string") {
+		// For string model name
+		if (typeof this.model === "string") {
+			if (this.model) {
+				// model is non-empty str
+				return LLMRegistry.newLLM(this.model);
+			}
+		} else if (this.model instanceof BaseLlm) {
 			return this.model;
-		}
-
-		if (this.model) {
-			// model is non-empty str
-			return LLMRegistry.newLLM(this.model);
+		} else if (this.model) {
+			// For LanguageModel
+			return new AiSdkLlm(this.model);
 		}
 
 		// find model from ancestors
