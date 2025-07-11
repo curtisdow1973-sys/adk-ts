@@ -28,9 +28,6 @@ Note: this project uses [**pnpm**](https://pnpm.io/) as the package manager. You
 For the examples to work correctly, you need to build the core ADK package first. This step compiles the TypeScript code and prepares the necessary files.
 
  ```bash
-   # In the root directory of the project
-
- ```bash
    pnpm build
  ```
 
@@ -42,11 +39,11 @@ For the examples to work correctly, you need to build the core ADK package first
    # apps/examples/.env
 
    # Optional: Specify which model to use
-   LLM_MODEL=your_model_name 
+   LLM_MODEL=your_model_name
 
    # Required: At least one API key
    OPENAI_API_KEY=your_openai_api_key
-   GOOGLE_API_KEY=your_google_api_key  
+   GOOGLE_API_KEY=your_google_api_key
    ANTHROPIC_API_KEY=your_anthropic_api_key
  ```
 
@@ -57,8 +54,7 @@ The default model is set to `gemini-2.5-flash`, `gemini-2.0-flash` or `gemini-2.
 To explore the examples, run the following command:
 
  ```bash
-   cd apps/examples
-   
+   cd apps/examples 
    pnpm start
  ```
 
