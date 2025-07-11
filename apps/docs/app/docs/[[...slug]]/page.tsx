@@ -27,7 +27,7 @@ export default async function Page(props: {
           <LLMCopyButton slug={params.slug || []} />
           <ViewOptions
             markdownUrl={`${page.url}.mdx`}
-            githubUrl={`https://github.com/IQAICOM/adk-ts/blob/dev/apps/docs/content/docs/${page.path}`}
+            githubUrl={`https://github.com/IQAIcom/adk-ts/blob/main/apps/docs/content/docs/${page.path}`}
           />
         </div>
       <DocsBody>
