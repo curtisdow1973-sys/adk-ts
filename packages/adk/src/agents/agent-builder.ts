@@ -13,8 +13,7 @@ import { LoopAgent } from "./loop-agent.js";
 import { ParallelAgent } from "./parallel-agent.js";
 import { SequentialAgent } from "./sequential-agent.js";
 import type { LanguageModel } from "ai";
-import { AiSdkLlm } from "../models/ai-adk.js";
-import { BaseLlm } from "../models/base-llm.js";
+import type { BaseLlm } from "../models/base-llm.js";
 
 /**
  * Configuration options for the AgentBuilder
@@ -346,22 +345,7 @@ export class AgentBuilder {
 					throw new Error("Model is required for LLM agent");
 				}
 
-				let model: string | BaseLlm;
-				const configModel = this.config.model;
-
-				// For string model name
-				if (typeof configModel === "string") {
-					model = configModel;
-				} else if (
-					configModel instanceof BaseLlm ||
-					(configModel as any).generateContentAsync
-				) {
-					// For BaseLlm subclass
-					model = configModel as BaseLlm;
-				} else {
-					// For LanguageModel
-					model = new AiSdkLlm(configModel as LanguageModel);
-				}
+				const model = this.config.model;
 
 				return new LlmAgent({
 					name: this.config.name,

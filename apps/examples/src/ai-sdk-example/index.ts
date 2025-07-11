@@ -1,5 +1,5 @@
 import { env } from "node:process";
-import { AiSdkLlm, LlmAgent, InMemoryRunner, FunctionTool } from "@iqai/adk";
+import { LlmAgent, InMemoryRunner, FunctionTool } from "@iqai/adk";
 import { google } from "@ai-sdk/google";
 
 function getWeather(location: string): string {
@@ -25,8 +25,6 @@ async function demonstrateWeatherAgent() {
 	}
 
 	try {
-		const model = new AiSdkLlm(google("gemini-2.0-flash"));
-
 		const weatherTool = new FunctionTool(getWeather, {
 			name: "getWeather",
 			description: "Gets current weather information for a specified location",
@@ -35,7 +33,7 @@ async function demonstrateWeatherAgent() {
 
 		const agent = new LlmAgent({
 			name: "weather_assistant",
-			model,
+			model: google(env.LLM_MODEL || "gemini-2.0-flash"),
 			description:
 				"A helpful weather assistant that provides current weather information",
 			instruction: `You are a helpful weather assistant. When asked about weather:
