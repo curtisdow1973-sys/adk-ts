@@ -12,8 +12,8 @@ import type { McpConfig, SamplingHandler } from "./types";
  * ```typescript
  * // Old verbose way:
  * const toolset = new McpToolset({
- *   name: "Near Intent Swaps MCP Client",
- *   description: "Client for Near Intent Swaps",
+ *   name: "Near Intents Swaps MCP Client",
+ *   description: "Client for Near Intents Swaps",
  *   debug: env.DEBUG,
  *   retryOptions: { maxRetries: 2, initialDelay: 200 },
  *   transport: {
@@ -246,14 +246,14 @@ export function McpNearAgent(config: McpServerConfig = {}): McpToolset {
 }
 
 /**
- * MCP NEAR Intent Swaps - NEAR Protocol intent swaps functionality
+ * MCP Near Intents Swaps - NEAR Protocol intent swaps functionality
  *
  * Required env vars: ACCOUNT_ID, ACCOUNT_KEY
  * Optional env vars: NEAR_NETWORK_ID, NEAR_NODE_URL, NEAR_GAS_LIMIT
  */
 export function McpNearIntentSwaps(config: McpServerConfig = {}): McpToolset {
 	const mcpConfig = createMcpConfig(
-		"NEAR Intent Swaps MCP Client",
+		"Near Intents Swaps MCP Client",
 		"@iqai/mcp-near-intent-swaps",
 		config,
 	);
