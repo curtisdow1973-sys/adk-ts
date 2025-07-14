@@ -4,62 +4,73 @@ import * as readline from "node:readline";
 import { promisify } from "node:util";
 import { VERSION } from "../index";
 
-const AGENT_TS_TEMPLATE = `import { LlmAgent as Agent } from '@iqai/adk';
-import {  ToolContext } from '@iqai/adk';
+const AGENT_TS_TEMPLATE = `import { env } from "node:process";
+import { FunctionTool, LlmAgent } from "@iqai/adk";
 
 // --- Tool Functions ---
 
 /**
- * Returns current weather information for a specified city
- * @param params Object containing city name
- * @param context Optional ToolContext
- * @returns Promise resolving to weather information or error
+ * Gets the current weather for a specified city
+ * @param city The city to get weather for
+ * @returns Weather information for the city
  */
-async function getWeather(
-  params: Record<string, any>,
-  context?: ToolContext
-): Promise<{ status: string; report?: string; error_message?: string }> {
-  const city = params.city;
-  console.log(\`--- Tool: getWeather called for city: \${city} ---\`);
-  const cityNormalized = city.toLowerCase().trim();
-  const mockWeatherDb: Record<string, { status: string; report: string }> = {
-    "newyork": {status: "success", report: "The weather in New York is sunny with a temperature of 25°C."},
-    "london": {status: "success", report: "It's cloudy in London with a temperature of 15°C."},
-    "tokyo": {status: "success", report: "Tokyo is experiencing light rain and a temperature of 18°C."},
+async function getWeather(city: string): Promise<Record<string, any>> {
+  console.log(\`Getting weather for: \${city}\`);
+  
+  // Mock weather data - replace with real API call
+  const weatherData: Record<string, any> = {
+    newyork: { temperature: "25°C", condition: "sunny", humidity: "60%" },
+    london: { temperature: "15°C", condition: "cloudy", humidity: "75%" },
+    tokyo: { temperature: "18°C", condition: "light rain", humidity: "80%" }
   };
-  if (mockWeatherDb[cityNormalized]) { return mockWeatherDb[cityNormalized]; }
-  else { return {status: "error", error_message: \`Sorry, I don't have weather information for '\${city}'.\`}; }
+  
+  const normalizedCity = city.toLowerCase().replace(/\s+/g, "");
+  return weatherData[normalizedCity] || { 
+    error: \`Weather data not available for \${city}\` 
+  };
 }
 
 /**
- * Gets the current local time and timezone.
- * @param params Empty object (no parameters needed)
- * @param context Optional ToolContext
- * @returns Promise resolving to time information
+ * Gets the current local time and timezone
+ * @returns Current time information
  */
-async function getCurrentTime(
-  params: Record<string, any>, 
-  context?: ToolContext
-): Promise<{ currentTime: string; timezone: string; }> {
-  console.log(\`--- Tool: getCurrentTime called ---\`);
+function getCurrentTime(): Record<string, any> {
+  console.log("Getting current time");
   const now = new Date();
   return {
     currentTime: now.toLocaleTimeString(),
-    timezone: Intl.DateTimeFormat().resolvedOptions().timeZone
+    timezone: Intl.DateTimeFormat().resolvedOptions().timeZone,
+    date: now.toLocaleDateString()
   };
+}
+
+// --- Create Function Tools ---
+
+function createTools() {
+  const weatherTool = new FunctionTool(getWeather, {
+    name: "get_weather",
+    description: "Gets current weather information for a city",
+  });
+
+  const timeTool = new FunctionTool(getCurrentTime, {
+    name: "get_current_time",
+    description: "Gets the current local time and timezone",
+  });
+
+  return [weatherTool, timeTool];
 }
 
 // --- Agent Definition ---
 
-// Export the root agent for ADK tools to find
-export const rootAgent = new Agent({
-  name: "{agent_name}", // Unique agent name
-  model: "{model_name}",
-  description: "Provides current weather and time information for cities.",
-  instruction: "You are a helpful assistant. Use the 'getWeather' tool for weather queries " +
-               "and the 'getCurrentTime' tool for time queries. Provide clear answers based on tool results. " +
-               "If asked for weather AND time, use both tools.",
-  tools: [getWeather, getCurrentTime], // List of available tools (functions)
+export const rootAgent = new LlmAgent({
+  name: "{agent_name}",
+  model: env.LLM_MODEL || "{model_name}",
+  description: "A helpful assistant that can provide weather and time information",
+  instruction: 
+    "You are a helpful assistant that can check the weather and get the current time. " +
+    "Use the get_weather tool for weather queries and the get_current_time tool for time queries. " +
+    "Provide clear and informative responses based on the tool results.",
+  tools: createTools(),
 });
 `;
 
