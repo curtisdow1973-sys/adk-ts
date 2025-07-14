@@ -95,7 +95,7 @@ export abstract class BaseLlm {
 						responseCount++;
 
 						// Log each response chunk
-						this.this.logger.debug(`ADK LLM Response ${responseCount}:`, {
+						this.logger.debug(`ADK LLM Response ${responseCount}:`, {
 							model: this.model,
 							parts: response.parts?.map((part) => ({
 								text:
