@@ -1,6 +1,6 @@
 ---
 title: Home
-description: Build, deploy, and manage AI agents with TypeScript and Google's Gemini models
+description: Build, deploy, and manage AI agents with TypeScript
 icon: House
 ---
 
@@ -8,76 +8,105 @@ import { Cards, Card } from 'fumadocs-ui/components/card';
 import { Callout } from 'fumadocs-ui/components/callout';
 
 <Callout type="warn" title="Work in Progress">
-This is a TypeScript port of the original Python ADK. Features and stability may vary as development continues.
+This is a TypeScript port inspired by the original Python ADK. Features and stability are actively being developed.
 </Callout>
 
-## What is ADK TypeScript?
+## What is ADK for TypeScript?
 
-Agent Development Kit (ADK) **for** TypeScript is a flexible and modular framework for **developing and deploying AI agents using TypeScript**. ADK integrates seamlessly with Google's Gemini models and is designed with a focus on **tight integration with the Google ecosystem**.
+Agent Development Kit (ADK) for TypeScript is a powerful, open-source framework for **building, orchestrating, and deploying AI agents**.
 
-ADK TypeScript makes it **easy to get started with simple agents** while providing the control and structure needed for **complex agent architectures and orchestration** within the Node.js environment.
+Inspired by the architectural principles of Google's Python ADK, our project is reimagined for the TypeScript ecosystem. We offer first-class support for Google Gemini models while providing the freedom to **integrate with any LLM, tool, or data source**. ADK makes it easy to start with simple agents and scales to support complex, multi-agent systems in any Node.js environment.
 
-## Quick Start
+## Why ADK for TypeScript?
 
-Get started in seconds with a simple agent:
+Our vision is to empower every developer to build intelligent agents with the same confidence as any modern software. We achieve this through three core pillars:
 
-```typescript title="simple-agent.ts"
-import { AgentBuilder } from "@iqai/adk";
-
-// The simplest possible usage - just model and ask!
-const response = await AgentBuilder
-  .withModel("gemini-2.5-flash")
-  .ask("What is the capital of France?");
-
-console.log(response); // "The capital of France is Paris."
-```
-
----
+-   **Unparalleled Developer Experience:** We are TypeScript-first, providing full type-safety and autocompletion out of the box. Our intuitive `AgentBuilder` API lets you create powerful agents with minimal, readable code.
+-   **Powerful & Flexible Architecture:** ADK is modular by design. Compose multiple agents, equip them with custom tools, and orchestrate complex workflows. Our provider-agnostic foundation means you're never locked into a single ecosystem.
+-   **Production-Ready from Day One:** Go beyond prototypes. With built-in session management, persistent memory, and first-class OpenTelemetry support for observability, ADK provides the robust foundation needed for real-world applications.
 
 ## Core Features
 
 <Cards>
   <Card
-    title="🔀 Flexible Orchestration"
-    description="Define workflows using workflow agents (Sequential, Parallel, Loop) for predictable pipelines, or leverage LLM-driven dynamic routing for adaptive behavior."
-    href="/docs/agents"
-  />
-
-  <Card
-    title="🤖 Multi-Agent Architecture"
-    description="Build modular and scalable applications by composing multiple specialized agents in a hierarchy. Enable complex coordination and delegation."
+    title="🤖 Multi-Agent Systems"
+    description="Orchestrate teams of specialized agents that collaborate to solve complex problems."
     href="/docs/agents/multi-agents"
   />
-
+  <Card
+    title="🔀 Flexible Orchestration"
+    description="Build complex workflows using sequential, parallel, or LLM-driven dynamic routing."
+    href="/docs/agents"
+  />
+  <Card
+    title="💾 State & Memory"
+    description="Enable persistent conversations with state management and context preservation across interactions."
+    href="/docs/sessions"
+  />
+  <Card
+    title="🔄 Multi-LLM Support"
+    description="Go beyond one provider. Seamlessly use and switch between models from Google, OpenAI, Anthropic, and more."
+    href="/docs/agents"
+  />
   <Card
     title="🛠️ Rich Tool Ecosystem"
-    description="Equip agents with diverse capabilities: use pre-built tools, create custom functions, integrate 3rd-party libraries, or use other agents as tools."
+    description="Equip agents with powerful tools via the Model Context Protocol (MCP)—connect to a wide range of MCP servers in the market or build your own."
     href="/docs/tools"
   />
-
   <Card
-    title="🚀 Deployment Ready"
-    description="Containerize and deploy your TypeScript agents anywhere – run locally, scale with cloud services, or integrate into custom infrastructure."
-    href="/docs/deploy"
+    title="🧭 Built-in Tracing"
+    description="Debug with confidence. First-class OpenTelemetry integration provides deep insights into your agent's execution."
+    href="/docs/advanced"
   />
-
   <Card
     title="📊 Built-in Evaluation"
-    description="Systematically assess agent performance using the evaluation module by testing both final responses and execution trajectories."
+    description="Systematically assess agent performance by testing final responses and execution trajectories."
     href="/docs/evaluate"
   />
-
   <Card
-    title="💾 Session Management"
-    description="Persistent conversations with memory, state management, and context preservation across interactions and deployments."
-    href="/docs/sessions"
+    title="🚀 Deployment Ready"
+    description="Containerize and deploy your agents anywhere, from local servers to scalable cloud infrastructure."
+    href="/docs/deploy"
   />
 </Cards>
 
+## What You Can Build
+
+<Cards>
+  <Card
+    title="Sophisticated AI Assistants"
+    description="Build chatbots that go beyond simple Q&A, with persistent memory and access to real-time information."
+  />
+  <Card
+    title="Autonomous Task Agents"
+    description="Create agents that can perform multi-step tasks, like analyzing data, booking appointments, or managing files."
+  />
+  <Card
+    title="Collaborative Agent Workflows"
+    description="Orchestrate multiple agents to solve complex problems, from automated research to code generation."
+  />
+  <Card
+    title="AI-Powered Applications"
+    description="Connect agents to your databases and APIs to create intelligent, interactive frontends for your services."
+  />
+</Cards>
+
+## Design Philosophy
+
+ADK is designed with the following principles:
+
+-   **TypeScript-first:** Full type safety and a modern developer experience.
+-   **Simple APIs:** Common patterns should be one-liners.
+-   **Gradual Complexity:** Start simple and add power as you need it.
+-   **Extensibility:** Every core component is designed to be replaced or extended.
+-   **Production Ready:** Built-in observability, error handling, and scalability.
+-   **Excellent Google Integration:** While provider-agnostic, we ensure seamless support for Gemini models and Google Cloud services.
+
+---
 
 ## Learn More
 
-Ready to dive deeper? Our documentation covers everything from basic concepts to advanced deployment:
+Ready to dive in? Our documentation covers everything from your first agent to advanced deployment.
 
 <Cards>
   <Card
@@ -85,29 +114,46 @@ Ready to dive deeper? Our documentation covers everything from basic concepts to
     description="Installation, quickstart, and your first agent"
     href="/docs/get-started"
   />
-
   <Card
     title="📚 Agents Guide"
     description="Learn about LLM agents, workflow agents, and custom agents"
     href="/docs/agents"
   />
-
   <Card
     title="🔧 Tools Reference"
     description="Built-in tools, custom functions, and third-party integrations"
     href="/docs/tools"
   />
-
   <Card
-    title="🎯 Advanced Features"
-    description="Sessions, memory, flows, and deployment strategies"
+    title="🎯 Advanced Concepts"
+    description="Dive into sessions, memory, flows, and deployment strategies"
     href="/docs/advanced"
   />
 </Cards>
 
-<Callout type="info" title="Community & Support">
+## Community & Support
+
 Join our community for help, discussions, and updates:
-- **GitHub**: Report issues and contribute
-- **Documentation**: Comprehensive guides and API reference
-- **Examples**: Real-world applications and use cases
-</Callout>
+
+<Cards>
+  <Card
+    title="💻 GitHub"
+    description="Source code, issues, and contributions"
+    href="https://github.com/IQAIcom/adk-ts"
+  />
+  <Card
+    title="💬 Discussions"
+    description="Ask questions, share ideas, and get help"
+    href="https://github.com/IQAIcom/adk-ts/discussions"
+  />
+  {/* <Card
+    title="Discord"
+    description="Join our Discord server for real-time collaboration and support"
+    href="https://discord.gg/your-discord-invite"
+  />
+  <Card
+    title="🔬 Examples"
+    description="Real working examples for common patterns"
+    href="https://github.com/IQAIcom/adk-ts/tree/main/apps/examples"
+  /> */}
+</Cards>
