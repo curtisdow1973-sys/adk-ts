@@ -135,18 +135,17 @@ export abstract class BaseLlmFlow {
 			await tool.processLlmRequest(toolContext, llmRequest);
 		}
 
-		// Log available tools in a clean table format
+		// Log available tools in a clean format
 		if (tools.length > 0) {
-			this.logger.debug("🛠️ Available Tools");
-			console.table(
-				tools.map((tool) => ({
-					Name: tool.name,
-					Description:
-						tool.description?.substring(0, 50) +
-						(tool.description?.length > 50 ? "..." : ""),
-					"Long Running": tool.isLongRunning ? "Yes" : "No",
-				})),
-			);
+			const toolsData = tools.map((tool) => ({
+				Name: tool.name,
+				Description:
+					tool.description?.substring(0, 50) +
+					(tool.description?.length > 50 ? "..." : ""),
+				"Long Running": tool.isLongRunning ? "Yes" : "No",
+			}));
+
+			this.logger.debugArray("🛠️ Available Tools", toolsData);
 		}
 	}
 
@@ -184,17 +183,16 @@ export abstract class BaseLlmFlow {
 		// Handle function calls
 		const functionCalls = finalizedEvent.getFunctionCalls();
 		if (functionCalls && functionCalls.length > 0) {
-			// Log function calls in a clean table format
-			this.logger.debug("🔧 Function Calls");
-			console.table(
-				functionCalls.map((fc) => ({
-					Name: fc.name,
-					Arguments:
-						JSON.stringify(fc.args).substring(0, 100) +
-						(JSON.stringify(fc.args).length > 100 ? "..." : ""),
-					ID: fc.id || "auto",
-				})),
-			);
+			// Log function calls in a clean format
+			const functionCallsData = functionCalls.map((fc) => ({
+				Name: fc.name,
+				Arguments:
+					JSON.stringify(fc.args).substring(0, 100) +
+					(JSON.stringify(fc.args).length > 100 ? "..." : ""),
+				ID: fc.id || "auto",
+			}));
+
+			this.logger.debugArray("🔧 Function Calls", functionCallsData);
 
 			for await (const event of this._postprocessHandleFunctionCallsAsync(
 				invocationContext,
@@ -414,8 +412,7 @@ export abstract class BaseLlmFlow {
 				? this._formatContentPreview(llmRequest.contents[0])
 				: "none";
 
-		this.logger.debug("📤 LLM Request");
-		console.table({
+		this.logger.debugStructured("📤 LLM Request", {
 			Model: llm.model,
 			Agent: invocationContext.agent.name,
 			"Content Items": llmRequest.contents?.length || 0,
@@ -441,7 +438,7 @@ export abstract class BaseLlmFlow {
 				llmResponse,
 			);
 
-			// Log LLM response in a clean table format
+			// Log LLM response in a clean format
 			const tokenCount =
 				llmResponse.usageMetadata?.totalTokenCount || "unknown";
 			const functionCallCount =
@@ -451,8 +448,7 @@ export abstract class BaseLlmFlow {
 			// Format response content preview
 			const responsePreview = this._formatResponsePreview(llmResponse);
 
-			this.logger.debug("📥 LLM Response");
-			console.table({
+			this.logger.debugStructured("📥 LLM Response", {
 				Model: llm.model,
 				"Token Count": tokenCount,
 				"Function Calls": functionCallCount,
@@ -580,6 +576,10 @@ export abstract class BaseLlmFlow {
 		return event;
 	}
 
+	/**
+	 * Logs data in a visually appealing format that works well in any terminal size.
+	 * Uses vertical layout for better readability and respects debug settings.
+	 */
 	_formatContentPreview(content: any): string {
 		if (!content) return "none";
 
