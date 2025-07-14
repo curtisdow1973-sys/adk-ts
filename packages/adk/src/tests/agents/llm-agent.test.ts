@@ -10,7 +10,6 @@ vi.mock("@adk/helpers/logger", () => ({
 	})),
 }));
 
-
 vi.mock("../../flows/llm-flows", () => ({
 	SingleFlow: vi.fn(),
 	AutoFlow: vi.fn(function () {
@@ -18,21 +17,20 @@ vi.mock("../../flows/llm-flows", () => ({
 	}),
 }));
 
-
 const mockContext: InvocationContext = {
-  invocationId: "test-inv-id",
-  agent: {} as any,
-  branch: [],
-  session: {
-    id: "ses-123",
-    userId: "user-123",
-    appName: "test-app",
-    state: {},
-    events: [],
-    lastUpdateTime: 0,
-  } as any,
-  endInvocation: false,
-  createChildContext: vi.fn(),
+	invocationId: "test-inv-id",
+	agent: {} as any,
+	branch: [],
+	session: {
+		id: "ses-123",
+		userId: "user-123",
+		appName: "test-app",
+		state: {},
+		events: [],
+		lastUpdateTime: 0,
+	} as any,
+	endInvocation: false,
+	createChildContext: vi.fn(),
 } as unknown as InvocationContext;
 
 describe("LlmAgent (Run Logic)", () => {
@@ -48,27 +46,27 @@ describe("LlmAgent (Run Logic)", () => {
 
 	describe("maybeSaveOutputToState", () => {
 		it("should do nothing if outputKey is not set", () => {
-		  const event = new Event({author: agent.name});
-		  agent["maybeSaveOutputToState"](event);
-		  expect(event.actions.stateDelta).toStrictEqual({})
+			const event = new Event({ author: agent.name });
+			agent["maybeSaveOutputToState"](event);
+			expect(event.actions.stateDelta).toStrictEqual({});
 		});
 
 		it("should do nothing if the event is not a final response", () => {
-		  agent.outputKey = "result";
-		  const event = new Event({ author: agent.name });
-		  vi.spyOn(event, "isFinalResponse").mockReturnValue(false);
+			agent.outputKey = "result";
+			const event = new Event({ author: agent.name });
+			vi.spyOn(event, "isFinalResponse").mockReturnValue(false);
 
-		  agent["maybeSaveOutputToState"](event);
-		  expect(event.actions.stateDelta).toStrictEqual({})
+			agent["maybeSaveOutputToState"](event);
+			expect(event.actions.stateDelta).toStrictEqual({});
 		});
 
 		it("should do nothing if the event has no content parts", () => {
-		  agent.outputKey = "result";
-		  const event = new Event({ content: { parts: [] }, author: agent.name });
-		  vi.spyOn(event, "isFinalResponse").mockReturnValue(true);
+			agent.outputKey = "result";
+			const event = new Event({ content: { parts: [] }, author: agent.name });
+			vi.spyOn(event, "isFinalResponse").mockReturnValue(true);
 
-		  agent["maybeSaveOutputToState"](event);
-		  expect(event.actions.stateDelta).toStrictEqual({})
+			agent["maybeSaveOutputToState"](event);
+			expect(event.actions.stateDelta).toStrictEqual({});
 		});
 
 		it("should save concatenated text to stateDelta if conditions are met", () => {
@@ -115,20 +113,19 @@ describe("LlmAgent (Run Logic)", () => {
 	});
 
 	describe("runAsyncImpl", () => {
-
 		it("should process yielded content from the flow", async () => {
-		  const mockFlowRunAsync = async function* () {
-		    yield "Hello world";
-		  };
-		  (agent["llmFlow"] as any).runAsync.mockReturnValue(mockFlowRunAsync());
+			const mockFlowRunAsync = async function* () {
+				yield "Hello world";
+			};
+			(agent["llmFlow"] as any).runAsync.mockReturnValue(mockFlowRunAsync());
 
-		  const yieldedEvents = [];
-		  for await (const event of agent["runAsyncImpl"](mockContext)) {
-		    yieldedEvents.push(event);
-		  }
+			const yieldedEvents = [];
+			for await (const event of agent["runAsyncImpl"](mockContext)) {
+				yieldedEvents.push(event);
+			}
 
-		  expect(yieldedEvents).toHaveLength(1);
-		  expect(yieldedEvents[0].errorCode).toBe("AGENT_EXECUTION_ERROR");
+			expect(yieldedEvents).toHaveLength(1);
+			expect(yieldedEvents[0].errorCode).toBe("AGENT_EXECUTION_ERROR");
 		});
 
 		it("should catch a non-Error object from the flow and yield a formatted error event", async () => {

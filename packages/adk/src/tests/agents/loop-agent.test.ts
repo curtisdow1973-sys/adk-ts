@@ -13,19 +13,19 @@ class MockSubAgent extends BaseAgent {
 }
 
 const mockContext: InvocationContext = {
-  invocationId: "test-inv-id",
-  agent: {} as any,
-  branch: [],
-  session: {
-    id: "ses-123",
-    userId: "user-123",
-    appName: "test-app",
-    state: {},
-    events: [],
-    lastUpdateTime: 0,
-  } as any,
-  endInvocation: false,
-  createChildContext: vi.fn(),
+	invocationId: "test-inv-id",
+	agent: {} as any,
+	branch: [],
+	session: {
+		id: "ses-123",
+		userId: "user-123",
+		appName: "test-app",
+		state: {},
+		events: [],
+		lastUpdateTime: 0,
+	} as any,
+	endInvocation: false,
+	createChildContext: vi.fn(),
 } as unknown as InvocationContext;
 
 describe("LoopAgent", () => {

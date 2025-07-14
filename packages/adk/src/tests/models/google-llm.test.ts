@@ -50,7 +50,7 @@ describe("GoogleLlm", () => {
 				project: "proj",
 				location: "loc",
 			});
-			expect(client).toBe(llm.apiClient); 
+			expect(client).toBe(llm.apiClient);
 		});
 
 		it("creates GoogleGenAI with apiKey if set", () => {
