@@ -1,18 +1,16 @@
+import { Logger } from "@adk/helpers/logger";
+import type { Content, Part } from "@google/genai";
 import {
-	generateText,
-	streamText,
-	jsonSchema,
 	type CoreMessage,
-	type Tool,
 	type LanguageModel,
+	type Tool,
+	generateText,
+	jsonSchema,
+	streamText,
 } from "ai";
 import { BaseLlm } from "./base-llm";
 import type { LlmRequest } from "./llm-request";
 import { LlmResponse } from "./llm-response";
-import { Logger } from "@adk/helpers/logger";
-import type { Part, Content } from "@google/genai";
-
-const logger = new Logger({ name: "AiSdkLlm" });
 
 /**
  * AI SDK integration that accepts a pre-configured LanguageModel.
@@ -20,6 +18,7 @@ const logger = new Logger({ name: "AiSdkLlm" });
  */
 export class AiSdkLlm extends BaseLlm {
 	private modelInstance: LanguageModel;
+	protected logger = new Logger({ name: "AiSdkLlm" });
 
 	/**
 	 * Constructor accepts a pre-configured LanguageModel instance
@@ -145,7 +144,7 @@ export class AiSdkLlm extends BaseLlm {
 				});
 			}
 		} catch (error) {
-			logger.error(`AI SDK Error: ${String(error)}`, { error, request });
+			this.logger.error(`AI SDK Error: ${String(error)}`, { error, request });
 			yield LlmResponse.fromError(error, {
 				errorCode: "AI_SDK_ERROR",
 				model: this.model,

@@ -5,8 +5,6 @@ import type { BaseLLMConnection } from "./base-llm-connection";
 import type { LlmRequest } from "./llm-request";
 import { LlmResponse } from "./llm-response";
 
-const logger = new Logger({ name: "AnthropicLlm" });
-
 type AnthropicRole = "user" | "assistant";
 
 const MAX_TOKENS = 1024;
@@ -16,6 +14,7 @@ const MAX_TOKENS = 1024;
  */
 export class AnthropicLlm extends BaseLlm {
 	private _client?: Anthropic;
+	protected logger = new Logger({ name: "AnthropicLlm" });
 
 	/**
 	 * Constructor for Anthropic LLM
@@ -38,7 +37,6 @@ export class AnthropicLlm extends BaseLlm {
 		llmRequest: LlmRequest,
 		stream = false,
 	): AsyncGenerator<LlmResponse, void, unknown> {
-
 		const model = llmRequest.model || this.model;
 		const messages = (llmRequest.contents || []).map((content) =>
 			this.contentToAnthropicMessage(content),
@@ -96,7 +94,9 @@ export class AnthropicLlm extends BaseLlm {
 	private anthropicMessageToLlmResponse(
 		message: Anthropic.Message,
 	): LlmResponse {
-		logger.debug(`Anthropic response: ${message.usage.output_tokens} tokens, ${message.stop_reason}`);
+		this.logger.debug(
+			`Anthropic response: ${message.usage.output_tokens} tokens, ${message.stop_reason}`,
+		);
 
 		return new LlmResponse({
 			content: {

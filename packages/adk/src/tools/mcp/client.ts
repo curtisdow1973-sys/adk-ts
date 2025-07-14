@@ -116,7 +116,10 @@ export class McpClientService {
 		try {
 			// Configure transport based on mode
 			if (this.config.transport.mode === "sse") {
-				this.logger.debug("🚀 Initializing MCP client in SSE mode", this.config.transport.serverUrl);
+				this.logger.debug(
+					"🚀 Initializing MCP client in SSE mode",
+					this.config.transport.serverUrl,
+				);
 
 				const headers = {
 					...(this.config.transport.headers || {}),
@@ -135,7 +138,10 @@ export class McpClientService {
 			}
 
 			// STDIO mode
-			this.logger.debug("🚀 Initializing MCP client in STDIO mode", this.config.transport.command);
+			this.logger.debug(
+				"🚀 Initializing MCP client in STDIO mode",
+				this.config.transport.command,
+			);
 
 			return new StdioClientTransport({
 				command: this.config.transport.command,
@@ -253,7 +259,9 @@ export class McpClientService {
 
 	private async setupSamplingHandler(client: Client): Promise<void> {
 		if (!this.mcpSamplingHandler) {
-			this.logger.debug("⚠️ No sampling handler provided - sampling requests will be rejected");
+			this.logger.debug(
+				"⚠️ No sampling handler provided - sampling requests will be rejected",
+			);
 			return;
 		}
 
@@ -290,7 +298,9 @@ export class McpClientService {
 			this.logger.debug("🎯 Sampling handler registered successfully");
 		} catch (error) {
 			this.logger.error("Failed to setup sampling handler:", error);
-			this.logger.debug("⚠️ Sampling handler registration failed, continuing without sampling support");
+			this.logger.debug(
+				"⚠️ Sampling handler registration failed, continuing without sampling support",
+			);
 		}
 	}
 

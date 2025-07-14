@@ -6,8 +6,6 @@ import type { BaseLLMConnection } from "./base-llm-connection";
 import type { LlmRequest } from "./llm-request";
 import { LlmResponse } from "./llm-response";
 
-const logger = new Logger({ name: "OpenAiLlm" });
-
 const NEW_LINE = "\n";
 
 type OpenAIRole = "user" | "assistant" | "system";
@@ -18,6 +16,7 @@ type OpenAIRole = "user" | "assistant" | "system";
  */
 export class OpenAiLlm extends BaseLlm {
 	private _client?: OpenAI;
+	protected logger = new Logger({ name: "OpenAiLlm" });
 
 	/**
 	 * Constructor for OpenAI LLM
@@ -252,7 +251,9 @@ export class OpenAiLlm extends BaseLlm {
 					choice,
 					response.usage,
 				);
-				logger.debug(`OpenAI response: ${response.usage?.completion_tokens || 0} tokens`);
+				this.logger.debug(
+					`OpenAI response: ${response.usage?.completion_tokens || 0} tokens`,
+				);
 				yield llmResponse;
 			}
 		}

@@ -152,7 +152,9 @@ export class GoogleLlm extends BaseLlm {
 				config,
 			});
 			const llmResponse = LlmResponse.create(response);
-			this.logger.debug(`Google response: ${llmResponse.usageMetadata?.candidatesTokenCount || 0} tokens`);
+			this.logger.debug(
+				`Google response: ${llmResponse.usageMetadata?.candidatesTokenCount || 0} tokens`,
+			);
 			yield llmResponse;
 		}
 	}

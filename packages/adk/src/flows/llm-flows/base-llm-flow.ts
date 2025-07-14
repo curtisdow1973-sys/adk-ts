@@ -18,10 +18,12 @@ export abstract class BaseLlmFlow {
 	requestProcessors: Array<any> = [];
 	responseProcessors: Array<any> = [];
 
-	private logger = new Logger({ name: "BaseLlmFlow" });
+	protected logger = new Logger({ name: "BaseLlmFlow" });
 
 	async *runAsync(invocationContext: InvocationContext): AsyncGenerator<Event> {
-		this.logger.group(`🚀 Starting runAsync flow - ${invocationContext.agent.name}`);
+		this.logger.group(
+			`🚀 Starting runAsync flow - ${invocationContext.agent.name}`,
+		);
 
 		let stepCount = 0;
 		while (true) {
@@ -199,11 +201,15 @@ export abstract class BaseLlmFlow {
 				yield event;
 			}
 
-			this.logger.debug(`🔧 Processed ${functionCalls.length} function calls → ${functionEventCount} events`);
+			this.logger.debug(
+				`🔧 Processed ${functionCalls.length} function calls → ${functionEventCount} events`,
+			);
 		}
 
 		if (processorEventCount > 0) {
-			this.logger.debug(`🔄 Response processors: ${processorEventCount} events`);
+			this.logger.debug(
+				`🔄 Response processors: ${processorEventCount} events`,
+			);
 		}
 	}
 
@@ -357,7 +363,9 @@ export abstract class BaseLlmFlow {
 					yield event;
 				}
 
-				this.logger.debug(`🔄 Transferred to agent ${transferToAgent} → ${transferEventCount} events`);
+				this.logger.debug(
+					`🔄 Transferred to agent ${transferToAgent} → ${transferEventCount} events`,
+				);
 			}
 		}
 	}
