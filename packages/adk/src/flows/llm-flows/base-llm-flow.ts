@@ -129,8 +129,7 @@ export abstract class BaseLlmFlow {
 		}
 
 		// Run request processors
-		for (let i = 0; i < this.requestProcessors.length; i++) {
-			const processor = this.requestProcessors[i];
+		for (const processor of this.requestProcessors) {
 			for await (const event of processor.runAsync(
 				invocationContext,
 				llmRequest,
