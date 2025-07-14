@@ -38,9 +38,6 @@ export class AnthropicLlm extends BaseLlm {
 		llmRequest: LlmRequest,
 		stream = false,
 	): AsyncGenerator<LlmResponse, void, unknown> {
-		logger.debug(
-			`Sending Anthropic request, model: ${llmRequest.model || this.model}, stream: ${stream}`,
-		);
 
 		const model = llmRequest.model || this.model;
 		const messages = (llmRequest.contents || []).map((content) =>
@@ -99,7 +96,7 @@ export class AnthropicLlm extends BaseLlm {
 	private anthropicMessageToLlmResponse(
 		message: Anthropic.Message,
 	): LlmResponse {
-		logger.debug("Anthropic response:", JSON.stringify(message, null, 2));
+		logger.debug(`Anthropic response: ${message.usage.output_tokens} tokens, ${message.stop_reason}`);
 
 		return new LlmResponse({
 			content: {

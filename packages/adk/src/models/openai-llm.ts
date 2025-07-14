@@ -43,11 +43,6 @@ export class OpenAiLlm extends BaseLlm {
 		// Preprocess request
 		this.preprocessRequest(llmRequest);
 
-		logger.debug(
-			`Sending OpenAI request, model: ${llmRequest.model || this.model}, stream: ${stream}`,
-		);
-		logger.debug(this.buildRequestLog(llmRequest));
-
 		const model = llmRequest.model || this.model;
 		const messages = (llmRequest.contents || []).map((content) =>
 			this.contentToOpenAiMessage(content),
@@ -102,16 +97,12 @@ export class OpenAiLlm extends BaseLlm {
 				if (!choice) continue;
 
 				const delta = choice.delta;
-				logger.debug("Delta content:", delta.content);
 
 				// Create LlmResponse for this chunk
 				const llmResponse = this.createChunkResponse(delta, chunk.usage);
 				if (chunk.usage) {
 					usageMetadata = chunk.usage;
 				}
-
-				// Log each chunk response similar to Google LLM
-				logger.debug(this.buildResponseLog(llmResponse));
 
 				// Handle content accumulation similar to Google LLM
 				if (llmResponse.content?.parts?.[0]?.text) {
@@ -220,7 +211,6 @@ export class OpenAiLlm extends BaseLlm {
 						finishReason: this.toAdkFinishReason(choice.finish_reason),
 					});
 
-					logger.debug(this.buildResponseLog(finalResponse));
 					yield finalResponse;
 				} else {
 					// Yield partial response if we have content
@@ -262,7 +252,7 @@ export class OpenAiLlm extends BaseLlm {
 					choice,
 					response.usage,
 				);
-				logger.debug(this.buildResponseLog(llmResponse));
+				logger.debug(`OpenAI response: ${response.usage?.completion_tokens || 0} tokens`);
 				yield llmResponse;
 			}
 		}
@@ -335,10 +325,6 @@ export class OpenAiLlm extends BaseLlm {
 		usage?: OpenAI.CompletionUsage,
 	): LlmResponse {
 		const message = choice.message;
-		logger.debug(
-			"OpenAI response:",
-			JSON.stringify({ message, usage }, null, 2),
-		);
 
 		const parts: any[] = [];
 

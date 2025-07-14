@@ -65,11 +65,6 @@ export class GoogleLlm extends BaseLlm {
 	): AsyncGenerator<LlmResponse, void, unknown> {
 		this.preprocessRequest(llmRequest);
 
-		this.logger.debug(
-			`Sending out request, model: ${llmRequest.model || this.model}, backend: ${this.apiBackend}, stream: ${stream}`,
-		);
-		this.logger.debug(this.buildRequestLog(llmRequest));
-
 		const model = llmRequest.model || this.model;
 		const contents = this.convertContents(llmRequest.contents || []);
 		const config = this.convertConfig(llmRequest.config);
@@ -88,7 +83,6 @@ export class GoogleLlm extends BaseLlm {
 
 			for await (const resp of responses) {
 				response = resp; // Track the latest response
-				this.logger.debug(this.buildResponseLog(resp));
 				const llmResponse = LlmResponse.create(resp);
 				usageMetadata = llmResponse.usageMetadata;
 
@@ -157,8 +151,9 @@ export class GoogleLlm extends BaseLlm {
 				contents,
 				config,
 			});
-			this.logger.debug(this.buildResponseLog(response));
-			yield LlmResponse.create(response);
+			const llmResponse = LlmResponse.create(response);
+			this.logger.debug(`Google response: ${llmResponse.usageMetadata?.candidatesTokenCount || 0} tokens`);
+			yield llmResponse;
 		}
 	}
 
