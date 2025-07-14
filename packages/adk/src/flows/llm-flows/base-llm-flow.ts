@@ -21,39 +21,33 @@ export abstract class BaseLlmFlow {
 	protected logger = new Logger({ name: "BaseLlmFlow" });
 
 	async *runAsync(invocationContext: InvocationContext): AsyncGenerator<Event> {
-		this.logger.group(
-			`🚀 Starting runAsync flow - ${invocationContext.agent.name}`,
-		);
+		this.logger.info(`Agent '${invocationContext.agent.name}' started.`);
 
 		let stepCount = 0;
 		while (true) {
 			stepCount++;
-			this.logger.debug(`📋 Running step ${stepCount}`);
-
 			let lastEvent: Event | null = null;
-			let eventCount = 0;
 			for await (const event of this._runOneStepAsync(invocationContext)) {
-				eventCount++;
 				lastEvent = event;
 				yield event;
 			}
 
-			this.logger.debug(`📤 Step ${stepCount} yielded ${eventCount} events`);
-
 			if (!lastEvent || lastEvent.isFinalResponse()) {
-				this.logger.debug(`✅ Flow completed after ${stepCount} steps`);
+				this.logger.info(
+					`Agent '${invocationContext.agent.name}' finished after ${stepCount} steps.`,
+				);
 				break;
 			}
 
 			if (lastEvent.partial) {
-				this.logger.error("❌ Flow error: Last event is partial");
+				this.logger.error(
+					"Partial event encountered. LLM max output limit may be reached.",
+				);
 				throw new Error(
 					"Last event shouldn't be partial. LLM max output limit may be reached.",
 				);
 			}
 		}
-
-		this.logger.groupEnd();
 	}
 
 	async *runLive(invocationContext: InvocationContext): AsyncGenerator<Event> {
@@ -64,7 +58,7 @@ export abstract class BaseLlmFlow {
 	async *_runOneStepAsync(
 		invocationContext: InvocationContext,
 	): AsyncGenerator<Event> {
-		this.logger.group("🔄 One step execution");
+		this.logger.info("Framework running one step.");
 
 		const llmRequest = new LlmRequest();
 
@@ -78,12 +72,11 @@ export abstract class BaseLlmFlow {
 			yield event;
 		}
 		if (preprocessEventCount > 0) {
-			this.logger.debug(`🔧 Preprocessing: ${preprocessEventCount} events`);
+			this.logger.debug(`Preprocessing: ${preprocessEventCount} events`);
 		}
 
 		if (invocationContext.endInvocation) {
-			this.logger.debug("🛑 Invocation ended during preprocessing");
-			this.logger.groupEnd();
+			this.logger.info("Invocation ended during preprocessing.");
 			return;
 		}
 
@@ -114,8 +107,9 @@ export abstract class BaseLlmFlow {
 			}
 		}
 
-		this.logger.debug(`🤖 LLM processed ${llmResponseCount} responses`);
-		this.logger.groupEnd();
+		if (llmResponseCount > 0) {
+			this.logger.debug(`LLM processed ${llmResponseCount} responses`);
+		}
 	}
 
 	async *_preprocessAsync(
@@ -151,7 +145,7 @@ export abstract class BaseLlmFlow {
 		}
 
 		if (tools.length > 0) {
-			this.logger.debug(`🛠️ Processed ${tools.length} tools`);
+			this.logger.info(`Framework processed ${tools.length} tools.`);
 		}
 	}
 
@@ -191,6 +185,9 @@ export abstract class BaseLlmFlow {
 		// Handle function calls
 		const functionCalls = finalizedEvent.getFunctionCalls();
 		if (functionCalls) {
+			this.logger.info(
+				`Framework processed ${functionCalls.length} function calls.`,
+			);
 			let functionEventCount = 0;
 			for await (const event of this._postprocessHandleFunctionCallsAsync(
 				invocationContext,
@@ -202,14 +199,12 @@ export abstract class BaseLlmFlow {
 			}
 
 			this.logger.debug(
-				`🔧 Processed ${functionCalls.length} function calls → ${functionEventCount} events`,
+				`Processed ${functionCalls.length} function calls → ${functionEventCount} events`,
 			);
 		}
 
 		if (processorEventCount > 0) {
-			this.logger.debug(
-				`🔄 Response processors: ${processorEventCount} events`,
-			);
+			this.logger.debug(`Response processors: ${processorEventCount} events`);
 		}
 	}
 
@@ -219,10 +214,7 @@ export abstract class BaseLlmFlow {
 		llmResponse: LlmResponse,
 		modelResponseEvent: Event,
 	): AsyncGenerator<Event> {
-		this.logger.debug("🔴 Starting live postprocessing", {
-			hasContent: !!llmResponse.content,
-			turnComplete: !!(llmResponse as any).turnComplete,
-		});
+		this.logger.info("Framework live postprocessing started.");
 
 		// Run processors
 		for await (const event of this._postprocessRunProcessorsAsync(
@@ -284,9 +276,9 @@ export abstract class BaseLlmFlow {
 
 				const transferToAgent = functionResponseEvent.actions?.transferToAgent;
 				if (transferToAgent) {
-					this.logger.debug("🔄 Transferring to agent in live mode", {
-						targetAgent: transferToAgent,
-					});
+					this.logger.info(
+						`Framework transferred to agent '${transferToAgent}'.`,
+					);
 
 					const agentToRun = this._getAgentToRun(
 						invocationContext,
@@ -310,7 +302,7 @@ export abstract class BaseLlmFlow {
 			}
 		}
 
-		this.logger.debug("✅ Live postprocessing completed");
+		this.logger.info("Framework live postprocessing completed.");
 	}
 
 	async *_postprocessRunProcessorsAsync(
@@ -364,7 +356,7 @@ export abstract class BaseLlmFlow {
 				}
 
 				this.logger.debug(
-					`🔄 Transferred to agent ${transferToAgent} → ${transferEventCount} events`,
+					`Transferred to agent ${transferToAgent} → ${transferEventCount} events`,
 				);
 			}
 		}
@@ -378,7 +370,7 @@ export abstract class BaseLlmFlow {
 		const agentToRun = rootAgent.findAgent(agentName);
 
 		if (!agentToRun) {
-			this.logger.error(`❌ Agent ${agentName} not found in the agent tree`);
+			this.logger.error(`Agent '${agentName}' not found in the agent tree.`);
 			throw new Error(`Agent ${agentName} not found in the agent tree.`);
 		}
 
@@ -418,7 +410,7 @@ export abstract class BaseLlmFlow {
 		const runConfig = invocationContext.runConfig;
 		if ((runConfig as any).supportCfc) {
 			this.logger.warn(
-				"⚠️ CFC (supportCfc) not fully implemented, using standard flow",
+				"CFC (supportCfc) not fully implemented, using standard flow.",
 			);
 		}
 
@@ -453,7 +445,9 @@ export abstract class BaseLlmFlow {
 			yield alteredLlmResponse || llmResponse;
 		}
 
-		this.logger.debug(`🤖 ${llm.model} → ${responseCount} responses`);
+		if (responseCount > 0) {
+			this.logger.debug(`${llm.model} → ${responseCount} responses`);
+		}
 	}
 
 	async _handleBeforeModelCallback(
