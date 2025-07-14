@@ -7,7 +7,7 @@ import type { ToolContext } from "../tool-context";
  * Simple GoogleSearch tool implementation
  */
 export class GoogleSearch extends BaseTool {
-	private logger = new Logger({ name: "GoogleSearch" });
+	protected logger = new Logger({ name: "GoogleSearch" });
 
 	/**
 	 * Constructor for GoogleSearch
