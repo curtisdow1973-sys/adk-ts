@@ -132,10 +132,7 @@ export abstract class BaseLlm {
 				} catch (error) {
 					span.recordException(error as Error);
 					span.setStatus({ code: 2, message: (error as Error).message });
-					logger.error("❌ ADK LLM Error:", {
-						model: this.model,
-						error: (error as Error).message,
-					});
+					logger.error(`❌ ADK LLM Error in model ${this.model}: ${(error as Error).message}`);
 					throw error;
 				} finally {
 					span.end();
