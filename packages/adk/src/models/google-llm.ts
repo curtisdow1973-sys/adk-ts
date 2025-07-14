@@ -34,8 +34,6 @@ export class GoogleLlm extends BaseLlm {
 	private _apiBackend?: GoogleLLMVariant;
 	private _trackingHeaders?: Record<string, string>;
 
-	protected logger = new Logger({ name: "GoogleLlm" });
-
 	/**
 	 * Constructor for Gemini
 	 */
@@ -242,76 +240,6 @@ export class GoogleLlm extends BaseLlm {
 		}
 
 		return `${funcDecl.name}: ${paramStr}`;
-	}
-
-	/**
-	 * Builds request log string.
-	 */
-	private buildRequestLog(req: LlmRequest): string {
-		const functionDecls: FunctionDeclaration[] =
-			(req.config?.tools?.[0] as any)?.functionDeclarations || [];
-
-		const functionLogs =
-			functionDecls.length > 0
-				? functionDecls.map((funcDecl) =>
-						this.buildFunctionDeclarationLog(funcDecl),
-					)
-				: [];
-
-		const contentsLogs =
-			req.contents?.map((content) =>
-				JSON.stringify(content, (key, value) => {
-					// Exclude large data fields
-					if (
-						key === "data" &&
-						typeof value === "string" &&
-						value.length > 100
-					) {
-						return "[EXCLUDED]";
-					}
-					return value;
-				}),
-			) || [];
-
-		return dedent`
-		LLM Request:
-		-----------------------------------------------------------
-		System Instruction:
-		${(req.config as any)?.systemInstruction || ""}
-		-----------------------------------------------------------
-		Contents:
-		${contentsLogs.join(NEW_LINE)}
-		-----------------------------------------------------------
-		Functions:
-		${functionLogs.join(NEW_LINE)}
-		-----------------------------------------------------------`;
-	}
-
-	/**
-	 * Builds response log string.
-	 */
-	private buildResponseLog(resp: GenerateContentResponse): string {
-		const functionCallsText: string[] = [];
-		if (resp.functionCalls) {
-			for (const funcCall of resp.functionCalls) {
-				functionCallsText.push(
-					`name: ${funcCall.name}, args: ${JSON.stringify(funcCall.args)}`,
-				);
-			}
-		}
-
-		return dedent`
-		LLM Response:
-		-----------------------------------------------------------
-		Text:
-		${resp.text || ""}
-		-----------------------------------------------------------
-		Function calls:
-		${functionCallsText.join(NEW_LINE)}
-		-----------------------------------------------------------
-		Raw response:
-		${JSON.stringify(resp, null, 2)}
-		-----------------------------------------------------------`;
 	}
 
 	/**

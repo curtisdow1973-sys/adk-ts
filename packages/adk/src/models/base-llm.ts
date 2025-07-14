@@ -78,13 +78,6 @@ export abstract class BaseLlm {
 						"adk.streaming": stream || false,
 					});
 
-					this.logger.debug("ADK LLM Request:", {
-						model: this.model,
-						contentCount: llmRequest.contents?.length || 0,
-						streaming: stream || false,
-						config: llmRequest.config,
-					});
-
 					let responseCount = 0;
 					let totalTokens = 0;
 
@@ -93,20 +86,6 @@ export abstract class BaseLlm {
 						stream,
 					)) {
 						responseCount++;
-
-						// Log each response chunk
-						this.logger.debug(`ADK LLM Response ${responseCount}:`, {
-							model: this.model,
-							parts: response.parts?.map((part) => ({
-								text:
-									typeof part.text === "string"
-										? part.text.substring(0, 200) +
-											(part.text.length > 200 ? "..." : "")
-										: "[non_text_content]",
-							})),
-							finishReason: response.finish_reason,
-							usage: response.usage,
-						});
 
 						// Update span attributes with response info
 						if (response.usage) {

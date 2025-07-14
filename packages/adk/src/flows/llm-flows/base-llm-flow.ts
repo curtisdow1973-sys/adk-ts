@@ -58,8 +58,6 @@ export abstract class BaseLlmFlow {
 	async *_runOneStepAsync(
 		invocationContext: InvocationContext,
 	): AsyncGenerator<Event> {
-		this.logger.info("Framework running one step.");
-
 		const llmRequest = new LlmRequest();
 
 		// Preprocessing phase
@@ -70,9 +68,6 @@ export abstract class BaseLlmFlow {
 		)) {
 			preprocessEventCount++;
 			yield event;
-		}
-		if (preprocessEventCount > 0) {
-			this.logger.debug(`Preprocessing: ${preprocessEventCount} events`);
 		}
 
 		if (invocationContext.endInvocation) {
@@ -105,10 +100,6 @@ export abstract class BaseLlmFlow {
 				modelResponseEvent.id = Event.newId();
 				yield event;
 			}
-		}
-
-		if (llmResponseCount > 0) {
-			this.logger.debug(`LLM processed ${llmResponseCount} responses`);
 		}
 	}
 
@@ -144,8 +135,18 @@ export abstract class BaseLlmFlow {
 			await tool.processLlmRequest(toolContext, llmRequest);
 		}
 
+		// Log available tools in a clean table format
 		if (tools.length > 0) {
-			this.logger.info(`Framework processed ${tools.length} tools.`);
+			this.logger.debug("🛠️ Available Tools");
+			console.table(
+				tools.map((tool) => ({
+					Name: tool.name,
+					Description:
+						tool.description?.substring(0, 50) +
+						(tool.description?.length > 50 ? "..." : ""),
+					"Long Running": tool.isLongRunning ? "Yes" : "No",
+				})),
+			);
 		}
 	}
 
@@ -156,12 +157,10 @@ export abstract class BaseLlmFlow {
 		modelResponseEvent: Event,
 	): AsyncGenerator<Event> {
 		// Run response processors
-		let processorEventCount = 0;
 		for await (const event of this._postprocessRunProcessorsAsync(
 			invocationContext,
 			llmResponse,
 		)) {
-			processorEventCount++;
 			yield event;
 		}
 
@@ -184,27 +183,26 @@ export abstract class BaseLlmFlow {
 
 		// Handle function calls
 		const functionCalls = finalizedEvent.getFunctionCalls();
-		if (functionCalls) {
-			this.logger.info(
-				`Framework processed ${functionCalls.length} function calls.`,
+		if (functionCalls && functionCalls.length > 0) {
+			// Log function calls in a clean table format
+			this.logger.debug("🔧 Function Calls");
+			console.table(
+				functionCalls.map((fc) => ({
+					Name: fc.name,
+					Arguments:
+						JSON.stringify(fc.args).substring(0, 100) +
+						(JSON.stringify(fc.args).length > 100 ? "..." : ""),
+					ID: fc.id || "auto",
+				})),
 			);
-			let functionEventCount = 0;
+
 			for await (const event of this._postprocessHandleFunctionCallsAsync(
 				invocationContext,
 				finalizedEvent,
 				llmRequest,
 			)) {
-				functionEventCount++;
 				yield event;
 			}
-
-			this.logger.debug(
-				`Processed ${functionCalls.length} function calls → ${functionEventCount} events`,
-			);
-		}
-
-		if (processorEventCount > 0) {
-			this.logger.debug(`Response processors: ${processorEventCount} events`);
 		}
 	}
 
@@ -214,16 +212,11 @@ export abstract class BaseLlmFlow {
 		llmResponse: LlmResponse,
 		modelResponseEvent: Event,
 	): AsyncGenerator<Event> {
-		this.logger.info("Framework live postprocessing started.");
-
 		// Run processors
 		for await (const event of this._postprocessRunProcessorsAsync(
 			invocationContext,
 			llmResponse,
 		)) {
-			this.logger.debug("📤 Live response processor event", {
-				eventId: event.id,
-			});
 			yield event;
 		}
 
@@ -235,9 +228,6 @@ export abstract class BaseLlmFlow {
 			!llmResponse.interrupted &&
 			!(llmResponse as any).turnComplete
 		) {
-			this.logger.debug(
-				"ℹ️ Skipping live event - no content or completion signal",
-			);
 			return;
 		}
 
@@ -248,17 +238,10 @@ export abstract class BaseLlmFlow {
 			modelResponseEvent,
 		);
 
-		this.logger.debug("📝 Finalized live model response event", {
-			eventId: finalizedEvent.id,
-			hasFunctionCalls: !!finalizedEvent.getFunctionCalls(),
-		});
-
 		yield finalizedEvent;
 
 		// Handle function calls for live mode
 		if (finalizedEvent.getFunctionCalls()) {
-			this.logger.debug("🔧 Processing live function calls");
-
 			// TODO: Implement functions.handleFunctionCallsLive when available
 			const functionResponseEvent = await functions.handleFunctionCallsAsync(
 				invocationContext,
@@ -267,42 +250,24 @@ export abstract class BaseLlmFlow {
 			);
 
 			if (functionResponseEvent) {
-				this.logger.debug("📤 Live function response event", {
-					eventId: functionResponseEvent.id,
-					hasTransfer: !!functionResponseEvent.actions?.transferToAgent,
-				});
-
 				yield functionResponseEvent;
 
 				const transferToAgent = functionResponseEvent.actions?.transferToAgent;
 				if (transferToAgent) {
-					this.logger.info(
-						`Framework transferred to agent '${transferToAgent}'.`,
-					);
+					this.logger.info(`🔄 Live transfer to agent '${transferToAgent}'`);
 
 					const agentToRun = this._getAgentToRun(
 						invocationContext,
 						transferToAgent,
 					);
 
-					let transferEventCount = 0;
 					for await (const event of agentToRun.runLive?.(invocationContext) ||
 						agentToRun.runAsync(invocationContext)) {
-						transferEventCount++;
-						this.logger.debug(`📤 Transfer agent event ${transferEventCount}`, {
-							eventId: event.id,
-						});
 						yield event;
 					}
-
-					this.logger.debug("✅ Agent transfer completed", {
-						eventCount: transferEventCount,
-					});
 				}
 			}
 		}
-
-		this.logger.info("Framework live postprocessing completed.");
 	}
 
 	async *_postprocessRunProcessorsAsync(
@@ -344,20 +309,16 @@ export abstract class BaseLlmFlow {
 
 			const transferToAgent = functionResponseEvent.actions?.transferToAgent;
 			if (transferToAgent) {
+				this.logger.info(`🔄 Transferring to agent '${transferToAgent}'`);
+
 				const agentToRun = this._getAgentToRun(
 					invocationContext,
 					transferToAgent,
 				);
 
-				let transferEventCount = 0;
 				for await (const event of agentToRun.runAsync(invocationContext)) {
-					transferEventCount++;
 					yield event;
 				}
-
-				this.logger.debug(
-					`Transferred to agent ${transferToAgent} → ${transferEventCount} events`,
-				);
 			}
 		}
 	}
@@ -420,6 +381,51 @@ export abstract class BaseLlmFlow {
 		const isStreaming =
 			invocationContext.runConfig.streamingMode === StreamingMode.SSE;
 
+		// Log LLM request in a clean table format
+		const tools = llmRequest.config?.tools || [];
+
+		const toolNames = tools
+			.map((tool: any) => {
+				// Handle Google-style function declarations
+				if (
+					tool.functionDeclarations &&
+					Array.isArray(tool.functionDeclarations)
+				) {
+					return tool.functionDeclarations.map((fn: any) => fn.name).join(", ");
+				}
+				// Handle different tool format possibilities
+				if (tool.name) return tool.name;
+				if (tool.function?.name) return tool.function.name;
+				if (tool.function?.function?.name) return tool.function.function.name;
+				return "unknown";
+			})
+			.join(", ");
+
+		// Format system instruction (truncate if too long)
+		const systemInstruction = llmRequest.getSystemInstructionText() || "";
+		const truncatedSystemInstruction =
+			systemInstruction.length > 100
+				? `${systemInstruction.substring(0, 100)}...`
+				: systemInstruction;
+
+		// Format content preview (show first message content)
+		const contentPreview =
+			llmRequest.contents?.length > 0
+				? this._formatContentPreview(llmRequest.contents[0])
+				: "none";
+
+		this.logger.debug("📤 LLM Request");
+		console.table({
+			Model: llm.model,
+			Agent: invocationContext.agent.name,
+			"Content Items": llmRequest.contents?.length || 0,
+			"Content Preview": contentPreview,
+			"System Instruction": truncatedSystemInstruction || "none",
+			"Available Tools": toolNames || "none",
+			"Tool Count": llmRequest.config?.tools?.length || 0,
+			Streaming: isStreaming ? "Yes" : "No",
+		});
+
 		let responseCount = 0;
 		for await (const llmResponse of llm.generateContentAsync(
 			llmRequest,
@@ -435,6 +441,28 @@ export abstract class BaseLlmFlow {
 				llmResponse,
 			);
 
+			// Log LLM response in a clean table format
+			const tokenCount =
+				llmResponse.usageMetadata?.totalTokenCount || "unknown";
+			const functionCallCount =
+				llmResponse.content?.parts?.filter((part: any) => part.functionCall)
+					.length || 0;
+
+			// Format response content preview
+			const responsePreview = this._formatResponsePreview(llmResponse);
+
+			this.logger.debug("📥 LLM Response");
+			console.table({
+				Model: llm.model,
+				"Token Count": tokenCount,
+				"Function Calls": functionCallCount,
+				"Response Preview": responsePreview,
+				"Finish Reason": llmResponse.finishReason || "unknown",
+				"Response #": responseCount,
+				Partial: llmResponse.partial ? "Yes" : "No",
+				Error: llmResponse.errorCode || "none",
+			});
+
 			// After model callback
 			const alteredLlmResponse = await this._handleAfterModelCallback(
 				invocationContext,
@@ -443,10 +471,6 @@ export abstract class BaseLlmFlow {
 			);
 
 			yield alteredLlmResponse || llmResponse;
-		}
-
-		if (responseCount > 0) {
-			this.logger.debug(`${llm.model} → ${responseCount} responses`);
 		}
 	}
 
@@ -554,6 +578,58 @@ export abstract class BaseLlmFlow {
 		}
 
 		return event;
+	}
+
+	_formatContentPreview(content: any): string {
+		if (!content) return "none";
+
+		// Handle Content type with parts
+		if (content.parts && Array.isArray(content.parts)) {
+			const textParts = content.parts
+				.filter((part: any) => part.text)
+				.map((part: any) => part.text)
+				.join(" ");
+
+			return textParts.length > 80
+				? `${textParts.substring(0, 80)}...`
+				: textParts || "no text content";
+		}
+
+		// Handle string content
+		if (typeof content === "string") {
+			return content.length > 80 ? `${content.substring(0, 80)}...` : content;
+		}
+
+		// Handle other types
+		const stringified = JSON.stringify(content);
+		return stringified.length > 80
+			? `${stringified.substring(0, 80)}...`
+			: stringified;
+	}
+
+	/**
+	 * Formats response content preview for debug logging
+	 */
+	_formatResponsePreview(llmResponse: LlmResponse): string {
+		if (!llmResponse.content) return "none";
+
+		// Handle Content type with parts
+		if (llmResponse.content.parts && Array.isArray(llmResponse.content.parts)) {
+			const textParts = llmResponse.content.parts
+				.filter((part: any) => part.text)
+				.map((part: any) => part.text)
+				.join(" ");
+
+			return textParts.length > 80
+				? `${textParts.substring(0, 80)}...`
+				: textParts || "no text content";
+		}
+
+		// Handle other types
+		const stringified = JSON.stringify(llmResponse.content);
+		return stringified.length > 80
+			? `${stringified.substring(0, 80)}...`
+			: stringified;
 	}
 
 	__getLlm(invocationContext: InvocationContext): BaseLlm {

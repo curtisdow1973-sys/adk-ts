@@ -16,7 +16,6 @@ type OpenAIRole = "user" | "assistant" | "system";
  */
 export class OpenAiLlm extends BaseLlm {
 	private _client?: OpenAI;
-	protected logger = new Logger({ name: "OpenAiLlm" });
 
 	/**
 	 * Constructor for OpenAI LLM
@@ -568,90 +567,6 @@ export class OpenAiLlm extends BaseLlm {
 		// but this method is here for consistency with the flow control pattern
 		const parts = response.content?.parts;
 		return parts?.some((part: any) => part.inlineData) || false;
-	}
-
-	/**
-	 * Build request log string for debugging (similar to Google LLM)
-	 */
-	private buildRequestLog(req: LlmRequest): string {
-		const functionDecls =
-			(req.config?.tools?.[0] as any)?.functionDeclarations || [];
-
-		const functionLogs =
-			functionDecls.length > 0
-				? functionDecls.map(
-						(funcDecl: any) =>
-							`${funcDecl.name}: ${JSON.stringify(funcDecl.parameters?.properties || {})}`,
-					)
-				: [];
-
-		const contentsLogs =
-			req.contents?.map((content) =>
-				JSON.stringify(content, (key, value) => {
-					// Exclude large data fields from logs
-					if (
-						key === "data" &&
-						typeof value === "string" &&
-						value.length > 100
-					) {
-						return "[EXCLUDED]";
-					}
-					return value;
-				}),
-			) || [];
-
-		return dedent`
-		LLM Request:
-		-----------------------------------------------------------
-		System Instruction:
-		${req.getSystemInstructionText() || ""}
-		-----------------------------------------------------------
-		Contents:
-		${contentsLogs.join(NEW_LINE)}
-		-----------------------------------------------------------
-		Functions:
-		${functionLogs.join(NEW_LINE)}
-		-----------------------------------------------------------`;
-	}
-
-	/**
-	 * Build response log string for debugging (similar to Google LLM)
-	 */
-	private buildResponseLog(response: LlmResponse): string {
-		const functionCallsText: string[] = [];
-
-		if (response.content?.parts) {
-			for (const part of response.content.parts) {
-				if ((part as any).functionCall) {
-					const funcCall = (part as any).functionCall;
-					functionCallsText.push(
-						`name: ${funcCall.name}, args: ${JSON.stringify(funcCall.args)}`,
-					);
-				}
-			}
-		}
-
-		const text =
-			response.content?.parts
-				?.filter((part: any) => part.text)
-				?.map((part: any) => part.text)
-				?.join("") || "";
-
-		return dedent`
-		LLM Response:
-		-----------------------------------------------------------
-		Text:
-		${text}
-		-----------------------------------------------------------
-		Function calls:
-		${functionCallsText.join(NEW_LINE)}
-		-----------------------------------------------------------
-		Usage:
-		${JSON.stringify(response.usageMetadata, null, 2)}
-		-----------------------------------------------------------
-		Finish Reason:
-		${response.finishReason}
-		-----------------------------------------------------------`;
 	}
 
 	/**
