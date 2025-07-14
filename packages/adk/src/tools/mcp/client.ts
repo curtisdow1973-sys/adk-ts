@@ -16,7 +16,7 @@ export class McpClientService {
 	private isClosing = false;
 	private mcpSamplingHandler: McpSamplingHandler | null = null;
 
-	private logger = new Logger({ name: "McpClientService" });
+	protected logger = new Logger({ name: "McpClientService" });
 
 	constructor(config: McpConfig) {
 		this.config = config;

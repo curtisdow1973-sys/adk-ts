@@ -34,7 +34,7 @@ export class GoogleLlm extends BaseLlm {
 	private _apiBackend?: GoogleLLMVariant;
 	private _trackingHeaders?: Record<string, string>;
 
-	private logger = new Logger({ name: "GoogleLlm" });
+	protected logger = new Logger({ name: "GoogleLlm" });
 
 	/**
 	 * Constructor for Gemini

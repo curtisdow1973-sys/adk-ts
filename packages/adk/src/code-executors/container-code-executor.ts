@@ -57,7 +57,7 @@ export class ContainerCodeExecutor extends BaseCodeExecutor {
 	private client?: Docker;
 	private container?: Docker.Container;
 	private isInitialized = false;
-	private logger = new Logger({ name: "ContainerCodeExecutor" });
+	protected logger = new Logger({ name: "ContainerCodeExecutor" });
 
 	constructor(config: ContainerCodeExecutorConfig = {}) {
 		// Validate configuration

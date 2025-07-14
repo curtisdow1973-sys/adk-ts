@@ -83,7 +83,7 @@ export class Runner<T extends BaseAgent = BaseAgent> {
 	 */
 	memoryService?: BaseMemoryService;
 
-	private logger = new Logger({ name: "Runner" });
+	protected logger = new Logger({ name: "Runner" });
 
 	/**
 	 * Initializes the Runner.
