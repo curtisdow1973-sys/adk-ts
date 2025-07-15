@@ -211,15 +211,21 @@ async function main() {
 					? `${selectedPackageManager.command} ${selectedPackageManager.args.join(" ")}`
 					: "npm install";
 
+		const steps = [
+			chalk.bold(`cd ${projectName}`),
+			...(!installDeps ? [chalk.bold(installCommand)] : []),
+			`${chalk.bold(`cp .env.example ${envFile}`)} ${chalk.gray(`# Add your API keys to the ${envFile} file`)}`,
+			chalk.bold(runCommand),
+		];
+
+		const nextSteps = steps.map((step, index) => `${index + 1}. ${step}`);
+
 		outro(
 			chalk.cyan(
 				dedent`
 			${chalk.bold("🚀 Next steps:")}
 
-			• ${chalk.bold(`cd ${projectName}`)}
-			${installDeps ? "" : `• ${chalk.bold(installCommand)}`}
-			• ${chalk.bold(`cp .env.example ${envFile}`)} ${chalk.gray(`# Add your API keys to the ${envFile} file`)}
-			• ${chalk.bold(runCommand)}
+			${nextSteps.join("\n			")}
 
 			${chalk.bold.green("🤖 Your AI agent is ready to go!")}
 			${chalk.gray("Documentation: https://adk.iqai.com")}
