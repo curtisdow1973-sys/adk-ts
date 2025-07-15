@@ -1,5 +1,11 @@
 # create-adk-project
 
+## 1.0.1
+
+### Patch Changes
+
+- 058e7de: Adds minor changes to cli output after project initalization
+
 ## 1.0.0
 
 ### Major Changes
