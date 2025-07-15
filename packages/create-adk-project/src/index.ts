@@ -84,7 +84,7 @@ async function main() {
 	}
 
 	const framework = await select({
-		message: "Which framework would you like to use?",
+		message: "Which template would you like to use?",
 		options: starters,
 	});
 
@@ -93,7 +93,7 @@ async function main() {
 		process.exit(0);
 	}
 
-	const selectedStarter = starters.find(s => s.value === framework);
+	const selectedStarter = starters.find((s) => s.value === framework);
 	if (!selectedStarter) {
 		outro("Invalid starter selected");
 		process.exit(1);
@@ -112,11 +112,11 @@ async function main() {
 	let selectedPackageManager: PackageManager | undefined;
 	if (installDeps) {
 		const availablePackageManagers = await detectAvailablePackageManagers();
-		
+
 		if (availablePackageManagers.length > 1) {
 			const pmChoice = await select({
 				message: "Which package manager would you like to use?",
-				options: availablePackageManagers.map(pm => ({
+				options: availablePackageManagers.map((pm) => ({
 					value: pm.name,
 					label: pm.label,
 					hint: `Use ${pm.command} for dependency management`,
@@ -128,7 +128,9 @@ async function main() {
 				process.exit(0);
 			}
 
-			selectedPackageManager = availablePackageManagers.find(pm => pm.name === pmChoice);
+			selectedPackageManager = availablePackageManagers.find(
+				(pm) => pm.name === pmChoice,
+			);
 		} else {
 			selectedPackageManager = availablePackageManagers[0];
 		}
@@ -156,16 +158,24 @@ async function main() {
 			const { spawn } = await import("node:child_process");
 
 			await new Promise<void>((resolve, reject) => {
-				const child = spawn(selectedPackageManager.command, selectedPackageManager.args, {
-					cwd: targetDir,
-					stdio: "pipe",
-				});
+				const child = spawn(
+					selectedPackageManager.command,
+					selectedPackageManager.args,
+					{
+						cwd: targetDir,
+						stdio: "pipe",
+					},
+				);
 
 				child.on("close", (code) => {
 					if (code === 0) {
 						resolve();
 					} else {
-						reject(new Error(`${selectedPackageManager.command} ${selectedPackageManager.args.join(" ")} failed with code ${code}`));
+						reject(
+							new Error(
+								`${selectedPackageManager.command} ${selectedPackageManager.args.join(" ")} failed with code ${code}`,
+							),
+						);
 					}
 				});
 
@@ -187,13 +197,23 @@ async function main() {
     `),
 		);
 
-		const runCommand = selectedPackageManager?.name === "npm" ? "npm run dev" : 
-						   selectedPackageManager?.name === "yarn" ? "yarn dev" :
-						   selectedPackageManager?.name === "pnpm" ? "pnpm dev" :
-						   selectedPackageManager?.name === "bun" ? "bun run dev" : "npm run dev";
+		const runCommand =
+			selectedPackageManager?.name === "npm"
+				? "npm run dev"
+				: selectedPackageManager?.name === "yarn"
+					? "yarn dev"
+					: selectedPackageManager?.name === "pnpm"
+						? "pnpm dev"
+						: selectedPackageManager?.name === "bun"
+							? "bun run dev"
+							: "npm run dev";
 
-		const installCommand = selectedPackageManager?.name === "yarn" ? "yarn" :
-							   selectedPackageManager ? `${selectedPackageManager.command} ${selectedPackageManager.args.join(" ")}` : "npm install";
+		const installCommand =
+			selectedPackageManager?.name === "yarn"
+				? "yarn"
+				: selectedPackageManager
+					? `${selectedPackageManager.command} ${selectedPackageManager.args.join(" ")}`
+					: "npm install";
 
 		outro(
 			chalk.cyan(
