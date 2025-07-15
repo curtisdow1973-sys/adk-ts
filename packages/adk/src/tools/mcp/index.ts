@@ -24,7 +24,7 @@ export {
 export * from "./types";
 export * from "./sampling-handler";
 export * from "./servers";
-
+export * from "./client";
 /**
  * A class for managing MCP tools similar to Python's MCPToolset.
  * Provides functionality to retrieve and use tools from an MCP server.
