@@ -97,7 +97,7 @@ export class AgentTool extends BaseTool {
 	 */
 	private skipSummarization: boolean;
 
-	private logger = new Logger({ name: "AgentTool" });
+	protected logger = new Logger({ name: "AgentTool" });
 
 	/**
 	 * Create a new agent tool
