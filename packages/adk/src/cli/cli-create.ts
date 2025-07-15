@@ -6,6 +6,7 @@ import { VERSION } from "../index";
 
 const AGENT_TS_TEMPLATE = `import { env } from "node:process";
 import { FunctionTool, LlmAgent } from "@iqai/adk";
+import dedent from "dedent";
 
 // --- Tool Functions ---
 
@@ -66,12 +67,35 @@ export const rootAgent = new LlmAgent({
   name: "{agent_name}",
   model: env.LLM_MODEL || "{model_name}",
   description: "A helpful assistant that can provide weather and time information",
-  instruction: 
-    "You are a helpful assistant that can check the weather and get the current time. " +
-    "Use the get_weather tool for weather queries and the get_current_time tool for time queries. " +
-    "Provide clear and informative responses based on the tool results.",
+  instruction: dedent\`
+    You are a helpful assistant that can check the weather and get the current time.
+    Use the get_weather tool for weather queries and the get_current_time tool for time queries.
+    Provide clear and informative responses based on the tool results.
+  \`,
   tools: createTools(),
 });
+
+// --- Main Function (Optional - for standalone execution) ---
+
+async function main() {
+  console.log(dedent\`
+    🤖 {agent_name} Agent Started
+    ═══════════════════════════════
+    
+    📝 Agent: {agent_name}
+    🤖 Model: \${env.LLM_MODEL || "{model_name}"}
+    
+    This agent can help with weather and time information!
+    To interact with this agent, use:
+    - npx adk run {agent_name}
+    - npx adk web {agent_name}
+  \`);
+}
+
+// Run main if this file is executed directly
+if (require.main === module) {
+  main().catch(console.error);
+}
 `;
 
 const PACKAGE_JSON_TEMPLATE = `{
@@ -79,16 +103,22 @@ const PACKAGE_JSON_TEMPLATE = `{
   "version": "1.0.0",
   "description": "Project with agents created with ADK TypeScript",
   "scripts": {
-    "build": "tsc"
+    "build": "tsc",
+    "dev": "tsx src/index.ts",
+    "start": "tsx src/index.ts"
   },
   "dependencies": {
     "@iqai/adk": "^${VERSION}",
-    "dotenv": "^16.3.1"
+    "dotenv": "^16.5.0",
+    "dedent": "^1.6.0"
   },
   "devDependencies": {
-    "ts-node": "^10.9.1",
-    "typescript": "^5.1.6",
-    "@types/node": "^20.0.0"
+    "tsx": "^4.19.4",
+    "typescript": "^5.3.2",
+    "@types/node": "^20.17.30"
+  },
+  "engines": {
+    "node": ">=18.0"
   }
 }
 `;
@@ -98,16 +128,17 @@ const TSCONFIG_JSON_TEMPLATE = `{
     "target": "ES2020",
     "module": "Node16",
     "outDir": "./dist",
-    "rootDir": "./",
+    "rootDir": "./src",
     "strict": true,
     "esModuleInterop": true,
     "skipLibCheck": true,
     "forceConsistentCasingInFileNames": true,
     "moduleResolution": "node16",
     "resolveJsonModule": true,
-    "declaration": true
+    "declaration": true,
+    "types": ["node"]
   },
-  "include": ["**/*.ts"],
+  "include": ["src/**/*.ts"],
   "exclude": ["node_modules", "dist"]
 }
 `;
@@ -169,13 +200,13 @@ async function promptForGoogleCloud(
 	rl: readline.Interface,
 	googleCloudProject?: string,
 ): Promise<string> {
-	googleCloudProject =
+	const defaultProject =
 		googleCloudProject || process.env.GOOGLE_CLOUD_PROJECT || "";
 	return promptStr(
 		rl,
 		"Enter Google Cloud project ID",
 		undefined,
-		googleCloudProject,
+		defaultProject,
 	);
 }
 
@@ -183,22 +214,17 @@ async function promptForGoogleCloudRegion(
 	rl: readline.Interface,
 	googleCloudRegion?: string,
 ): Promise<string> {
-	googleCloudRegion =
+	const defaultRegion =
 		googleCloudRegion || process.env.GOOGLE_CLOUD_LOCATION || "us-central1";
-	return promptStr(
-		rl,
-		"Enter Google Cloud region",
-		undefined,
-		googleCloudRegion,
-	);
+	return promptStr(rl, "Enter Google Cloud region", undefined, defaultRegion);
 }
 
 async function promptForGoogleApiKey(
 	rl: readline.Interface,
 	googleApiKey?: string,
 ): Promise<string> {
-	googleApiKey = googleApiKey || process.env.GOOGLE_API_KEY || "";
-	return promptStr(rl, "Enter Google API key", GOOGLE_API_MSG, googleApiKey);
+	const defaultApiKey = googleApiKey || process.env.GOOGLE_API_KEY || "";
+	return promptStr(rl, "Enter Google API key", GOOGLE_API_MSG, defaultApiKey);
 }
 
 async function promptForModel(rl: readline.Interface): Promise<string> {
@@ -242,19 +268,28 @@ async function promptToChooseBackend(
 	);
 
 	if (backendChoice === "1") {
-		googleApiKey = await promptForGoogleApiKey(rl, googleApiKey);
-		return { googleApiKey };
+		const finalGoogleApiKey = await promptForGoogleApiKey(rl, googleApiKey);
+		return { googleApiKey: finalGoogleApiKey };
 	}
 	if (backendChoice === "2") {
 		console.log(GOOGLE_CLOUD_SETUP_MSG);
-		googleCloudProject = await promptForGoogleCloud(rl, googleCloudProject);
-		googleCloudRegion = await promptForGoogleCloudRegion(rl, googleCloudRegion);
-		return { googleCloudProject, googleCloudRegion };
+		const finalGoogleCloudProject = await promptForGoogleCloud(
+			rl,
+			googleCloudProject,
+		);
+		const finalGoogleCloudRegion = await promptForGoogleCloudRegion(
+			rl,
+			googleCloudRegion,
+		);
+		return {
+			googleCloudProject: finalGoogleCloudProject,
+			googleCloudRegion: finalGoogleCloudRegion,
+		};
 	}
 
 	// Default fallback to Google AI
-	googleApiKey = await promptForGoogleApiKey(rl, googleApiKey);
-	return { googleApiKey };
+	const finalGoogleApiKey = await promptForGoogleApiKey(rl, googleApiKey);
+	return { googleApiKey: finalGoogleApiKey };
 }
 
 /**
@@ -286,9 +321,10 @@ async function generateFiles(
 	const hasTsconfigJson = fs.existsSync(rootTsconfigJsonPath);
 
 	// --- Create Agent-Specific Files ---
-	await fs.promises.mkdir(agentFolder, { recursive: true });
+	const srcFolder = path.join(agentFolder, "src");
+	await fs.promises.mkdir(srcFolder, { recursive: true });
 
-	const agentFilePath = path.join(agentFolder, "agent.ts");
+	const agentFilePath = path.join(srcFolder, "index.ts");
 	const agentCode = AGENT_TS_TEMPLATE.replace(
 		/{model_name}/g,
 		opts.model || "gemini-2.0-flash",
@@ -347,33 +383,28 @@ Project structure:
 - package.json
 - tsconfig.json
 - ${agentName}/
-  - agent.ts
+  - src/
+    - index.ts
+  - .env
+
+Directory created:
+- ${agentName}/
+  - src/
+    - index.ts
   - .env
 
 Next steps:
 1. Install dependencies:
    npm install
 
-2. Build the project:
+2. Build the project (if you made changes):
    npm run build
 
-3. Run your agent:
-   npx adk run ${agentName}`);
-	} else {
-		console.log(`
-New agent '${agentName}' created in existing project.
+3. Run your new agent:
+   npx adk run ${agentName}
 
-Directory created:
-- ${agentName}/
-  - agent.ts
-  - .env
-
-Next steps:
-1. Build the project (if you made changes):
-   npm run build
-
-2. Run your new agent:
-   npx adk run ${agentName}`);
+4. Or try the dev UI in browser:
+   npx adk web ${agentName}`);
 	}
 }
 
