@@ -6,6 +6,46 @@ import dedent from "dedent";
 import { downloadTemplate } from "giget";
 import { starters } from "./starters";
 
+interface PackageManager {
+	name: string;
+	command: string;
+	args: string[];
+	label: string;
+}
+
+const packageManagers: PackageManager[] = [
+	{ name: "npm", command: "npm", args: ["install"], label: "📦 npm" },
+	{ name: "pnpm", command: "pnpm", args: ["install"], label: "⚡ pnpm" },
+	{ name: "yarn", command: "yarn", args: ["install"], label: "🧶 yarn" },
+	{ name: "bun", command: "bun", args: ["install"], label: "🍞 bun" },
+];
+
+async function detectAvailablePackageManagers(): Promise<PackageManager[]> {
+	const { spawn } = await import("node:child_process");
+	const available: PackageManager[] = [];
+
+	for (const pm of packageManagers) {
+		try {
+			await new Promise<void>((resolve, reject) => {
+				const child = spawn(pm.command, ["--version"], {
+					stdio: "pipe",
+				});
+				child.on("close", (code) => {
+					if (code === 0) {
+						available.push(pm);
+					}
+					resolve();
+				});
+				child.on("error", () => resolve());
+			});
+		} catch {
+			// Package manager not available
+		}
+	}
+
+	return available.length > 0 ? available : [packageManagers[0]]; // Fallback to npm
+}
+
 async function main() {
 	console.clear();
 
@@ -69,6 +109,31 @@ async function main() {
 		process.exit(0);
 	}
 
+	let selectedPackageManager: PackageManager | undefined;
+	if (installDeps) {
+		const availablePackageManagers = await detectAvailablePackageManagers();
+		
+		if (availablePackageManagers.length > 1) {
+			const pmChoice = await select({
+				message: "Which package manager would you like to use?",
+				options: availablePackageManagers.map(pm => ({
+					value: pm.name,
+					label: pm.label,
+					hint: `Use ${pm.command} for dependency management`,
+				})),
+			});
+
+			if (typeof pmChoice === "symbol") {
+				outro("Operation cancelled");
+				process.exit(0);
+			}
+
+			selectedPackageManager = availablePackageManagers.find(pm => pm.name === pmChoice);
+		} else {
+			selectedPackageManager = availablePackageManagers[0];
+		}
+	}
+
 	const s = spinner();
 
 	try {
@@ -85,13 +150,13 @@ async function main() {
 
 		s.stop("Project created successfully!");
 
-		if (installDeps) {
-			s.start("Installing dependencies...");
+		if (installDeps && selectedPackageManager) {
+			s.start(`Installing dependencies with ${selectedPackageManager.name}...`);
 
 			const { spawn } = await import("node:child_process");
 
 			await new Promise<void>((resolve, reject) => {
-				const child = spawn("npm", ["install"], {
+				const child = spawn(selectedPackageManager.command, selectedPackageManager.args, {
 					cwd: targetDir,
 					stdio: "pipe",
 				});
@@ -100,7 +165,7 @@ async function main() {
 					if (code === 0) {
 						resolve();
 					} else {
-						reject(new Error(`npm install failed with code ${code}`));
+						reject(new Error(`${selectedPackageManager.command} ${selectedPackageManager.args.join(" ")} failed with code ${code}`));
 					}
 				});
 
@@ -122,16 +187,24 @@ async function main() {
     `),
 		);
 
+		const runCommand = selectedPackageManager?.name === "npm" ? "npm run dev" : 
+						   selectedPackageManager?.name === "yarn" ? "yarn dev" :
+						   selectedPackageManager?.name === "pnpm" ? "pnpm dev" :
+						   selectedPackageManager?.name === "bun" ? "bun run dev" : "npm run dev";
+
+		const installCommand = selectedPackageManager?.name === "yarn" ? "yarn" :
+							   selectedPackageManager ? `${selectedPackageManager.command} ${selectedPackageManager.args.join(" ")}` : "npm install";
+
 		outro(
 			chalk.cyan(
 				dedent`
           ${chalk.bold("🚀 Next steps:")}
 
             ${chalk.yellow("1.")} ${chalk.bold(`cd ${projectName}`)}
-            ${installDeps ? "" : `${chalk.yellow("2.")} ${chalk.bold("npm install")}`}
+            ${installDeps ? "" : `${chalk.yellow("2.")} ${chalk.bold(installCommand)}`}
             ${chalk.yellow(installDeps ? "2." : "3.")} ${chalk.bold(`cp .env.example ${envFile}`)}
             ${chalk.yellow(installDeps ? "3." : "4.")} ${chalk.gray(`# Add your API keys to the ${envFile} file`)}
-            ${chalk.yellow(installDeps ? "4." : "5.")} ${chalk.bold("npm run dev")}
+            ${chalk.yellow(installDeps ? "4." : "5.")} ${chalk.bold(runCommand)}
 
           ${chalk.bold.green("🤖 Your AI agent is ready to go!")}
           ${chalk.gray("Documentation: https://docs.iqai.com")}

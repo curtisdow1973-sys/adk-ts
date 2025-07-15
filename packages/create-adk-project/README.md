@@ -32,7 +32,7 @@ The CLI will guide you through:
 
 1. **Project Name** - Choose your project directory name
 2. **Framework Selection** - Currently includes ADK Agent Starter
-3. **Dependency Installation** - Automatically installs npm packages
+3. **Dependency Installation** - Choose from available package managers (npm, pnpm, yarn, bun)
 4. **Environment Setup** - Creates `.env` template file
 
 ## Template Source
@@ -43,7 +43,7 @@ The starter template is maintained at: [adk-agent-starter](https://github.com/IQ
 
 - 🚀 Interactive prompts powered by clack
 - 🎨 Beautiful CLI interface with ASCII art
-- 📦 Automatic dependency installation
+- 📦 Smart package manager detection (npm, pnpm, yarn, bun)
 - ⚡ Fast project scaffolding
 - 🔧 Complete development environment setup
 - 📋 Ready-to-run example code
