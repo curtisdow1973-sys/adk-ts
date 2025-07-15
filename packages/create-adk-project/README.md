@@ -1,6 +1,6 @@
 # create-adk-project
 
-A CLI tool to quickly create ADK TypeScript projects with different frameworks.
+CLI tool to create ADK TypeScript agent projects with a complete starter template.
 
 ## Usage
 
@@ -15,49 +15,43 @@ npm install -g create-adk-project
 create-adk-project
 ```
 
-## Templates
+## What's Included
 
-- **basic** - Basic ADK project with TypeScript
-- **hono** - ADK project with Hono web framework
-- **express** - ADK project with Express.js framework
-- **nextjs** - ADK project with Next.js framework
-- **fastify** - ADK project with Fastify framework
+The CLI creates a complete ADK agent project with:
 
-## Options
+- **🤖 ADK Agent Starter Template** - Complete agent development environment
+- **📝 TypeScript Configuration** - Pre-configured for modern Node.js development
+- **🛠️ Example Agents** - Working examples to get you started quickly
+- **⚙️ Environment Setup** - Template for API keys and configuration
+- **📦 Development Scripts** - Build, test, and development commands
+- **🔧 Tooling** - ESLint, Prettier, and other development tools
 
-- `--template, -t <template>` - Specify template (basic, hono, express, nextjs, fastify)
-- `--yes, -y` - Skip prompts and use defaults
-- `--version` - Show version number
-- `--help` - Show help
+## Interactive Setup
 
-## Examples
+The CLI will guide you through:
 
-```bash
-# Interactive mode
-npx create-adk-project
+1. **Project Name** - Choose your project directory name
+2. **Framework Selection** - Currently includes ADK Agent Starter
+3. **Dependency Installation** - Automatically installs npm packages
+4. **Environment Setup** - Creates `.env` template file
 
-# Specify project name
-npx create-adk-project my-agent
+## Template Source
 
-# Use specific template
-npx create-adk-project my-agent --template hono
-
-# Skip prompts
-npx create-adk-project my-agent --template basic --yes
-```
-
-## Templates Repository
-
-The templates are stored in a separate repository: [adk-ts-templates](https://github.com/IQAIcom/adk-ts-templates)
+The starter template is maintained at: [adk-agent-starter](https://github.com/IQAIcom/adk-agent-starter)
 
 ## Features
 
 - 🚀 Interactive prompts powered by clack
-- 📦 Multiple framework templates
-- 🎨 Beautiful CLI interface with colors
-- 📋 Package manager selection (npm, pnpm, yarn)
-- ✅ Automatic dependency installation
-- 🔧 Automatic project configuration
+- 🎨 Beautiful CLI interface with ASCII art
+- 📦 Automatic dependency installation
+- ⚡ Fast project scaffolding
+- 🔧 Complete development environment setup
+- 📋 Ready-to-run example code
+
+## Requirements
+
+- Node.js v22.0 or higher
+- npm, yarn, or pnpm
 
 ## License
 
