@@ -6,6 +6,7 @@ import { Event } from "../../events/event";
 import { BaseTool } from "../base/base-tool";
 import type { ToolContext } from "../tool-context";
 import { v4 as uuidv4 } from "uuid";
+import type { Part } from "@google/genai";
 
 /**
  * Type for agents that can be used as tools
@@ -212,7 +213,7 @@ export class AgentTool extends BaseTool {
 			});
 
 			// Run the agent and collect the last event
-			let lastEvent: any = null;
+			let lastEvent: Event | null = null;
 			for await (const event of this.agent.runAsync(childInvocationContext)) {
 				if (event.content && event.author === this.agent.name) {
 					lastEvent = event;
@@ -226,11 +227,11 @@ export class AgentTool extends BaseTool {
 
 			// Concatenate all text parts from the last event with newlines
 			const mergedText = lastEvent.content.parts
-				.filter((part: any) => part.text !== undefined && part.text !== null)
-				.map((part: any) => part.text)
+				.filter((part: Part) => part.text !== undefined && part.text !== null)
+				.map((part: Part) => part.text)
 				.join("\n");
 
-			let toolResult: any;
+			let toolResult: string;
 			try {
 				toolResult = JSON.parse(mergedText);
 			} catch {
@@ -239,7 +240,7 @@ export class AgentTool extends BaseTool {
 
 			// If an output key is specified, store the result in the state
 			if (this.outputKey && context?.state) {
-				(context.state as any)[this.outputKey] = toolResult;
+				context.state[this.outputKey] = toolResult;
 			}
 
 			this.logger.debug(`Agent tool ${this.name} completed successfully`);
