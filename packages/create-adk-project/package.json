@@ -1,6 +1,6 @@
 {
 	"name": "create-adk-project",
-	"version": "0.1.0",
+	"version": "1.0.0",
 	"description": "CLI tool to create ADK TypeScript projects with different frameworks",
 	"main": "dist/index.js",
 	"types": "dist/index.d.ts",
@@ -17,7 +17,14 @@
 		"type": "git",
 		"url": "https://github.com/IQAIcom/adk-ts.git"
 	},
-	"keywords": ["ai", "llm", "agent", "cli", "typescript", "create-project"],
+	"keywords": [
+		"ai",
+		"llm",
+		"agent",
+		"cli",
+		"typescript",
+		"create-project"
+	],
 	"author": "IQAI",
 	"license": "MIT",
 	"dependencies": {
