@@ -29,10 +29,7 @@ async function main() {
 		transport: {
 			mode: "stdio",
 			command: "npx",
-			args: [
-				"ts-node",
-				"/Users/prudhvisuraaj/Developer/Braindao/adk-ts/apps/examples/src/mcp-discord-agent/discord-listener-server.ts",
-			],
+			args: ["ts-node", `${__dirname}/discord-listener-server.ts`],
 			env: { DISCORD_TOKEN: env.DISCORD_TOKEN, PATH: env.PATH },
 		},
 	});
