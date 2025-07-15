@@ -34,6 +34,7 @@ async function main() {
       user_display_name: ${message.author.displayName}
       message: ${message.content}
     `;
+		await message.channel.sendTyping();
 		// Send sampling request to MCP client
 		const result = await server.request(
 			{
