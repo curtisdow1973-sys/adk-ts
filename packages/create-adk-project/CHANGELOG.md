@@ -1,5 +1,11 @@
 # create-adk-project
 
+## 1.0.2
+
+### Patch Changes
+
+- 06ecd66: Fixes cli next steps numbering
+
 ## 1.0.1
 
 ### Patch Changes
