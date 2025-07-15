@@ -188,13 +188,9 @@ async function main() {
 		const envFile = ".env";
 
 		console.log(
-			chalk.green(`
-    ╔═══════════════════════════════════════════════════════════════╗
-    ║                                                               ║
-    ║  ${chalk.bold.yellow("🎉 SUCCESS!")} Your ADK project has been created!           ║
-    ║                                                               ║
-    ╚═══════════════════════════════════════════════════════════════╝
-    `),
+			chalk.green(
+				`${chalk.bold.yellow("🎉 SUCCESS!")} Your ADK project has been created!`,
+			),
 		);
 
 		const runCommand =
@@ -218,17 +214,16 @@ async function main() {
 		outro(
 			chalk.cyan(
 				dedent`
-          ${chalk.bold("🚀 Next steps:")}
+			${chalk.bold("🚀 Next steps:")}
 
-            ${chalk.yellow("1.")} ${chalk.bold(`cd ${projectName}`)}
-            ${installDeps ? "" : `${chalk.yellow("2.")} ${chalk.bold(installCommand)}`}
-            ${chalk.yellow(installDeps ? "2." : "3.")} ${chalk.bold(`cp .env.example ${envFile}`)}
-            ${chalk.yellow(installDeps ? "3." : "4.")} ${chalk.gray(`# Add your API keys to the ${envFile} file`)}
-            ${chalk.yellow(installDeps ? "4." : "5.")} ${chalk.bold(runCommand)}
+			• ${chalk.bold(`cd ${projectName}`)}
+			${installDeps ? "" : `• ${chalk.bold(installCommand)}`}
+			• ${chalk.bold(`cp .env.example ${envFile}`)} ${chalk.gray(`# Add your API keys to the ${envFile} file`)}
+			• ${chalk.bold(runCommand)}
 
-          ${chalk.bold.green("🤖 Your AI agent is ready to go!")}
-          ${chalk.gray("Documentation: https://docs.iqai.com")}
-        `,
+			${chalk.bold.green("🤖 Your AI agent is ready to go!")}
+			${chalk.gray("Documentation: https://adk.iqai.com")}
+		`,
 			),
 		);
 	} catch (error) {
