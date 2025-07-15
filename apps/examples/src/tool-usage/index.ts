@@ -10,7 +10,6 @@ import { WeatherTool } from "./weather";
  */
 const APP_NAME = "tool-usage-demo";
 const USER_ID = uuidv4();
-const DEBUG = true; // Enable debug mode for showing agent loop
 
 /**
  * Tool Usage Example
@@ -70,10 +69,6 @@ async function runAgentQuery(
 		sessionId ||
 		(await runner.sessionService.createSession(APP_NAME, USER_ID)).id;
 
-	if (DEBUG) {
-		console.log(`\n[DEBUG] Starting agent loop with query: ${query}`);
-	}
-
 	let response = "";
 	for await (const event of runner.runAsync({
 		userId: USER_ID,
@@ -90,10 +85,6 @@ async function runAgentQuery(
 				response = content;
 			}
 		}
-	}
-
-	if (DEBUG) {
-		console.log("[DEBUG] Agent loop completed");
 	}
 
 	return response;

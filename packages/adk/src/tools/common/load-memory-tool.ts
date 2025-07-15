@@ -7,7 +7,7 @@ import type { ToolContext } from "../tool-context";
  * Tool that allows an agent to load memories relevant to a query
  */
 export class LoadMemoryTool extends BaseTool {
-	private logger = new Logger({ name: "LoadMemoryTool" });
+	protected logger = new Logger({ name: "LoadMemoryTool" });
 
 	/**
 	 * Constructor for LoadMemoryTool

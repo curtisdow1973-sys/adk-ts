@@ -1,12 +1,13 @@
 import { Logger } from "@adk/helpers/logger";
 import type { GenerateContentConfig } from "@google/genai";
+import type { LanguageModel } from "ai";
 import type { BaseArtifactService } from "../artifacts/base-artifact-service";
 import type { BaseCodeExecutor } from "../code-executors/base-code-executor";
 import { Event } from "../events/event";
 import { AutoFlow, type BaseLlmFlow, SingleFlow } from "../flows/llm-flows";
 import type { BaseMemoryService } from "../memory/base-memory-service";
-import { BaseLlm } from "../models/base-llm";
 import { AiSdkLlm } from "../models/ai-sdk";
+import { BaseLlm } from "../models/base-llm";
 import { LLMRegistry } from "../models/llm-registry";
 import type { BasePlanner } from "../planners/base-planner";
 import type { BaseSessionService } from "../sessions/base-session-service";
@@ -15,7 +16,6 @@ import { FunctionTool } from "../tools/function/function-tool";
 import { BaseAgent } from "./base-agent";
 import type { InvocationContext } from "./invocation-context";
 import type { ReadonlyContext } from "./readonly-context";
-import type { LanguageModel } from "ai";
 
 /**
  * Type for instruction providers that can be functions
@@ -235,7 +235,7 @@ export class LlmAgent<T extends BaseLlm = BaseLlm> extends BaseAgent {
 	 */
 	public outputSchema?: any; // Schema type - depends on specific implementation
 
-	private logger = new Logger({ name: "LlmAgent" });
+	protected logger = new Logger({ name: "LlmAgent" });
 
 	/**
 	 * Constructor for LlmAgent

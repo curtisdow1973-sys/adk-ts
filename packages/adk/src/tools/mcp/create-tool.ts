@@ -48,7 +48,7 @@ class McpToolAdapter extends BaseTool {
 	private client: Client;
 	private clientService: McpClientService | null = null;
 
-	private logger = new Logger({ name: "McpToolAdapter" });
+	protected logger = new Logger({ name: "McpToolAdapter" });
 
 	constructor(mcpTool: McpTool, client: Client) {
 		const metadata = (mcpTool.metadata || {}) as McpToolMetadata;

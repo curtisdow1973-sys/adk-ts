@@ -16,8 +16,6 @@ import { InMemorySessionService } from "./sessions/in-memory-session-service";
 import type { Session } from "./sessions/session";
 import { tracer } from "./telemetry";
 
-const logger = new Logger({ name: "Runner" });
-
 /**
  * Find function call event if last event is function response.
  */
@@ -84,6 +82,8 @@ export class Runner<T extends BaseAgent = BaseAgent> {
 	 * The memory service for the runner.
 	 */
 	memoryService?: BaseMemoryService;
+
+	protected logger = new Logger({ name: "Runner" });
 
 	/**
 	 * Initializes the Runner.
@@ -220,7 +220,7 @@ export class Runner<T extends BaseAgent = BaseAgent> {
 				yield event;
 			}
 		} catch (error) {
-			logger.debug("Error running agent:", error);
+			this.logger.debug("Error running agent:", error);
 			span.recordException(error as Error);
 			span.setStatus({
 				code: SpanStatusCode.ERROR,
@@ -310,7 +310,7 @@ export class Runner<T extends BaseAgent = BaseAgent> {
 			const agent = rootAgent.findSubAgent?.(event.author);
 			if (!agent) {
 				// Agent not found, continue looking
-				logger.debug(
+				this.logger.debug(
 					`Event from an unknown agent: ${event.author}, event id: ${event.id}`,
 				);
 				continue;
