@@ -81,7 +81,7 @@ The documentation includes:
 Explore comprehensive examples in the `apps/examples` directory:
 
 ```bash
-git clone <repository-url>
+git clone https://github.com/IQAIcom/adk-ts.git
 cd adk-ts
 pnpm install
 cd apps/examples
