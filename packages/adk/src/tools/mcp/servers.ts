@@ -289,6 +289,20 @@ export function McpTelegram(config: McpServerConfig = {}): McpToolset {
 }
 
 /**
+ * MCP CoinGecko - Access cryptocurrency market data and analytics
+ *
+ * Optional env vars: COINGECKO_PRO_API_KEY, COINGECKO_DEMO_API_KEY, COINGECKO_ENVIRONMENT
+ */
+export function McpCoinGecko(config: McpServerConfig = {}): McpToolset {
+	const mcpConfig = createMcpConfig(
+		"CoinGecko MCP Client",
+		"@coingecko/coingecko-mcp",
+		config,
+	);
+	return new McpToolset(mcpConfig);
+}
+
+/**
  * Popular third-party MCP servers
  * These can be added as we expand support for community MCP servers
  */
