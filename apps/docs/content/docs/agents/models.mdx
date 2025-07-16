@@ -20,8 +20,8 @@ ADK TypeScript supports two primary integration approaches:
   />
 
   <Card
-    title="🔌 Wrapper Classes"
-    description="Access external models through LiteLLM and other adapters"
+    title="🔌 Vercel AI SDK"
+    description="Access models from multiple providers through Vercel AI SDK"
   />
 </Cards>
 
@@ -71,39 +71,91 @@ The most straightforward way to use Google's flagship models with ADK TypeScript
 Choose Flash models for speed and efficiency, Pro models for complex reasoning, and Live API models for real-time audio/video applications.
 </Callout>
 
-## External Models via LiteLLM
+## Vercel AI SDK Integration
 
-Access models from OpenAI, Anthropic, Cohere, and 100+ other providers through the LiteLLM integration.
+Access models from OpenAI, Anthropic, Google, and other providers through the Vercel AI SDK integration.
 
 ### Supported Providers
 
 <Cards>
   <Card
     title="🤖 OpenAI"
-    description="GPT-4, GPT-3.5, and latest ChatGPT models"
+    description="GPT-4o, GPT-4, GPT-3.5, and latest ChatGPT models"
   />
 
   <Card
     title="🧠 Anthropic"
-    description="Claude models for advanced reasoning"
+    description="Claude 3.5 Sonnet, Claude 3 Opus, and Haiku models"
   />
 
   <Card
-    title="⚡ Cohere"
-    description="Command models for enterprise applications"
+    title="🔥 Mistral"
+    description="Mistral Large, Codestral, and specialized models"
   />
 
   <Card
     title="🌐 Many Others"
-    description="100+ models from various providers"
+    description="Google, Groq, Perplexity, Cohere, and other providers"
   />
 </Cards>
 
 ### Setup Requirements
 
-1. **Install LiteLLM**: Add the LiteLLM package to your project
+1. **Install Provider Package**: You must install the specific AI SDK provider package for each provider you want to use:
+   - OpenAI: `npm install @ai-sdk/openai`
+   - Anthropic: `npm install @ai-sdk/anthropic`
+   - Google: `npm install @ai-sdk/google`
+   - Mistral: `npm install @ai-sdk/mistral`
 2. **Configure API Keys**: Set environment variables for your chosen providers
-3. **Create Wrapper**: Use the LiteLLM wrapper class with your agents
+3. **Use in LlmAgent**: Pass the configured model instance to `LlmAgent`
+
+### Example Usage
+
+First, install the required provider packages:
+
+```bash
+# Install the providers you want to use
+npm install @ai-sdk/openai @ai-sdk/anthropic @ai-sdk/google
+```
+
+Then use them in your agents:
+
+```typescript
+import { LlmAgent } from "@iqai/adk";
+import { openai } from "@ai-sdk/openai";
+import { anthropic } from "@ai-sdk/anthropic";
+import { google } from "@ai-sdk/google";
+
+// OpenAI GPT-4
+const openaiAgent = new LlmAgent({
+  name: "openai_agent",
+  model: openai("gpt-4"),
+  instruction: "You are a helpful assistant"
+});
+
+// Anthropic Claude
+const claudeAgent = new LlmAgent({
+  name: "claude_agent", 
+  model: anthropic("claude-3-5-sonnet-20241022"),
+  instruction: "You are a helpful assistant"
+});
+
+// Google Gemini
+const geminiAgent = new LlmAgent({
+  name: "gemini_agent",
+  model: google("gemini-2.0-flash"),
+  instruction: "You are a helpful assistant"
+});
+```
+
+### Benefits of Vercel AI SDK Integration
+
+- **Unified Interface**: Consistent API across all providers
+- **Type Safety**: Full TypeScript support with proper type definitions
+- **Streaming Support**: Built-in streaming capabilities for real-time responses
+- **Tool Calling**: Native function calling support across providers
+- **Active Maintenance**: Regularly updated with new providers and features
+- **Performance Optimized**: Efficient request handling and response processing
 
 ## Local and Open Source Models
 

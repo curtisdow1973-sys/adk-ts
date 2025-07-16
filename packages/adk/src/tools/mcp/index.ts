@@ -31,7 +31,7 @@ export * from "./client";
  */
 export class McpToolset {
 	private config: McpConfig;
-	private clientService: McpClientService | null = null;
+	client: McpClientService | null = null;
 	private toolFilter:
 		| string[]
 		| ((tool: any, context?: ToolContext) => boolean)
@@ -48,7 +48,7 @@ export class McpToolset {
 	) {
 		this.config = config;
 		this.toolFilter = toolFilter;
-		this.clientService = new McpClientService(config);
+		this.client = new McpClientService(config);
 	}
 
 	/**
@@ -82,11 +82,11 @@ export class McpToolset {
 			);
 		}
 
-		if (!this.clientService) {
-			this.clientService = new McpClientService(this.config);
+		if (!this.client) {
+			this.client = new McpClientService(this.config);
 		}
-		await this.clientService.initialize();
-		return this.clientService;
+		await this.client.initialize();
+		return this.client;
 	}
 
 	/**
@@ -96,11 +96,11 @@ export class McpToolset {
 	 * @param handler - ADK sampling handler that receives ADK-formatted messages
 	 */
 	setSamplingHandler(handler: SamplingHandler): void {
-		if (!this.clientService) {
-			this.clientService = new McpClientService(this.config);
+		if (!this.client) {
+			this.client = new McpClientService(this.config);
 		}
 
-		this.clientService.setSamplingHandler(handler);
+		this.client.setSamplingHandler(handler);
 
 		if (this.config.debug) {
 			console.log("🎯 Sampling handler set for MCP toolset");
@@ -111,8 +111,8 @@ export class McpToolset {
 	 * Remove the sampling handler
 	 */
 	removeSamplingHandler(): void {
-		if (this.clientService) {
-			this.clientService.removeSamplingHandler();
+		if (this.client) {
+			this.client.removeSamplingHandler();
 
 			if (this.config.debug) {
 				console.log("🚫 Sampling handler removed from MCP toolset");
@@ -140,11 +140,11 @@ export class McpToolset {
 				return this.tools;
 			}
 
-			if (!this.clientService) {
+			if (!this.client) {
 				await this.initialize();
 			}
 
-			const client = await this.clientService!.initialize();
+			const client = await this.client!.initialize();
 
 			const toolsResponse = (await client.listTools()) as ListToolsResult;
 
@@ -213,9 +213,9 @@ export class McpToolset {
 		try {
 			this.isClosing = true;
 
-			if (this.clientService) {
-				await this.clientService.close();
-				this.clientService = null;
+			if (this.client) {
+				await this.client.close();
+				this.client = null;
 			}
 
 			this.tools = [];

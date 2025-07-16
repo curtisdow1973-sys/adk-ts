@@ -29,7 +29,7 @@ export function Hero() {
             <svg className="w-3.5 h-3.5 mr-2 animate-pulse" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
             </svg>
-            Google ADK for TypeScript
+            ADK-TS: Build AI Agents in TypeScript
           </div>
 
           <h1 className="text-4xl sm:text-5xl md:text-6xl lg:text-7xl font-bold tracking-tight mb-4 animate-fade-in-up animation-delay-200">
