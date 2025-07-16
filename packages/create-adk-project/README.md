@@ -1,6 +1,18 @@
+<div align="center">
+
+<img src="https://files.catbox.moe/vumztw.png" alt="ADK TypeScript Logo" width="100" />
+
+<br/>
+
 # create-adk-project
 
-CLI tool to create ADK TypeScript agent projects with a complete starter template.
+**CLI tool to create ADK TypeScript agent projects with a complete starter template**
+
+*Interactive Setup • Project Scaffolding • Ready-to-Run Examples*
+
+---
+
+</div>
 
 ## Usage
 
