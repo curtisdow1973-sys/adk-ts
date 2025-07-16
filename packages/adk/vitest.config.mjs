@@ -35,6 +35,6 @@ export default defineConfig({
 		testTimeout: 10000,
 		clearMocks: true,
 		restoreMocks: true,
-		exclude: ["**/dist/**"],
+		exclude: ["**/dist/**", "**/node_modules/**"],
 	},
 });
