@@ -1,8 +1,15 @@
-# ADK TypeScript: Agent Development Kit
+<div align="center">
 
-The Agent Development Kit (ADK) for TypeScript provides a comprehensive framework for building sophisticated AI agents with multi-LLM support, advanced tool integration, memory systems, and flexible conversation flows. Built from the ground up for production use, ADK enables developers to create intelligent, autonomous systems that can handle complex multi-step tasks.
 
-This project is structured as a **Turborepo** monorepo, containing the core ADK package and comprehensive example applications demonstrating real-world usage patterns.
+<img src="https://files.catbox.moe/vumztw.png" alt="ADK TypeScript Logo" width="100" />
+
+<br/>
+
+# ADK TS: Agent Development Kit
+
+**A comprehensive TypeScript framework for building sophisticated AI agents with multi-LLM support, advanced tools, and flexible conversation flows.**
+
+*Production-ready • Multi-Agent Systems • Extensible Architecture*
 
 <p align="center">
   <a href="https://www.npmjs.com/package/@iqai/adk">
@@ -18,6 +25,16 @@ This project is structured as a **Turborepo** monorepo, containing the core ADK 
     <img src="https://img.shields.io/github/stars/IQAIcom/adk-ts?style=social" alt="GitHub Stars" />
   </a>
 </p>
+
+---
+
+</div>
+
+## 🌟 Overview
+
+The Agent Development Kit (ADK) for TypeScript provides a comprehensive framework for building sophisticated AI agents with multi-LLM support, advanced tool integration, memory systems, and flexible conversation flows. Built from the ground up for production use, ADK enables developers to create intelligent, autonomous systems that can handle complex multi-step tasks.
+
+This project is structured as a **Turborepo** monorepo, containing the core ADK package and comprehensive example applications demonstrating real-world usage patterns.
 
 ## 🚀 Core Capabilities
 
