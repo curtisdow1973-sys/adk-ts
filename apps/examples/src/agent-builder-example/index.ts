@@ -106,7 +106,7 @@ async function demonstrateSessionManagement(): Promise<void> {
 	console.log("════════════════════════════════════");
 
 	// Create agent with persistent session
-	const { runner, session } = await AgentBuilder.create("persistent_agent")
+	const { runner } = await AgentBuilder.create("persistent_agent")
 		.withModel(env.LLM_MODEL || "gemini-2.5-flash")
 		.withDescription("An agent that remembers our conversation")
 		.withInstruction(dedent`
@@ -118,10 +118,6 @@ async function demonstrateSessionManagement(): Promise<void> {
 			createDatabaseSessionService(getSqliteConnectionString("agentbuilder")),
 		)
 		.build();
-
-	if (!runner || !session) {
-		throw new Error("Failed to create runner and session");
-	}
 
 	// First interaction - using simplified runner API
 	console.log("💬 First interaction:");
@@ -177,16 +173,13 @@ async function demonstrateMultiAgentWorkflows(): Promise<void> {
 	console.log("📋 Sequential Workflow (Research → Summarize):");
 	console.log("   Creating and executing sequential workflow...");
 
-	const { runner: sequentialRunner, session: sequentialSession } =
-		await AgentBuilder.create("sequential_workflow")
-			.withDescription("A workflow that researches and then summarizes")
-			.asSequential([(await researchAgent).agent, (await summaryAgent).agent])
-			.withQuickSession()
-			.build();
-
-	if (!sequentialRunner || !sequentialSession) {
-		throw new Error("Failed to create sequential workflow runner and session");
-	}
+	const { runner: sequentialRunner } = await AgentBuilder.create(
+		"sequential_workflow",
+	)
+		.withDescription("A workflow that researches and then summarizes")
+		.asSequential([(await researchAgent).agent, (await summaryAgent).agent])
+		.withQuickSession()
+		.build();
 
 	// Execute the actual sequential workflow using simplified API
 	console.log("🔬 Executing: Research → Summarize workflow");
