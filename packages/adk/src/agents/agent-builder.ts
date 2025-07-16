@@ -71,12 +71,12 @@ export interface EnhancedRunner {
 }
 
 /**
- * Built agent result containing the agent and optional runner/session
+ * Built agent result containing the agent and runner/session
  */
 export interface BuiltAgent {
 	agent: BaseAgent;
-	runner?: EnhancedRunner;
-	session?: Session;
+	runner: EnhancedRunner;
+	session: Session;
 }
 
 /**
@@ -336,11 +336,6 @@ export class AgentBuilder {
 	 */
 	async ask(message: string | FullMessage): Promise<string> {
 		const { runner } = await this.build();
-
-		if (!runner) {
-			throw new Error("Failed to create runner");
-		}
-
 		return runner.ask(message);
 	}
 
