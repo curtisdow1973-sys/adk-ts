@@ -6,7 +6,7 @@ import type { ToolContext } from "../tool-context";
  * Tool that allows an agent to exit the current execution loop
  */
 export class ExitLoopTool extends BaseTool {
-	private logger = new Logger({ name: "ExitLoopTool" });
+	protected logger = new Logger({ name: "ExitLoopTool" });
 
 	/**
 	 * Constructor for ExitLoopTool

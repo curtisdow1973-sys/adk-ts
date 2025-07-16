@@ -18,7 +18,7 @@ import {
  * between MCP format and ADK format
  */
 export class McpSamplingHandler {
-	private logger = new Logger({ name: "McpSamplingHandler" });
+	protected logger = new Logger({ name: "McpSamplingHandler" });
 	private samplingHandler: SamplingHandler;
 
 	constructor(samplingHandler: SamplingHandler) {

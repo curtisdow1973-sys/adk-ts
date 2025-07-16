@@ -12,6 +12,16 @@ import { Card } from 'fumadocs-ui/components/card';
 Make sure you have [installed ADK TypeScript](/docs/get-started/installation) before continuing.
 </Callout>
 
+<Callout title="Quick Start Alternative">
+Want to skip the manual setup? Use our CLI to create a complete project:
+
+```bash
+npx create-adk-project
+```
+
+This creates a project with all the examples below already set up and ready to run!
+</Callout>
+
 ## Your First Agent
 
 Let's start with the simplest possible agent - one that can answer questions:
@@ -275,6 +285,64 @@ async function multipleQuestions() {
   }
 }
 ```
+
+## Using External Models
+
+Want to use models from OpenAI, Anthropic, or other providers? ADK supports 100+ models through Vercel AI SDK:
+
+### OpenAI Example
+
+```bash
+# First install the OpenAI provider package
+npm install @ai-sdk/openai
+```
+
+```typescript
+import { LlmAgent } from "@iqai/adk";
+import { openai } from "@ai-sdk/openai";
+
+async function useOpenAI() {
+  // Set OPENAI_API_KEY in your environment
+  
+  const agent = new LlmAgent({
+    name: "openai_agent",
+    model: openai("gpt-4"),
+    instruction: "You are a helpful assistant"
+  });
+
+  const response = await agent.ask("Explain quantum computing in simple terms");
+  console.log(response);
+}
+```
+
+### Anthropic Example
+
+```bash
+# First install the Anthropic provider package
+npm install @ai-sdk/anthropic
+```
+
+```typescript
+import { LlmAgent } from "@iqai/adk";
+import { anthropic } from "@ai-sdk/anthropic";
+
+async function useAnthropic() {
+  // Set ANTHROPIC_API_KEY in your environment
+  
+  const agent = new LlmAgent({
+    name: "claude_agent", 
+    model: anthropic("claude-3-5-sonnet-20241022"),
+    instruction: "You are a helpful assistant"
+  });
+
+  const response = await agent.ask("Write a haiku about programming");
+  console.log(response);
+}
+```
+
+<Callout type="info" title="More Providers">
+ADK supports many models through Vercel AI SDK including OpenAI, Anthropic, Google, Mistral, and more. Check the [Models documentation](/docs/agents/models) for the complete list of supported providers.
+</Callout>
 
 ## Next Steps
 

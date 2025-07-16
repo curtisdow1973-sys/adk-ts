@@ -1,10 +1,13 @@
 import { Logger } from "@adk/helpers/logger";
 import type { GenerateContentConfig } from "@google/genai";
+import type { LanguageModel } from "ai";
 import type { BaseArtifactService } from "../artifacts/base-artifact-service";
+import type { BaseCodeExecutor } from "../code-executors/base-code-executor";
 import { Event } from "../events/event";
 import { AutoFlow, type BaseLlmFlow, SingleFlow } from "../flows/llm-flows";
 import type { BaseMemoryService } from "../memory/base-memory-service";
-import type { BaseLlm } from "../models/base-llm";
+import { AiSdkLlm } from "../models/ai-sdk";
+import { BaseLlm } from "../models/base-llm";
 import { LLMRegistry } from "../models/llm-registry";
 import type { BasePlanner } from "../planners/base-planner";
 import type { BaseSessionService } from "../sessions/base-session-service";
@@ -29,7 +32,7 @@ export type ToolUnion = BaseTool | ((...args: any[]) => any);
 /**
  * Configuration for LlmAgent
  */
-export interface LlmAgentConfig {
+export interface LlmAgentConfig<T extends BaseLlm = BaseLlm> {
 	/**
 	 * Name of the agent
 	 */
@@ -44,7 +47,7 @@ export interface LlmAgentConfig {
 	 * The LLM model to use
 	 * When not set, the agent will inherit the model from its ancestor
 	 */
-	model?: string | BaseLlm;
+	model?: string | T | LanguageModel;
 
 	/**
 	 * Instructions for the LLM model, guiding the agent's behavior
@@ -61,6 +64,11 @@ export interface LlmAgentConfig {
 	 * Tools available to this agent
 	 */
 	tools?: ToolUnion[];
+
+	/**
+	 * Code executor for this agent
+	 */
+	codeExecutor?: BaseCodeExecutor;
 
 	/**
 	 * Disallows LLM-controlled transferring to the parent agent
@@ -134,12 +142,12 @@ export interface LlmAgentConfig {
 /**
  * LLM-based Agent
  */
-export class LlmAgent extends BaseAgent {
+export class LlmAgent<T extends BaseLlm = BaseLlm> extends BaseAgent {
 	/**
 	 * The model to use for the agent
 	 * When not set, the agent will inherit the model from its ancestor
 	 */
-	public model: string | BaseLlm;
+	public model: string | T | LanguageModel;
 
 	/**
 	 * Instructions for the LLM model, guiding the agent's behavior
@@ -156,6 +164,11 @@ export class LlmAgent extends BaseAgent {
 	 * Tools available to this agent
 	 */
 	public tools: ToolUnion[];
+
+	/**
+	 * Code executor for this agent
+	 */
+	public codeExecutor?: BaseCodeExecutor;
 
 	/**
 	 * Disallows LLM-controlled transferring to the parent agent
@@ -222,12 +235,12 @@ export class LlmAgent extends BaseAgent {
 	 */
 	public outputSchema?: any; // Schema type - depends on specific implementation
 
-	private logger = new Logger({ name: "LlmAgent" });
+	protected logger = new Logger({ name: "LlmAgent" });
 
 	/**
 	 * Constructor for LlmAgent
 	 */
-	constructor(config: LlmAgentConfig) {
+	constructor(config: LlmAgentConfig<T>) {
 		super({
 			name: config.name,
 			description: config.description,
@@ -237,6 +250,7 @@ export class LlmAgent extends BaseAgent {
 		this.instruction = config.instruction || "";
 		this.globalInstruction = config.globalInstruction || "";
 		this.tools = config.tools || [];
+		this.codeExecutor = config.codeExecutor;
 		this.disallowTransferToParent = config.disallowTransferToParent || false;
 		this.disallowTransferToPeers = config.disallowTransferToPeers || false;
 		this.includeContents = config.includeContents || "default";
@@ -257,13 +271,17 @@ export class LlmAgent extends BaseAgent {
 	 * This method is only for use by Agent Development Kit
 	 */
 	get canonicalModel(): BaseLlm {
-		if (typeof this.model !== "string") {
+		// For string model name
+		if (typeof this.model === "string") {
+			if (this.model) {
+				// model is non-empty str
+				return LLMRegistry.newLLM(this.model);
+			}
+		} else if (this.model instanceof BaseLlm) {
 			return this.model;
-		}
-
-		if (this.model) {
-			// model is non-empty str
-			return LLMRegistry.newLLM(this.model);
+		} else if (this.model) {
+			// For LanguageModel
+			return new AiSdkLlm(this.model);
 		}
 
 		// find model from ancestors

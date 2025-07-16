@@ -1,5 +1,5 @@
 import { McpToolset } from "./index";
-import type { McpConfig } from "./types";
+import type { McpConfig, SamplingHandler } from "./types";
 
 /**
  * Simplified MCP Server Wrappers
@@ -12,8 +12,8 @@ import type { McpConfig } from "./types";
  * ```typescript
  * // Old verbose way:
  * const toolset = new McpToolset({
- *   name: "Near Intent Swaps MCP Client",
- *   description: "Client for Near Intent Swaps",
+ *   name: "Near Intents Swaps MCP Client",
+ *   description: "Client for Near Intents Swaps",
  *   debug: env.DEBUG,
  *   retryOptions: { maxRetries: 2, initialDelay: 200 },
  *   transport: {
@@ -70,6 +70,38 @@ import type { McpConfig } from "./types";
  *   tools: [...atpTools, ...fraxlendTools],
  * });
  * ```
+ *
+ * @example
+ * ```typescript
+ * // Using MCP servers with sampling handlers:
+ * import { createSamplingHandler, LlmResponse } from "@iqai/adk";
+ *
+ * const samplingHandler = createSamplingHandler(async (request) => {
+ *   // Handle MCP sampling requests
+ *   return new LlmResponse({
+ *     content: {
+ *       role: "model",
+ *       parts: [{ text: "Response from sampling handler" }],
+ *     },
+ *   });
+ * });
+ *
+ * const nearTools = await McpNearAgent({
+ *   env: {
+ *     ACCOUNT_ID: env.ACCOUNT_ID,
+ *     ACCOUNT_KEY: env.ACCOUNT_KEY,
+ *     NEAR_NETWORK_ID: "testnet",
+ *     PATH: env.PATH
+ *   },
+ *   samplingHandler
+ * }).getTools();
+ *
+ * const agent = new LlmAgent({
+ *   name: "near_assistant",
+ *   model: "gemini-2.5-flash",
+ *   tools: nearTools,
+ * });
+ * ```
  */
 
 /**
@@ -87,6 +119,8 @@ export interface McpServerConfig {
 		maxRetries?: number;
 		initialDelay?: number;
 	};
+	/** Sampling handler for processing MCP sampling requests */
+	samplingHandler?: SamplingHandler;
 }
 
 /**
@@ -97,7 +131,13 @@ function createMcpConfig(
 	packageName: string,
 	config: McpServerConfig = {},
 ): McpConfig {
-	const { debug, description, retryOptions, env: envVars = {} } = config;
+	const {
+		debug,
+		description,
+		retryOptions,
+		env: envVars = {},
+		samplingHandler,
+	} = config;
 
 	// Convert all environment values to strings
 	const env: Record<string, string> = {};
@@ -123,6 +163,7 @@ function createMcpConfig(
 			args: ["-y", packageName],
 			env,
 		},
+		samplingHandler,
 	};
 }
 
@@ -205,14 +246,14 @@ export function McpNearAgent(config: McpServerConfig = {}): McpToolset {
 }
 
 /**
- * MCP NEAR Intent Swaps - NEAR Protocol intent swaps functionality
+ * MCP Near Intents Swaps - NEAR Protocol intent swaps functionality
  *
  * Required env vars: ACCOUNT_ID, ACCOUNT_KEY
  * Optional env vars: NEAR_NETWORK_ID, NEAR_NODE_URL, NEAR_GAS_LIMIT
  */
 export function McpNearIntentSwaps(config: McpServerConfig = {}): McpToolset {
 	const mcpConfig = createMcpConfig(
-		"NEAR Intent Swaps MCP Client",
+		"Near Intents Swaps MCP Client",
 		"@iqai/mcp-near-intent-swaps",
 		config,
 	);
@@ -242,6 +283,20 @@ export function McpTelegram(config: McpServerConfig = {}): McpToolset {
 	const mcpConfig = createMcpConfig(
 		"Telegram MCP Client",
 		"@iqai/mcp-telegram",
+		config,
+	);
+	return new McpToolset(mcpConfig);
+}
+
+/**
+ * MCP CoinGecko - Access cryptocurrency market data and analytics
+ *
+ * Optional env vars: COINGECKO_PRO_API_KEY, COINGECKO_DEMO_API_KEY, COINGECKO_ENVIRONMENT
+ */
+export function McpCoinGecko(config: McpServerConfig = {}): McpToolset {
+	const mcpConfig = createMcpConfig(
+		"CoinGecko MCP Client",
+		"@coingecko/coingecko-mcp",
 		config,
 	);
 	return new McpToolset(mcpConfig);
@@ -284,7 +339,7 @@ export function McpMemory(config: McpServerConfig = {}): McpToolset {
  * Generic MCP server function for any package
  *
  * @param packageName The npm package name of the MCP server
- * @param config Configuration object with environment variables
+ * @param config Configuration object with environment variables and optional sampling handler
  * @param name Optional custom name for the client
  */
 export function McpGeneric(
