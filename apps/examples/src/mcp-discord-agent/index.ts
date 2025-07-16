@@ -19,11 +19,13 @@ let samplingHandler: SamplingHandler;
 async function main() {
 	// Create a sampling handler for MCP
 	samplingHandler = createSamplingHandler(async (llmRequest) => {
-		// Use author id from the last message if available
 		const lastMsg = llmRequest.contents[llmRequest.contents.length - 1];
-		const userId = lastMsg?.parts?.[0]?.text
-			? `${USER_ID_PREFIX}mcp`
+		const content = lastMsg.parts[0].text!;
+		const userIdMatch = content.match(/user_id:\s*(\d+)/);
+		const userId = userIdMatch
+			? `${USER_ID_PREFIX}${userIdMatch[1]}`
 			: `${USER_ID_PREFIX}unknown`;
+		console.log(userId);
 		let response = "";
 		for await (const event of runner.runAsync({
 			userId,
@@ -74,7 +76,6 @@ async function initializeRunner() {
 			- Often replies messages with a laughing emoji and sometimes with a thumbs down emoji
 			- Is very sarcastic and witty
       `,
-			tools,
 		}),
 		sessionService: createDatabaseSessionService(
 			getSqliteConnectionString("discord_agent"),
