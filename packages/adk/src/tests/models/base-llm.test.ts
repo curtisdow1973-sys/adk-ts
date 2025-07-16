@@ -1,4 +1,4 @@
-import { BaseLlm, LlmRequest } from "@adk/models";
+import { BaseLlm, type LlmRequest } from "@adk/models";
 import { describe, it, expect, vi, beforeEach } from "vitest";
 
 vi.mock("@adk/helpers/logger", () => ({

@@ -1,7 +1,7 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
 
 import Anthropic from "@anthropic-ai/sdk";
-import { AnthropicLlm, LlmRequest, LlmResponse } from "@adk/models";
+import { AnthropicLlm, type LlmRequest, LlmResponse } from "@adk/models";
 
 vi.mock("@anthropic-ai/sdk");
 vi.mock("@adk/helpers/logger", () => ({
@@ -284,31 +284,30 @@ describe("AnthropicLlm", () => {
 			});
 		});
 
-    describe("toAnthropicRole", () => {
-      it.each([
-        ["model", "assistant"],
-        ["assistant", "assistant"],
-        ["user", "user"],
-        ["unknown", "user"],
-        [undefined, "user"],
-      ])("should convert '%s' role to '%s'", (input, expected) => {
-        expect(anthropicLlm["toAnthropicRole"](input)).toBe(expected);
-      });
-    });
+		describe("toAnthropicRole", () => {
+			it.each([
+				["model", "assistant"],
+				["assistant", "assistant"],
+				["user", "user"],
+				["unknown", "user"],
+				[undefined, "user"],
+			])("should convert '%s' role to '%s'", (input, expected) => {
+				expect(anthropicLlm["toAnthropicRole"](input)).toBe(expected);
+			});
+		});
 
-    describe("toAdkFinishReason", () => {
-      it.each([
-        ["end_turn", "STOP"],
-        ["stop_sequence", "STOP"],
-        ["tool_use", "STOP"],
-        ["max_tokens", "MAX_TOKENS"],
-        ["unknown", "FINISH_REASON_UNSPECIFIED"],
-        [undefined, "FINISH_REASON_UNSPECIFIED"],
-      ])("should convert '%s' to '%s'", (input, expected) => {
-        expect(anthropicLlm["toAdkFinishReason"](input)).toBe(expected);
-      });
-    });
-
+		describe("toAdkFinishReason", () => {
+			it.each([
+				["end_turn", "STOP"],
+				["stop_sequence", "STOP"],
+				["tool_use", "STOP"],
+				["max_tokens", "MAX_TOKENS"],
+				["unknown", "FINISH_REASON_UNSPECIFIED"],
+				[undefined, "FINISH_REASON_UNSPECIFIED"],
+			])("should convert '%s' to '%s'", (input, expected) => {
+				expect(anthropicLlm["toAdkFinishReason"](input)).toBe(expected);
+			});
+		});
 
 		describe("updateTypeString", () => {
 			it("should lowercase type strings in schema", () => {

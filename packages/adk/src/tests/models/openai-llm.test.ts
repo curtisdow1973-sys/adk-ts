@@ -9,7 +9,7 @@ vi.mock("@adk/helpers/logger", () => ({
 	})),
 }));
 vi.mock("openai", () => ({
-	default: vi.fn(function () {
+	default: vi.fn(() => {
 		return {
 			chat: {
 				completions: {
@@ -274,7 +274,7 @@ describe("OpenAiLlm", () => {
 
 	describe("client getter", () => {
 		it("should throw if OPENAI_API_KEY is not set", () => {
-			delete process.env.OPENAI_API_KEY;
+			process.env.OPENAI_API_KEY = undefined;
 			const llm2 = new OpenAiLlm();
 			expect(() => (llm2 as any).client).toThrow(
 				/OPENAI_API_KEY environment variable is required/,

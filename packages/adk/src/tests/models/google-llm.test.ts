@@ -50,12 +50,12 @@ describe("GoogleLlm", () => {
 				project: "proj",
 				location: "loc",
 			});
-			expect(client).toBe(llm.apiClient); 
+			expect(client).toBe(llm.apiClient);
 		});
 
 		it("creates GoogleGenAI with apiKey if set", () => {
 			process.env.GOOGLE_API_KEY = "abc";
-			delete process.env.GOOGLE_GENAI_USE_VERTEXAI;
+			process.env.GOOGLE_GENAI_USE_VERTEXAI = undefined;
 			const llm = new GoogleLlm();
 			const client = llm.apiClient;
 			expect(GoogleGenAI).toHaveBeenCalledWith({
@@ -65,10 +65,10 @@ describe("GoogleLlm", () => {
 		});
 
 		it("throws if no API key or VertexAI config", () => {
-			delete process.env.GOOGLE_API_KEY;
-			delete process.env.GOOGLE_GENAI_USE_VERTEXAI;
-			delete process.env.GOOGLE_CLOUD_PROJECT;
-			delete process.env.GOOGLE_CLOUD_LOCATION;
+			process.env.GOOGLE_API_KEY = undefined;
+			process.env.GOOGLE_GENAI_USE_VERTEXAI = undefined;
+			process.env.GOOGLE_CLOUD_PROJECT = undefined;
+			process.env.GOOGLE_CLOUD_LOCATION = undefined;
 			const llm = new GoogleLlm();
 			expect(() => llm.apiClient).toThrow(
 				/Google API Key or Vertex AI configuration is required/,
@@ -92,7 +92,7 @@ describe("GoogleLlm", () => {
 	describe("trackingHeaders", () => {
 		it("returns correct headers with and without AGENT_ENGINE_TELEMETRY_ENV_VARIABLE_NAME", () => {
 			const llm = new GoogleLlm();
-			delete process.env.GOOGLE_CLOUD_AGENT_ENGINE_ID;
+			process.env.GOOGLE_CLOUD_AGENT_ENGINE_ID = undefined;
 			const headers1 = llm.trackingHeaders;
 			expect(headers1["x-goog-api-client"]).toMatch(/google-adk\/1\.0\.0/);
 			process.env.GOOGLE_CLOUD_AGENT_ENGINE_ID = "foo";
@@ -136,7 +136,7 @@ describe("GoogleLlm", () => {
 
 		it("creates GoogleGenAI with apiKey and apiVersion", () => {
 			process.env.GOOGLE_API_KEY = "abc";
-			delete process.env.GOOGLE_GENAI_USE_VERTEXAI;
+			process.env.GOOGLE_GENAI_USE_VERTEXAI = undefined;
 			const llm = new GoogleLlm();
 			const client = llm.liveApiClient;
 			expect(GoogleGenAI).toHaveBeenCalledWith({
@@ -147,10 +147,10 @@ describe("GoogleLlm", () => {
 		});
 
 		it("throws if no API key or VertexAI config", () => {
-			delete process.env.GOOGLE_API_KEY;
-			delete process.env.GOOGLE_GENAI_USE_VERTEXAI;
-			delete process.env.GOOGLE_CLOUD_PROJECT;
-			delete process.env.GOOGLE_CLOUD_LOCATION;
+			process.env.GOOGLE_API_KEY = undefined;
+			process.env.GOOGLE_GENAI_USE_VERTEXAI = undefined;
+			process.env.GOOGLE_CLOUD_PROJECT = undefined;
+			process.env.GOOGLE_CLOUD_LOCATION = undefined;
 			const llm = new GoogleLlm();
 			expect(() => llm.liveApiClient).toThrow(
 				/API configuration required for live client/,
