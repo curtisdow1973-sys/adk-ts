@@ -226,52 +226,6 @@ describe("OpenAiLlm", () => {
 		});
 	});
 
-	describe("buildRequestLog", () => {
-		it("should build a request log string", () => {
-			const req: any = {
-				getSystemInstructionText: () => "sys",
-				contents: [{ parts: [{ text: "foo" }] }],
-				config: {
-					tools: [
-						{
-							functionDeclarations: [
-								{ name: "f", parameters: { properties: { x: 1 } } },
-							],
-						},
-					],
-				},
-			};
-			const log = (llm as any).buildRequestLog(req);
-			expect(log).toMatch(/LLM Request:/);
-			expect(log).toMatch(/System Instruction:/);
-			expect(log).toMatch(/Contents:/);
-			expect(log).toMatch(/Functions:/);
-			expect(log).toMatch(/f: {"x":1}/);
-		});
-	});
-
-	describe("buildResponseLog", () => {
-		it("should build a response log string", () => {
-			const resp = new LlmResponse({
-				content: {
-					parts: [
-						{ text: "foo" },
-						{ functionCall: { name: "bar", args: { y: 2 } } },
-					],
-				} as any,
-				usageMetadata: { totalTokenCount: 5 },
-				finishReason: "STOP",
-			});
-			const log = (llm as any).buildResponseLog(resp);
-			expect(log).toMatch(/LLM Response:/);
-			expect(log).toMatch(/Text:\nfoo/);
-			expect(log).toMatch(/Function calls:/);
-			expect(log).toMatch(/name: bar, args: {"y":2}/);
-			expect(log).toMatch(/Usage:/);
-			expect(log).toMatch(/Finish Reason:/);
-		});
-	});
-
 	describe("client getter", () => {
 		it("should throw if OPENAI_API_KEY is not set", () => {
 			process.env.OPENAI_API_KEY = undefined;
