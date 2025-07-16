@@ -43,11 +43,40 @@ export interface SessionConfig {
 }
 
 /**
+ * Message part interface for flexible message input
+ */
+export interface MessagePart {
+	text?: string;
+	image?: string;
+	[key: string]: any;
+}
+
+/**
+ * Full message interface for advanced usage
+ */
+export interface FullMessage {
+	parts: MessagePart[];
+	[key: string]: any;
+}
+
+/**
+ * Enhanced runner interface with simplified API
+ */
+export interface EnhancedRunner {
+	ask(message: string | FullMessage): Promise<string>;
+	runAsync(params: {
+		userId: string;
+		sessionId: string;
+		newMessage: FullMessage;
+	}): AsyncIterable<any>;
+}
+
+/**
  * Built agent result containing the agent and optional runner/session
  */
 export interface BuiltAgent {
 	agent: BaseAgent;
-	runner?: Runner;
+	runner?: EnhancedRunner;
 	session?: Session;
 }
 
@@ -82,16 +111,29 @@ export type AgentType =
  *   .withInstruction("You are helpful")
  *   .build();
  *
- * // Agent with session and runner
+ * // Agent with quick session (no manual IDs needed)
+ * const { runner } = await AgentBuilder
+ *   .create("my-agent")
+ *   .withModel("gemini-2.5-flash")
+ *   .withQuickSession()
+ *   .build();
+ * const response = await runner.ask("Hello!");
+ *
+ * // Agent with custom session (optional IDs with smart defaults)
  * const { agent, runner, session } = await AgentBuilder
  *   .create("my-agent")
  *   .withModel("gemini-2.5-flash")
- *   .withSession(sessionService, "user123", "myApp")
+ *   .withSession(sessionService) // userId and appName auto-generated
  *   .build();
  *
  * // Using an AI SDK provider directly
  * import { google } from "@ai-sdk/google";
  * const response = await AgentBuilder.withModel(google()).ask("Hi");
+ *
+ * // Advanced message format
+ * const response = await runner.ask({
+ *   parts: [{ text: "Hello" }, { image: "base64..." }]
+ * });
  * ```
  */
 export class AgentBuilder {
@@ -223,25 +265,25 @@ export class AgentBuilder {
 	}
 
 	/**
-	 * Configure session management
+	 * Configure session management with optional smart defaults
 	 * @param service Session service to use
-	 * @param userId User identifier
-	 * @param appName Application name
+	 * @param userId User identifier (optional, defaults to agent-based ID)
+	 * @param appName Application name (optional, defaults to agent-based name)
 	 * @param memoryService Optional memory service
 	 * @param artifactService Optional artifact service
 	 * @returns This builder instance for chaining
 	 */
 	withSession(
 		service: BaseSessionService,
-		userId: string,
-		appName: string,
+		userId?: string,
+		appName?: string,
 		memoryService?: BaseMemoryService,
 		artifactService?: BaseArtifactService,
 	): this {
 		this.sessionConfig = {
 			service,
-			userId,
-			appName,
+			userId: userId || this.generateDefaultUserId(),
+			appName: appName || this.generateDefaultAppName(),
 			memoryService,
 			artifactService,
 		};
@@ -250,13 +292,15 @@ export class AgentBuilder {
 
 	/**
 	 * Configure with an in-memory session (for quick setup)
-	 * @param appName Application name
-	 * @param userId User identifier
+	 * @param appName Application name (optional, defaults to agent-based name)
+	 * @param userId User identifier (optional, defaults to agent-based ID)
 	 * @returns This builder instance for chaining
 	 */
-	withQuickSession(appName: string, userId: string): this {
+	withQuickSession(appName?: string, userId?: string): this {
 		return this.withSession(new InMemorySessionService(), userId, appName);
 	}
+
+
 
 	/**
 	 * Build the agent and optionally create runner and session
@@ -264,7 +308,7 @@ export class AgentBuilder {
 	 */
 	async build(): Promise<BuiltAgent> {
 		const agent = this.createAgent();
-		let runner: Runner | undefined;
+		let runner: EnhancedRunner | undefined;
 		let session: Session | undefined;
 
 		if (this.sessionConfig) {
@@ -287,7 +331,10 @@ export class AgentBuilder {
 				runnerConfig.artifactService = this.sessionConfig.artifactService;
 			}
 
-			runner = new Runner(runnerConfig);
+			const baseRunner = new Runner(runnerConfig);
+			
+			// Create enhanced runner with simplified API
+			runner = this.createEnhancedRunner(baseRunner, session);
 		}
 
 		return { agent, runner, session };
@@ -295,43 +342,22 @@ export class AgentBuilder {
 
 	/**
 	 * Quick execution helper - build and run a message
-	 * @param message Message to send to the agent
+	 * @param message Message to send to the agent (string or full message object)
 	 * @returns Agent response
 	 */
-	async ask(message: string): Promise<string> {
+	async ask(message: string | FullMessage): Promise<string> {
 		// If no session config is provided, create a temporary one automatically
 		if (!this.sessionConfig) {
-			const userId = `user-${this.config.name}`;
-			const appName = `session-${this.config.name}`;
-			this.withQuickSession(appName, userId);
+			this.withQuickSession();
 		}
 
-		const { runner, session } = await this.build();
+		const { runner } = await this.build();
 
-		if (!runner || !session) {
-			throw new Error("Failed to create runner and session");
+		if (!runner) {
+			throw new Error("Failed to create runner");
 		}
 
-		let response = "";
-
-		for await (const event of runner.runAsync({
-			userId: this.sessionConfig!.userId,
-			sessionId: session.id,
-			newMessage: {
-				parts: [{ text: message }],
-			},
-		})) {
-			if (event.content?.parts) {
-				const content = event.content.parts
-					.map((part) => part.text || "")
-					.join("");
-				if (content) {
-					response += content;
-				}
-			}
-		}
-
-		return response;
+		return runner.ask(message);
 	}
 
 	/**
@@ -398,5 +424,67 @@ export class AgentBuilder {
 					rootNode: this.config.rootNode,
 				});
 		}
+	}
+
+	/**
+	 * Generate default user ID based on agent name and timestamp
+	 * @returns Generated user ID
+	 */
+	private generateDefaultUserId(): string {
+		const timestamp = Date.now();
+		return `user-${this.config.name}-${timestamp}`;
+	}
+
+	/**
+	 * Generate default app name based on agent name
+	 * @returns Generated app name
+	 */
+	private generateDefaultAppName(): string {
+		return `app-${this.config.name}`;
+	}
+
+	/**
+	 * Create enhanced runner with simplified API
+	 * @param baseRunner The base runner instance
+	 * @param session The session instance
+	 * @returns Enhanced runner with simplified API
+	 */
+	private createEnhancedRunner(baseRunner: Runner, session: Session): EnhancedRunner {
+		const sessionConfig = this.sessionConfig!;
+		
+		return {
+			async ask(message: string | FullMessage): Promise<string> {
+				const fullMessage: FullMessage = typeof message === 'string' 
+					? { parts: [{ text: message }] }
+					: message;
+
+				let response = "";
+
+				for await (const event of baseRunner.runAsync({
+					userId: sessionConfig.userId,
+					sessionId: session.id,
+					newMessage: fullMessage,
+				})) {
+					if (event.content?.parts) {
+						const content = event.content.parts
+							.map((part) => part.text || "")
+							.join("");
+						if (content) {
+							response += content;
+						}
+					}
+				}
+
+				return response;
+			},
+
+			runAsync(params: {
+				userId: string;
+				sessionId: string;
+				newMessage: FullMessage;
+			}) {
+				return baseRunner.runAsync(params);
+			}
+		};
 	}
 }
