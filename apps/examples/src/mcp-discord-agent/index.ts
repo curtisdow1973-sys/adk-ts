@@ -58,7 +58,7 @@ async function initializeRunner() {
 		env: { DISCORD_TOKEN: env.DISCORD_TOKEN, PATH: env.PATH },
 	});
 
-	const tools = await discordToolset.getTools();
+	await discordToolset.getTools();
 
 	runner = new Runner({
 		appName: APP_NAME,
