@@ -5,13 +5,13 @@ import {
 	createDatabaseSessionService,
 	InMemoryMemoryService,
 	type SamplingHandler,
-	McpToolset,
+	McpDiscord,
 } from "@iqai/adk";
 import * as fs from "node:fs";
 import * as path from "node:path";
 import { env } from "node:process";
 
-const APP_NAME = "McpSamplingDiscordAgent";
+const APP_NAME = "McpDiscordAgent";
 const USER_ID_PREFIX = "discord-user-";
 let runner: Runner;
 let samplingHandler: SamplingHandler;
@@ -51,16 +51,9 @@ async function initializeRunner() {
 	const llmModel = env.LLM_MODEL || "gemini-2.5-flash";
 	console.log("🔧 Using LLM model:", llmModel);
 
-	const discordToolset = new McpToolset({
-		name: "discord-sampling-client",
-		description: "MCP client for Discord sampling agent",
+	const discordToolset = McpDiscord({
 		samplingHandler,
-		transport: {
-			mode: "stdio",
-			command: "pnpm",
-			args: ["dlx", "@iqai/mcp-discord"],
-			env: { DISCORD_TOKEN: env.DISCORD_TOKEN, PATH: env.PATH },
-		},
+		env: { DISCORD_TOKEN: env.DISCORD_TOKEN, PATH: env.PATH },
 	});
 
 	const tools = await discordToolset.getTools();
@@ -84,7 +77,7 @@ async function initializeRunner() {
 			tools,
 		}),
 		sessionService: createDatabaseSessionService(
-			getSqliteConnectionString("discord_sampling_agent"),
+			getSqliteConnectionString("discord_agent"),
 		),
 		memoryService: new InMemoryMemoryService(),
 	});

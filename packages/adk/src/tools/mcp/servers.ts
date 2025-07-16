@@ -289,6 +289,21 @@ export function McpTelegram(config: McpServerConfig = {}): McpToolset {
 }
 
 /**
+ * MCP Discord - Interact with Discord via MCP protocol
+ *
+ * Required env vars: DISCORD_TOKEN
+ * Optional env vars: PATH
+ */
+export function McpDiscord(config: McpServerConfig = {}): McpToolset {
+	const mcpConfig = createMcpConfig(
+		"Discord MCP Client",
+		"@iqai/mcp-discord",
+		config,
+	);
+	return new McpToolset(mcpConfig);
+}
+
+/**
  * Popular third-party MCP servers
  * These can be added as we expand support for community MCP servers
  */
