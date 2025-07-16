@@ -101,49 +101,30 @@ interface RunnerConfig {
 }
 
 /**
- * AgentBuilder - A fluent interface for building agents with optional session management
+ * AgentBuilder - A fluent interface for creating AI agents with automatic session management
  *
- * This builder provides a convenient way to create agents, manage sessions, and
- * automatically set up runners without the boilerplate code. It supports all
- * agent types and maintains backward compatibility with existing interfaces.
+ * Provides a simple, chainable API for building different types of agents (LLM, Sequential, 
+ * Parallel, Loop, LangGraph) with tools, custom instructions, and multi-agent workflows.
+ * Sessions are automatically created using in-memory storage by default.
  *
- * Examples:
+ * @example
  * ```typescript
- * // Simplest possible usage
- * const response = await AgentBuilder
- *   .withModel("gemini-2.5-flash")
- *   .ask("What is the capital of Australia?");
+ * // Simple usage
+ * const response = await AgentBuilder.withModel("gemini-2.5-flash").ask("Hello");
  *
- * // Simple agent with name
- * const { agent } = AgentBuilder
- *   .create("my-agent")
- *   .withModel("gemini-2.5-flash")
- *   .withInstruction("You are helpful")
- *   .build();
- *
- * // Agent with quick session (no manual IDs needed)
+ * // With tools and instructions
  * const { runner } = await AgentBuilder
- *   .create("my-agent")
+ *   .create("research-agent")
  *   .withModel("gemini-2.5-flash")
- *   .withQuickSession()
- *   .build();
- * const response = await runner.ask("Hello!");
- *
- * // Agent with custom session (optional IDs with smart defaults)
- * const { agent, runner, session } = await AgentBuilder
- *   .create("my-agent")
- *   .withModel("gemini-2.5-flash")
- *   .withSession(sessionService) // userId and appName auto-generated
+ *   .withTools(new GoogleSearch())
+ *   .withInstruction("You are a research assistant")
  *   .build();
  *
- * // Using an AI SDK provider directly
- * import { google } from "@ai-sdk/google";
- * const response = await AgentBuilder.withModel(google()).ask("Hi");
- *
- * // Advanced message format
- * const response = await runner.ask({
- *   parts: [{ text: "Hello" }, { image: "base64..." }]
- * });
+ * // Multi-agent workflow
+ * const { runner } = await AgentBuilder
+ *   .create("workflow")
+ *   .asSequential([agent1, agent2])
+ *   .build();
  * ```
  */
 export class AgentBuilder {
@@ -301,7 +282,8 @@ export class AgentBuilder {
 	}
 
 	/**
-	 * Configure with an in-memory session (for quick setup)
+	 * Configure with an in-memory session with custom IDs
+	 * Note: In-memory sessions are created automatically by default, use this only if you need custom appName/userId
 	 * @param appName Application name (optional, defaults to agent-based name)
 	 * @param userId User identifier (optional, defaults to agent-based ID)
 	 * @returns This builder instance for chaining
@@ -318,6 +300,11 @@ export class AgentBuilder {
 		const agent = this.createAgent();
 		let runner: EnhancedRunner | undefined;
 		let session: Session | undefined;
+
+		// If no session config is provided, create a default in-memory session
+		if (!this.sessionConfig) {
+			this.withQuickSession();
+		}
 
 		if (this.sessionConfig) {
 			session = await this.sessionConfig.service.createSession(
@@ -348,11 +335,6 @@ export class AgentBuilder {
 	 * @returns Agent response
 	 */
 	async ask(message: string | FullMessage): Promise<string> {
-		// If no session config is provided, create a temporary one automatically
-		if (!this.sessionConfig) {
-			this.withQuickSession();
-		}
-
 		const { runner } = await this.build();
 
 		if (!runner) {
@@ -473,6 +455,8 @@ export class AgentBuilder {
 		baseRunner: Runner,
 		session: Session,
 	): EnhancedRunner {
+		const sessionConfig = this.sessionConfig; // Capture sessionConfig in closure
+
 		return {
 			async ask(message: string | FullMessage): Promise<string> {
 				const fullMessage: FullMessage =
@@ -482,12 +466,12 @@ export class AgentBuilder {
 
 				let response = "";
 
-				if (!this.sessionConfig) {
+				if (!sessionConfig) {
 					throw new Error("Session configuration is required");
 				}
 
 				for await (const event of baseRunner.runAsync({
-					userId: this.sessionConfig.userId,
+					userId: sessionConfig.userId,
 					sessionId: session.id,
 					newMessage: fullMessage,
 				})) {
