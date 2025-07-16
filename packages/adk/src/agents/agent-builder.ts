@@ -451,8 +451,6 @@ export class AgentBuilder {
 		baseRunner: Runner,
 		session: Session,
 	): EnhancedRunner {
-		const sessionConfig = this.sessionConfig!;
-
 		return {
 			async ask(message: string | FullMessage): Promise<string> {
 				const fullMessage: FullMessage =
@@ -463,7 +461,7 @@ export class AgentBuilder {
 				let response = "";
 
 				for await (const event of baseRunner.runAsync({
-					userId: sessionConfig.userId,
+					userId: this.sessionConfig.userId,
 					sessionId: session.id,
 					newMessage: fullMessage,
 				})) {
