@@ -1,5 +1,7 @@
+import { type LanguageModel, generateId } from "ai";
 import type { BaseArtifactService } from "../artifacts/base-artifact-service.js";
 import type { BaseMemoryService } from "../memory/base-memory-service.js";
+import type { BaseLlm } from "../models/base-llm.js";
 import type { BasePlanner } from "../planners/base-planner.js";
 import { Runner } from "../runners.js";
 import type { BaseSessionService } from "../sessions/base-session-service.js";
@@ -12,8 +14,6 @@ import { LlmAgent } from "./llm-agent.js";
 import { LoopAgent } from "./loop-agent.js";
 import { ParallelAgent } from "./parallel-agent.js";
 import { SequentialAgent } from "./sequential-agent.js";
-import type { LanguageModel } from "ai";
-import type { BaseLlm } from "../models/base-llm.js";
 
 /**
  * Configuration options for the AgentBuilder
@@ -300,8 +300,6 @@ export class AgentBuilder {
 		return this.withSession(new InMemorySessionService(), userId, appName);
 	}
 
-
-
 	/**
 	 * Build the agent and optionally create runner and session
 	 * @returns Built agent with optional runner and session
@@ -332,7 +330,7 @@ export class AgentBuilder {
 			}
 
 			const baseRunner = new Runner(runnerConfig);
-			
+
 			// Create enhanced runner with simplified API
 			runner = this.createEnhancedRunner(baseRunner, session);
 		}
@@ -427,12 +425,12 @@ export class AgentBuilder {
 	}
 
 	/**
-	 * Generate default user ID based on agent name and timestamp
+	 * Generate default user ID based on agent name and id
 	 * @returns Generated user ID
 	 */
 	private generateDefaultUserId(): string {
-		const timestamp = Date.now();
-		return `user-${this.config.name}-${timestamp}`;
+		const id = generateId();
+		return `user-${this.config.name}-${id}`;
 	}
 
 	/**
@@ -449,14 +447,18 @@ export class AgentBuilder {
 	 * @param session The session instance
 	 * @returns Enhanced runner with simplified API
 	 */
-	private createEnhancedRunner(baseRunner: Runner, session: Session): EnhancedRunner {
+	private createEnhancedRunner(
+		baseRunner: Runner,
+		session: Session,
+	): EnhancedRunner {
 		const sessionConfig = this.sessionConfig!;
-		
+
 		return {
 			async ask(message: string | FullMessage): Promise<string> {
-				const fullMessage: FullMessage = typeof message === 'string' 
-					? { parts: [{ text: message }] }
-					: message;
+				const fullMessage: FullMessage =
+					typeof message === "string"
+						? { parts: [{ text: message }] }
+						: message;
 
 				let response = "";
 
@@ -484,7 +486,7 @@ export class AgentBuilder {
 				newMessage: FullMessage;
 			}) {
 				return baseRunner.runAsync(params);
-			}
+			},
 		};
 	}
 }
