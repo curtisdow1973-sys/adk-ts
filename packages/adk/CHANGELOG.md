@@ -1,5 +1,11 @@
 # @iqai/adk
 
+## 0.1.6
+
+### Patch Changes
+
+- 6bc189d: Adds coingecko mcp server definition
+
 ## 0.1.5
 
 ### Patch Changes
