@@ -1,5 +1,7 @@
+import type { Content, Part } from "@google/genai";
 import { type LanguageModel, generateId } from "ai";
 import type { BaseArtifactService } from "../artifacts/base-artifact-service.js";
+import type { Event } from "../events/event.js";
 import type { BaseMemoryService } from "../memory/base-memory-service.js";
 import type { BaseLlm } from "../models/base-llm.js";
 import type { BasePlanner } from "../planners/base-planner.js";
@@ -45,18 +47,15 @@ export interface SessionConfig {
 /**
  * Message part interface for flexible message input
  */
-export interface MessagePart {
-	text?: string;
+export interface MessagePart extends Part {
 	image?: string;
-	[key: string]: any;
 }
 
 /**
  * Full message interface for advanced usage
  */
-export interface FullMessage {
-	parts: MessagePart[];
-	[key: string]: any;
+export interface FullMessage extends Content {
+	parts?: MessagePart[];
 }
 
 /**
@@ -68,7 +67,7 @@ export interface EnhancedRunner {
 		userId: string;
 		sessionId: string;
 		newMessage: FullMessage;
-	}): AsyncIterable<any>;
+	}): AsyncIterable<Event>;
 }
 
 /**
@@ -89,6 +88,17 @@ export type AgentType =
 	| "parallel"
 	| "loop"
 	| "langgraph";
+
+/**
+ * Configuration for creating a Runner instance
+ */
+interface RunnerConfig {
+	appName: string;
+	agent: BaseAgent;
+	sessionService: BaseSessionService;
+	memoryService?: BaseMemoryService;
+	artifactService?: BaseArtifactService;
+}
 
 /**
  * AgentBuilder - A fluent interface for building agents with optional session management
@@ -315,19 +325,13 @@ export class AgentBuilder {
 				this.sessionConfig.userId,
 			);
 
-			const runnerConfig: any = {
+			const runnerConfig: RunnerConfig = {
 				appName: this.sessionConfig.appName,
 				agent,
 				sessionService: this.sessionConfig.service,
+				memoryService: this.sessionConfig.memoryService,
+				artifactService: this.sessionConfig.artifactService,
 			};
-
-			if (this.sessionConfig.memoryService) {
-				runnerConfig.memoryService = this.sessionConfig.memoryService;
-			}
-
-			if (this.sessionConfig.artifactService) {
-				runnerConfig.artifactService = this.sessionConfig.artifactService;
-			}
 
 			const baseRunner = new Runner(runnerConfig);
 
@@ -381,7 +385,11 @@ export class AgentBuilder {
 				});
 			}
 			case "sequential":
-				if (!this.config.subAgents) {
+				if (
+					!this.config.subAgents ||
+					!Array.isArray(this.config.subAgents) ||
+					this.config.subAgents.length === 0
+				) {
 					throw new Error("Sub-agents required for sequential agent");
 				}
 				return new SequentialAgent({
@@ -391,7 +399,11 @@ export class AgentBuilder {
 				});
 
 			case "parallel":
-				if (!this.config.subAgents) {
+				if (
+					!this.config.subAgents ||
+					!Array.isArray(this.config.subAgents) ||
+					this.config.subAgents.length === 0
+				) {
 					throw new Error("Sub-agents required for parallel agent");
 				}
 				return new ParallelAgent({
@@ -401,7 +413,11 @@ export class AgentBuilder {
 				});
 
 			case "loop":
-				if (!this.config.subAgents) {
+				if (
+					!this.config.subAgents ||
+					!Array.isArray(this.config.subAgents) ||
+					this.config.subAgents.length === 0
+				) {
 					throw new Error("Sub-agents required for loop agent");
 				}
 				return new LoopAgent({
@@ -412,7 +428,13 @@ export class AgentBuilder {
 				});
 
 			case "langgraph":
-				if (!this.config.nodes || !this.config.rootNode) {
+				if (
+					!this.config.nodes ||
+					!Array.isArray(this.config.nodes) ||
+					this.config.nodes.length === 0 ||
+					!this.config.rootNode ||
+					typeof this.config.rootNode !== "string"
+				) {
 					throw new Error("Nodes and root node required for LangGraph agent");
 				}
 				return new LangGraphAgent({
@@ -460,14 +482,23 @@ export class AgentBuilder {
 
 				let response = "";
 
+				if (!this.sessionConfig) {
+					throw new Error("Session configuration is required");
+				}
+
 				for await (const event of baseRunner.runAsync({
 					userId: this.sessionConfig.userId,
 					sessionId: session.id,
 					newMessage: fullMessage,
 				})) {
-					if (event.content?.parts) {
+					if (event.content?.parts && Array.isArray(event.content.parts)) {
 						const content = event.content.parts
-							.map((part) => part.text || "")
+							.map(
+								(part) =>
+									(part && typeof part === "object" && "text" in part
+										? part.text
+										: "") || "",
+							)
 							.join("");
 						if (content) {
 							response += content;
