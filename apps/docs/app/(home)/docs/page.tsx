@@ -24,20 +24,20 @@ export default function DocsPage(): React.ReactElement {
       </p>
       <div className="mt-8 flex justify-center">
         <Link
-          href="/docs/framework/get-started"
+          href="/docs/framework/framework/get-started"
           className={cn(buttonVariants(), 'px-6')}
         >
           Get Started
         </Link>
         <Link
-          href="/docs/framework/quickstart"
+          href="/docs/framework/framework/quickstart"
           className={cn(buttonVariants({ variant: 'outline' }), 'ml-4 px-6')}
         >
           Quickstart Guide
         </Link>
       </div>
       <div className="mt-16 grid grid-cols-1 gap-6 text-left md:grid-cols-2 max-w-4xl mx-auto">
-        <Item href="/docs/framework">
+        <Item href="/docs/framework/framework">
           <Icon>
             <Building2 className="size-full" />
           </Icon>
@@ -46,7 +46,7 @@ export default function DocsPage(): React.ReactElement {
             Build intelligent AI agents with our comprehensive TypeScript framework featuring tools, sessions, and runtime management.
           </p>
         </Item>
-        <Item href="/docs/mcp-servers">
+        <Item href="/docs/framework/mcp-servers">
           <Icon>
             <Server className="size-full" />
           </Icon>

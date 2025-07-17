@@ -303,7 +303,7 @@ import { openai } from "@ai-sdk/openai";
 
 async function useOpenAI() {
   // Set OPENAI_API_KEY in your environment
-  
+
   const agent = new LlmAgent({
     name: "openai_agent",
     model: openai("gpt-4"),
@@ -328,9 +328,9 @@ import { anthropic } from "@ai-sdk/anthropic";
 
 async function useAnthropic() {
   // Set ANTHROPIC_API_KEY in your environment
-  
+
   const agent = new LlmAgent({
-    name: "claude_agent", 
+    name: "claude_agent",
     model: anthropic("claude-3-5-sonnet-20241022"),
     instruction: "You are a helpful assistant"
   });
@@ -352,25 +352,25 @@ Congratulations! You've created your first AI agent. Here's what to explore next
   <Card
     title="🛠️ Add More Tools"
     description="Learn about built-in tools and how to create custom ones"
-    href="/docs/tools"
+    href="/docs/framework/tools"
   />
 
   <Card
     title="🤖 Advanced Agents"
     description="Explore LLM agents, workflow agents, and multi-agent systems"
-    href="/docs/agents"
+    href="/docs/framework/agents"
   />
 
   <Card
     title="💾 Sessions & Memory"
     description="Add persistent conversations and memory to your agents"
-    href="/docs/sessions"
+    href="/docs/framework/sessions"
   />
 
   <Card
     title="📊 Real Examples"
     description="See complete working examples with different patterns"
-    href="/docs/examples"
+    href="/docs/framework/examples"
   />
 </div>
 
