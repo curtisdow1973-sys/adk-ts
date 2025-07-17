@@ -668,9 +668,20 @@ export function createWebServer(params: {
 			// Import agent module
 			console.log(`Requiring agent module from: ${agentModulePath}`);
 
-			// Use ts-node to handle TypeScript files if needed
+			// Register TypeScript compiler with compatible options
 			try {
-				require("ts-node/register");
+				const { register } = require("ts-node");
+				register({
+					transpileOnly: true,
+					compilerOptions: {
+						module: "CommonJS",
+						moduleResolution: "Node",
+						target: "ES2020",
+						esModuleInterop: true,
+						allowSyntheticDefaultImports: true,
+						skipLibCheck: true,
+					},
+				});
 			} catch (err) {
 				console.warn(
 					"Failed to register ts-node. If agent uses TypeScript, this might cause issues.",
@@ -1082,26 +1093,31 @@ export function createWebServer(params: {
 	}
 
 	if (uiDir) {
-		// Serve static files
+		// Serve static files from the determined UI directory
 		app.use(express.static(uiDir));
 
-		// Serve index.html for all routes (SPA support)
-		app.get("*", (req: Request, res: Response) => {
-			if (req.path.startsWith("/api/") || req.path === "/list-apps") {
-				// Let API endpoints be handled by their respective handlers
-				return;
+		// For all other routes, serve the main index.html file (supports SPA routing)
+		app.get("/*", (req: Request, res: Response, next) => {
+			// Exclude API-like paths from being served the index.html file
+			if (
+				req.path.startsWith("/api/") ||
+				req.path.startsWith("/apps/") ||
+				req.path === "/list-apps"
+			) {
+				return next(); // Pass control to the next handler (e.g., 404)
 			}
+			// For any other path, serve the main application file
 			res.sendFile(path.join(uiDir, "index.html"));
 		});
 
 		console.log(`Serving UI from: ${uiDir}`);
 	} else {
-		// If no UI is available, provide a simple status page
+		// If no UI directory is found, provide a simple status page
 		app.get("/", (req: Request, res: Response) => {
-			res.send(`
+			res.status(404).send(`
         <html>
           <head>
-            <title>ADK Web Server</title>
+            <title>ADK Web Server - UI Not Found</title>
             <style>
               body { font-family: Arial, sans-serif; margin: 40px; line-height: 1.6; }
               h1 { color: #333; }
@@ -1114,13 +1130,14 @@ export function createWebServer(params: {
             <div class="info">
               <p>Server is running on port ${port}</p>
               <p>Agent directory: ${path.resolve(agentDir)}</p>
-              <p>Connect via Socket.IO to interact with the agent</p>
-              <p>No UI is available. UI directory not found.</p>
+              <p>No UI is available because the UI directory was not found.</p>
               <p>Checked these locations:</p>
               <ul>
-                ${possibleUiDirs.map((dir) => `<li><code>${dir}</code></li>`).join("\n              ")}
+                ${possibleUiDirs
+									.map((dir) => `<li><code>${dir}</code></li>`)
+									.join("\n              ")}
               </ul>
-              <p>This likely means the browser folder was not included in the package.</p>
+              <p>This likely means the 'browser' folder was not included in the package.</p>
             </div>
           </body>
         </html>

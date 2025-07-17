@@ -1,7 +1,7 @@
 import * as fs from "node:fs";
 import * as path from "node:path";
-import * as readline from "node:readline";
-import { promisify } from "node:util";
+import { intro, outro, select, text, note, spinner } from "@clack/prompts";
+import chalk from "chalk";
 import { VERSION } from "../index";
 
 const AGENT_TS_TEMPLATE = `import { env } from "node:process";
@@ -166,92 +166,75 @@ Next steps:
 To add more agents: create new folders with agent.ts files!
 `;
 
-function askQuestion(
-	rl: readline.Interface,
-	question: string,
-	defaultValue?: string,
-): Promise<string> {
-	return new Promise((resolve) => {
-		rl.question(
-			defaultValue ? `${question} (${defaultValue}): ` : `${question}: `,
-			(answer) => {
-				resolve(answer?.trim() ? answer.trim() : defaultValue || "");
-			},
-		);
-	});
-}
-
 async function promptStr(
-	rl: readline.Interface,
 	promptPrefix: string,
 	priorMsg?: string,
 	defaultValue?: string,
 ): Promise<string> {
 	if (priorMsg) {
-		console.log(priorMsg);
+		note(priorMsg);
 	}
 
-	// No need for a loop here as we will resolve only when we have a valid value
-	const value = await askQuestion(rl, promptPrefix, defaultValue);
-	return value?.trim() ? value.trim() : defaultValue || "";
+	const value = await text({
+		message: promptPrefix,
+		defaultValue: defaultValue || "",
+		placeholder: defaultValue || "Enter value...",
+	});
+
+	if (typeof value === "string") {
+		return value.trim() || defaultValue || "";
+	}
+	return defaultValue || "";
 }
 
 async function promptForGoogleCloud(
-	rl: readline.Interface,
 	googleCloudProject?: string,
 ): Promise<string> {
 	const defaultProject =
 		googleCloudProject || process.env.GOOGLE_CLOUD_PROJECT || "";
-	return promptStr(
-		rl,
-		"Enter Google Cloud project ID",
-		undefined,
-		defaultProject,
-	);
+	return promptStr("Enter Google Cloud project ID", undefined, defaultProject);
 }
 
 async function promptForGoogleCloudRegion(
-	rl: readline.Interface,
 	googleCloudRegion?: string,
 ): Promise<string> {
 	const defaultRegion =
 		googleCloudRegion || process.env.GOOGLE_CLOUD_LOCATION || "us-central1";
-	return promptStr(rl, "Enter Google Cloud region", undefined, defaultRegion);
+	return promptStr("Enter Google Cloud region", undefined, defaultRegion);
 }
 
-async function promptForGoogleApiKey(
-	rl: readline.Interface,
-	googleApiKey?: string,
-): Promise<string> {
+async function promptForGoogleApiKey(googleApiKey?: string): Promise<string> {
 	const defaultApiKey = googleApiKey || process.env.GOOGLE_API_KEY || "";
-	return promptStr(rl, "Enter Google API key", GOOGLE_API_MSG, defaultApiKey);
+	return promptStr("Enter Google API key", GOOGLE_API_MSG, defaultApiKey);
 }
 
-async function promptForModel(rl: readline.Interface): Promise<string> {
-	// Ask once and handle response
-	const modelChoice = await askQuestion(
-		rl,
-		"Choose a model for the root agent:\n1. gemini-2.0-flash (recommended)\n2. gemini-2.5-pro\n3. Other models (fill later)\nChoose model",
-		"1",
-	);
+async function promptForModel(): Promise<string> {
+	const modelChoice = await select({
+		message: "Choose a model for the root agent",
+		options: [
+			{
+				value: "gemini-2.0-flash",
+				label: "Gemini 2.0 Flash",
+				hint: "Recommended",
+			},
+			{ value: "gemini-2.5-pro", label: "Gemini 2.5 Pro" },
+			{
+				value: "<FILL_IN_MODEL>",
+				label: "Other models",
+				hint: "Configure later",
+			},
+		],
+		initialValue: "gemini-2.0-flash",
+	});
 
-	if (modelChoice === "1") {
-		return "gemini-2.0-flash";
-	}
-	if (modelChoice === "2") {
-		return "gemini-2.5-pro";
-	}
-	if (modelChoice === "3") {
-		console.log(OTHER_MODEL_MSG);
-		return "<FILL_IN_MODEL>";
+	if (modelChoice === "<FILL_IN_MODEL>") {
+		note(OTHER_MODEL_MSG);
 	}
 
-	// Default fallback
-	return "gemini-2.0-flash";
+	return typeof modelChoice === "string" ? modelChoice : "gemini-2.0-flash";
 }
 
 async function promptToChooseBackend(
-	rl: readline.Interface,
 	googleApiKey?: string,
 	googleCloudProject?: string,
 	googleCloudRegion?: string,
@@ -260,27 +243,25 @@ async function promptToChooseBackend(
 	googleCloudProject?: string;
 	googleCloudRegion?: string;
 }> {
-	// Ask once and handle response
-	const backendChoice = await askQuestion(
-		rl,
-		"1. Google AI\n2. Vertex AI\nChoose a backend",
-		"1",
-	);
+	const backendChoice = await select({
+		message: "Choose a backend",
+		options: [
+			{ value: "google-ai", label: "Google AI", hint: "Requires API key" },
+			{ value: "vertex-ai", label: "Vertex AI", hint: "Requires GCP project" },
+		],
+		initialValue: "google-ai",
+	});
 
-	if (backendChoice === "1") {
-		const finalGoogleApiKey = await promptForGoogleApiKey(rl, googleApiKey);
+	if (backendChoice === "google-ai") {
+		const finalGoogleApiKey = await promptForGoogleApiKey(googleApiKey);
 		return { googleApiKey: finalGoogleApiKey };
 	}
-	if (backendChoice === "2") {
-		console.log(GOOGLE_CLOUD_SETUP_MSG);
-		const finalGoogleCloudProject = await promptForGoogleCloud(
-			rl,
-			googleCloudProject,
-		);
-		const finalGoogleCloudRegion = await promptForGoogleCloudRegion(
-			rl,
-			googleCloudRegion,
-		);
+	if (backendChoice === "vertex-ai") {
+		note(GOOGLE_CLOUD_SETUP_MSG);
+		const finalGoogleCloudProject =
+			await promptForGoogleCloud(googleCloudProject);
+		const finalGoogleCloudRegion =
+			await promptForGoogleCloudRegion(googleCloudRegion);
 		return {
 			googleCloudProject: finalGoogleCloudProject,
 			googleCloudRegion: finalGoogleCloudRegion,
@@ -288,7 +269,7 @@ async function promptToChooseBackend(
 	}
 
 	// Default fallback to Google AI
-	const finalGoogleApiKey = await promptForGoogleApiKey(rl, googleApiKey);
+	const finalGoogleApiKey = await promptForGoogleApiKey(googleApiKey);
 	return { googleApiKey: finalGoogleApiKey };
 }
 
@@ -421,33 +402,42 @@ export async function runCmd({
 	googleCloudProject?: string;
 	googleCloudRegion?: string;
 }) {
-	const rl = readline.createInterface({
-		input: process.stdin,
-		output: process.stdout,
-	});
+	intro(chalk.cyan(`🚀 Creating new ADK agent: ${chalk.bold(agentName)}`));
 
 	// Sanitize the agent name
 	const sanitizedAgentName = sanitizeAgentName(agentName);
 	if (sanitizedAgentName !== agentName) {
-		console.log(
+		note(
 			`Agent name has been sanitized from "${agentName}" to "${sanitizedAgentName}" (only alphanumeric characters and underscores allowed)`,
 		);
 	}
 
 	if (!model) {
-		model = await promptForModel(rl);
+		model = await promptForModel();
 	}
+
+	const s = spinner();
+	s.start("Configuring backend...");
+
+	// Stop spinner before interactive prompts to prevent visual conflicts
+	s.stop("Choose backend options");
+
 	const backend = await promptToChooseBackend(
-		rl,
 		googleApiKey,
 		googleCloudProject,
 		googleCloudRegion,
 	);
+
+	// No need for another spinner stop here since it's already stopped above
+
+	s.start("Generating agent files...");
 	await generateFiles(sanitizedAgentName, {
 		googleApiKey: backend.googleApiKey,
 		googleCloudProject: backend.googleCloudProject,
 		googleCloudRegion: backend.googleCloudRegion,
 		model,
 	});
-	rl.close();
+	s.stop("Files generated");
+
+	outro(chalk.green(`✅ Agent "${sanitizedAgentName}" created successfully!`));
 }

@@ -128,10 +128,8 @@ export function createApiServer(options: ApiServerOptions): {
 	const traceDict: Record<string, any> = {};
 	const sessionTraceDict: Record<string, number[]> = {};
 
-	// Create in-memory exporter for session tracing
 	const memoryExporter = new InMemoryExporter(sessionTraceDict);
 
-	// Create the Express app
 	const app = express();
 	const server = http.createServer(app);
 	const io = new SocketIOServer(server, {
@@ -142,7 +140,6 @@ export function createApiServer(options: ApiServerOptions): {
 		},
 	});
 
-	// Add middleware
 	app.use(express.json());
 	app.use(
 		cors({
@@ -697,13 +694,15 @@ export function createApiServer(options: ApiServerOptions): {
 		const BASE_DIR = path.dirname(__filename);
 		const ANGULAR_DIST_PATH = path.join(BASE_DIR, "browser");
 
-		// Root redirect to dev-ui
-		app.get("/", (req, res) => {
-			res.redirect("/dev-ui");
-		});
+		// Serve static files from the browser directory
+		app.use(express.static(ANGULAR_DIST_PATH));
 
-		// Dev UI page - serve the index.html file directly
-		app.get("/dev-ui", (req, res) => {
+		// Dev UI page - serve the index.html for all other routes, supporting SPAs
+		app.get("/*", (req, res) => {
+			// Exclude API-like paths from being served the index.html file
+			if (req.path.startsWith("/api/") || req.path.startsWith("/debug/")) {
+				return res.status(404).send("Not Found");
+			}
 			const indexHtmlPath = path.join(ANGULAR_DIST_PATH, "index.html");
 			if (fs.existsSync(indexHtmlPath)) {
 				res.sendFile(indexHtmlPath);
@@ -716,9 +715,6 @@ export function createApiServer(options: ApiServerOptions): {
 					);
 			}
 		});
-
-		// Serve all static files from the browser directory
-		app.use("/", express.static(ANGULAR_DIST_PATH));
 
 		console.log(`Serving web UI from ${ANGULAR_DIST_PATH}`);
 	}
