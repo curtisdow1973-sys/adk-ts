@@ -8,31 +8,6 @@ import { Tabs, Tab } from 'fumadocs-ui/components/tabs';
 - **Package**: [`@iqai/mcp-near-intent-swaps`](https://www.npmjs.com/package/@iqai/mcp-near-intent-swaps)
 - **Purpose**: An MCP server for Near Intents swaps using the [Defuse Protocol one-click SDK](https://github.com/defuse-protocol/one-click-sdk-typescript). This server provides tools for cross-chain token swaps through NEAR's intent-based architecture.
 
-## Features
-
-- **GET_NEAR_SWAP_TOKENS**: Discover available tokens for swaps
-- **GET_NEAR_SWAP_SIMPLE_QUOTE**: Get basic swap quotes without addresses
-- **GET_NEAR_SWAP_FULL_QUOTE**: Get complete quotes with deposit addresses
-- **EXECUTE_NEAR_SWAP**: Execute swaps by submitting deposit transactions
-- **CHECK_NEAR_SWAP_STATUS**: Check the status of swap executions
-
-## User Flow
-
-This server supports a complete 5-step user flow:
-
-1. **[DISCOVERY]** Use `GET_NEAR_SWAP_TOKENS` to discover available tokens
-2. **[STEP 1]** Use `GET_NEAR_SWAP_SIMPLE_QUOTE` to check swap rates without addresses
-3. **[STEP 2]** Use `GET_NEAR_SWAP_FULL_QUOTE` to get deposit address when ready to swap
-4. **[STEP 3]** User sends funds to the deposit address (external action)
-5. **[STEP 4]** Use `EXECUTE_NEAR_SWAP` to submit deposit transaction hash
-6. **[STEP 5]** Use `CHECK_NEAR_SWAP_STATUS` to monitor swap progress until completion
-
-## Prerequisites
-
-- Node.js >= 16
-- pnpm >= 8
-- A JWT token from the Defuse Protocol (for authentication)
-
 ## Usage with ADK TypeScript
 
 <Tabs items={['Simple', 'Verbose', 'Claude Desktop']}>
@@ -84,6 +59,32 @@ This server supports a complete 5-step user flow:
     ```
   </Tab>
 </Tabs>
+
+
+## Features
+
+- **GET_NEAR_SWAP_TOKENS**: Discover available tokens for swaps
+- **GET_NEAR_SWAP_SIMPLE_QUOTE**: Get basic swap quotes without addresses
+- **GET_NEAR_SWAP_FULL_QUOTE**: Get complete quotes with deposit addresses
+- **EXECUTE_NEAR_SWAP**: Execute swaps by submitting deposit transactions
+- **CHECK_NEAR_SWAP_STATUS**: Check the status of swap executions
+
+## User Flow
+
+This server supports a complete 5-step user flow:
+
+1. **[DISCOVERY]** Use `GET_NEAR_SWAP_TOKENS` to discover available tokens
+2. **[STEP 1]** Use `GET_NEAR_SWAP_SIMPLE_QUOTE` to check swap rates without addresses
+3. **[STEP 2]** Use `GET_NEAR_SWAP_FULL_QUOTE` to get deposit address when ready to swap
+4. **[STEP 3]** User sends funds to the deposit address (external action)
+5. **[STEP 4]** Use `EXECUTE_NEAR_SWAP` to submit deposit transaction hash
+6. **[STEP 5]** Use `CHECK_NEAR_SWAP_STATUS` to monitor swap progress until completion
+
+## Prerequisites
+
+- Node.js >= 16
+- pnpm >= 8
+- A JWT token from the Defuse Protocol (for authentication)
 
 ## Configuration
 

@@ -9,6 +9,63 @@ import { Tabs, Tab } from 'fumadocs-ui/components/tabs';
 - **Package**: [`@iqai/mcp-bamm`](https://www.npmjs.com/package/@iqai/mcp-bamm)
 - **Purpose**: Interacting with Borrow Automated Market Maker (BAMM) contracts on the Fraxtal blockchain.
 
+## Usage with ADK TypeScript
+
+<Tabs items={['Simple', 'Verbose', 'Claude Desktop']}>
+  <Tab value="Simple">
+    ```typescript
+    import {McpBamm} from "@iqai/adk";
+
+    const toolset = McpBamm({
+      env: {
+        WALLET_PRIVATE_KEY: process.env.WALLET_PRIVATE_KEY,
+      },
+      })
+
+    const tools = toolset.getTools()
+    ```
+  </Tab>
+
+  <Tab value="Verbose">
+    ```typescript
+    import {McpToolset} from "@iqai/adk";
+
+    const toolset = new McpToolset({
+      name: "BAMM MCP Client",
+      description: "Client for BAMM DeFi operations",
+      transport: {
+        mode: "stdio",
+        command: "pnpm",
+        args: ["dlx", "@iqai/mcp-bamm"],
+        env: {
+          WALLET_PRIVATE_KEY: process.env.WALLET_PRIVATE_KEY,
+          PATH: process.env.PATH || "",
+        },
+      },
+    })
+
+    const tools = toolset.getTools()
+    ```
+  </Tab>
+
+  <Tab value="Claude Desktop">
+    ```json
+    {
+      "mcpServers": {
+        "bamm-mcp-server": {
+          "command": "pnpm",
+          "args": ["dlx", "@iqai/mcp-bamm"],
+          "env": {
+            "WALLET_PRIVATE_KEY": "your_wallet_private_key_here"
+          }
+        }
+      }
+    }
+    ```
+  </Tab>
+</Tabs>
+
+
 ## Features
 
 - Allows MCP-compatible clients to manage BAMM positions, borrow against LP tokens, and perform other operations related to the BAMM protocol.
@@ -73,61 +130,6 @@ Handle the private key with extreme care. Ensure it is stored securely and only 
 - `WALLET_PRIVATE_KEY`: (Required for all blockchain operations)
   - The private key of the wallet to be used for interacting with BAMM contracts (signing transactions for lending, borrowing, etc.).
 
-## Usage with ADK TypeScript
-
-<Tabs items={['Simple', 'Verbose', 'Claude Desktop']}>
-  <Tab value="Simple">
-    ```typescript
-    import {McpBamm} from "@iqai/adk";
-
-    const toolset = McpBamm({
-      env: {
-        WALLET_PRIVATE_KEY: process.env.WALLET_PRIVATE_KEY,
-      },
-      })
-
-    const tools = toolset.getTools()
-    ```
-  </Tab>
-
-  <Tab value="Verbose">
-    ```typescript
-    import {McpToolset} from "@iqai/adk";
-
-    const toolset = new McpToolset({
-      name: "BAMM MCP Client",
-      description: "Client for BAMM DeFi operations",
-      transport: {
-        mode: "stdio",
-        command: "pnpm",
-        args: ["dlx", "@iqai/mcp-bamm"],
-        env: {
-          WALLET_PRIVATE_KEY: process.env.WALLET_PRIVATE_KEY,
-          PATH: process.env.PATH || "",
-        },
-      },
-    })
-
-    const tools = toolset.getTools()
-    ```
-  </Tab>
-
-  <Tab value="Claude Desktop">
-    ```json
-    {
-      "mcpServers": {
-        "bamm-mcp-server": {
-          "command": "pnpm",
-          "args": ["dlx", "@iqai/mcp-bamm"],
-          "env": {
-            "WALLET_PRIVATE_KEY": "your_wallet_private_key_here"
-          }
-        }
-      }
-    }
-    ```
-  </Tab>
-</Tabs>
 
 ## Usage Examples
 

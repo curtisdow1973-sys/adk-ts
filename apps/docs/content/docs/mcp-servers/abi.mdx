@@ -9,33 +9,6 @@ import { Tabs, Tab } from 'fumadocs-ui/components/tabs';
 - **Package**: [`@iqai/mcp-abi`](https://www.npmjs.com/package/@iqai/mcp-abi)
 - **Purpose**: Smart contract ABI interactions for Ethereum-compatible blockchains
 
-## Features
-
-- Dynamically generates MCP tools based on contract ABI
-- Supports both read (view/pure) and write functions
-- Automatic tool naming with contract prefixes
-- Compatible with any Ethereum-compatible blockchain
-- Comprehensive error handling and transaction management
-
-## Available Tools
-
-The server automatically creates tools for each function in the provided ABI:
-
-- **Read Functions**: Query contract state without transactions
-  - Example: `ERC20_BALANCE_OF`, `ERC20_TOTAL_SUPPLY`, `ERC20_NAME`
-- **Write Functions**: Execute state-changing transactions
-  - Example: `ERC20_TRANSFER`, `ERC20_APPROVE`, `ERC20_MINT`
-
-## Environment Variables
-
-| Variable             | Description                         | Required                             |
-| -------------------- | ----------------------------------- | ------------------------------------ |
-| `WALLET_PRIVATE_KEY` | Private key for transaction signing | For write functions                  |
-| `CONTRACT_ABI`       | JSON string of the contract's ABI   | Yes                                  |
-| `CONTRACT_ADDRESS`   | Deployed contract address           | Yes                                  |
-| `CONTRACT_NAME`      | Friendly name for tool prefixes     | Optional (defaults to "CONTRACT")    |
-| `CHAIN_ID`           | Blockchain network chain ID         | Optional (defaults to Fraxtal - 252) |
-| `RPC_URL`            | Custom RPC endpoint URL             | Optional                             |
 
 ## Usage with ADK TypeScript
 
@@ -107,6 +80,34 @@ The server automatically creates tools for each function in the provided ABI:
     ```
   </Tab>
 </Tabs>
+
+## Features
+
+- Dynamically generates MCP tools based on contract ABI
+- Supports both read (view/pure) and write functions
+- Automatic tool naming with contract prefixes
+- Compatible with any Ethereum-compatible blockchain
+- Comprehensive error handling and transaction management
+
+## Available Tools
+
+The server automatically creates tools for each function in the provided ABI:
+
+- **Read Functions**: Query contract state without transactions
+  - Example: `ERC20_BALANCE_OF`, `ERC20_TOTAL_SUPPLY`, `ERC20_NAME`
+- **Write Functions**: Execute state-changing transactions
+  - Example: `ERC20_TRANSFER`, `ERC20_APPROVE`, `ERC20_MINT`
+
+## Environment Variables
+
+| Variable             | Description                         | Required                             |
+| -------------------- | ----------------------------------- | ------------------------------------ |
+| `WALLET_PRIVATE_KEY` | Private key for transaction signing | For write functions                  |
+| `CONTRACT_ABI`       | JSON string of the contract's ABI   | Yes                                  |
+| `CONTRACT_ADDRESS`   | Deployed contract address           | Yes                                  |
+| `CONTRACT_NAME`      | Friendly name for tool prefixes     | Optional (defaults to "CONTRACT")    |
+| `CHAIN_ID`           | Blockchain network chain ID         | Optional (defaults to Fraxtal - 252) |
+| `RPC_URL`            | Custom RPC endpoint URL             | Optional                             |
 
 ## Usage Examples
 

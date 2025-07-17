@@ -8,62 +8,7 @@ import { Tabs, Tab } from 'fumadocs-ui/components/tabs';
 
 - **Package**: [`@iqai/mcp-atp`](https://www.npmjs.com/package/@iqai/mcp-atp)
 - **Purpose**: Interact with the IQ AI Agent Tokenization Platform
-**Example**: 🚀 [MCP-ATP Agent Example](https://github.com/IQAIcom/adk-ts/tree/main/apps/examples/src/mcp-atp-agent)
-
-## Features
-
-- Interact with the IQ AI Agent Tokenization Platform
-- Fetch statistics and details for a specific AI agent
-- Retrieve the user's current holdings in ATP AI tokens
-- Purchase AI agent tokens using IQ as the base currency
-- Sell AI agent tokens back to the protocol
-- Retrieve logs for a specific AI agent, with pagination
-- Add a new log entry for a specific AI agent
-
-## Available Tools
-
-### `ATP_AGENT_STATS`
-
-Fetch statistics and details for a specific AI agent:
-
-- Parameters: `tokenContract` (string)
-
-### `ATP_GET_AGENT_POSITIONS`
-
-Retrieve the user's current holdings in ATP AI tokens:
-
-- Requires: `ATP_WALLET_PRIVATE_KEY`
-
-### `ATP_BUY_AGENT`
-
-Purchase AI agent tokens using IQ as the base currency:
-
-- Parameters: `tokenContract` (string), `amount` (string)
-- Requires: `ATP_WALLET_PRIVATE_KEY`
-
-### `ATP_SELL_AGENT`
-
-Sell AI agent tokens back to the protocol:
-
-- Parameters: `tokenContract` (string), `amount` (string)
-- Requires: `ATP_WALLET_PRIVATE_KEY`
-
-### `ATP_GET_AGENT_LOGS`
-
-Retrieve logs for a specific AI agent, with pagination:
-
-- Parameters: `agentTokenContract` (string), `page` (number, optional), `limit` (number, optional)
-
-### `ATP_ADD_AGENT_LOG`
-
-Add a new log entry for a specific AI agent:
-
-- Parameters: `agentTokenContract` (string), `content` (string), `apiKey` (string), `txHash` (string, optional), `chainId` (number, optional)
-
-## Environment Variables
-
-- `ATP_WALLET_PRIVATE_KEY`: Required for position and trading operations
-- `ATP_API_KEY`: Required for certain backend API calls
+- **Example**: 🚀 [MCP-ATP Agent Example](https://github.com/IQAIcom/adk-ts/tree/main/apps/examples/src/mcp-atp-agent)
 
 ## Usage with ADK TypeScript
 
@@ -122,6 +67,61 @@ Add a new log entry for a specific AI agent:
     ```
   </Tab>
 </Tabs>
+
+## Features
+
+- Interact with the IQ AI Agent Tokenization Platform
+- Fetch statistics and details for a specific AI agent
+- Retrieve the user's current holdings in ATP AI tokens
+- Purchase AI agent tokens using IQ as the base currency
+- Sell AI agent tokens back to the protocol
+- Retrieve logs for a specific AI agent, with pagination
+- Add a new log entry for a specific AI agent
+
+## Available Tools
+
+### `ATP_AGENT_STATS`
+
+Fetch statistics and details for a specific AI agent:
+
+- Parameters: `tokenContract` (string)
+
+### `ATP_GET_AGENT_POSITIONS`
+
+Retrieve the user's current holdings in ATP AI tokens:
+
+- Requires: `ATP_WALLET_PRIVATE_KEY`
+
+### `ATP_BUY_AGENT`
+
+Purchase AI agent tokens using IQ as the base currency:
+
+- Parameters: `tokenContract` (string), `amount` (string)
+- Requires: `ATP_WALLET_PRIVATE_KEY`
+
+### `ATP_SELL_AGENT`
+
+Sell AI agent tokens back to the protocol:
+
+- Parameters: `tokenContract` (string), `amount` (string)
+- Requires: `ATP_WALLET_PRIVATE_KEY`
+
+### `ATP_GET_AGENT_LOGS`
+
+Retrieve logs for a specific AI agent, with pagination:
+
+- Parameters: `agentTokenContract` (string), `page` (number, optional), `limit` (number, optional)
+
+### `ATP_ADD_AGENT_LOG`
+
+Add a new log entry for a specific AI agent:
+
+- Parameters: `agentTokenContract` (string), `content` (string), `apiKey` (string), `txHash` (string, optional), `chainId` (number, optional)
+
+## Environment Variables
+
+- `ATP_WALLET_PRIVATE_KEY`: Required for position and trading operations
+- `ATP_API_KEY`: Required for certain backend API calls
 
 ## Usage Examples
 
