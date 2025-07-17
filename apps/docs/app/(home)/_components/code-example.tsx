@@ -62,7 +62,6 @@ export function CodeExample() {
                     .withDescription("A helpful AI assistant")
                     .withInstruction("Provide concise responses.")
                     .withTools(new GoogleSearch(), new HttpRequestTool())
-                    .withQuickSession("my-app", "user-123")
                     .build();
 
                   // Multi-agent workflow

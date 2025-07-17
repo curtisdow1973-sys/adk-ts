@@ -129,7 +129,6 @@ async function quickQuery() {
     .create("query_assistant")
     .withModel("gemini-2.5-flash")
     .withInstruction("You are a helpful AI. Respond clearly and concisely.")
-    .withQuickSession("my-app", "user-123")
     .ask("What is the capital of France?");
 
   console.log(response);
