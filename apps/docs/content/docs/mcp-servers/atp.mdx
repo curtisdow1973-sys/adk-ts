@@ -70,18 +70,23 @@ Add a new log entry for a specific AI agent:
 <Tabs items={['Simple', 'Verbose', 'Claude Desktop']}>
   <Tab value="Simple">
     ```typescript
-    McpAtp({
+    import {McpAtp} from "@iqai/adk";
+
+    const toolset = McpAtp({
       env: {
         ATP_WALLET_PRIVATE_KEY: process.env.WALLET_PRIVATE_KEY,
         ATP_API_KEY: process.env.ATP_API_KEY,
       },
     })
+    const tools = toolset.getTools()
     ```
   </Tab>
-  
+
   <Tab value="Verbose">
     ```typescript
-    new McpToolset({
+    import {McpToolset} from "@iqai/adk";
+
+    const toolset = new McpToolset({
       name: "ATP MCP Client",
       description: "Client for the @iqai/mcp-atp server",
       transport: {
@@ -95,9 +100,11 @@ Add a new log entry for a specific AI agent:
         },
       },
     })
+
+    const tools = toolset.getTools()
     ```
   </Tab>
-  
+
   <Tab value="Claude Desktop">
     ```json
     {

@@ -53,17 +53,23 @@ The private key is used for signing transactions. Handle with care.
 <Tabs items={['Simple', 'Verbose', 'Claude Desktop']}>
   <Tab value="Simple">
     ```typescript
-    McpOdos({
+    import {McpOdos} from "@iqai/adk";
+
+    const toolset = McpOdos({
       env: {
         WALLET_PRIVATE_KEY: process.env.WALLET_PRIVATE_KEY,
       },
     })
+
+    const tools = toolset.getTools()
     ```
   </Tab>
-  
+
   <Tab value="Verbose">
     ```typescript
-    new McpToolset({
+    import {McpToolset} from "@iqai/adk";
+
+    const toolset = new McpToolset({
       name: "ODOS MCP Client",
       description: "Client for ODOS DEX aggregation",
       transport: {
@@ -76,9 +82,11 @@ The private key is used for signing transactions. Handle with care.
         },
       },
     })
+
+    const tools = toolset.getTools()
     ```
   </Tab>
-  
+
   <Tab value="Claude Desktop">
     ```json
     {

@@ -42,7 +42,9 @@ The server automatically creates tools for each function in the provided ABI:
 <Tabs items={['Simple', 'Verbose', 'Claude Desktop']}>
   <Tab value="Simple">
     ```typescript
-    McpAbi({
+    import {McpAbi} from "@iqai/adk";
+
+    const toolset = McpAbi({
       env: {
         WALLET_PRIVATE_KEY: process.env.WALLET_PRIVATE_KEY,
         CONTRACT_ABI: process.env.CONTRACT_ABI,
@@ -52,12 +54,16 @@ The server automatically creates tools for each function in the provided ABI:
         RPC_URL: "https://rpc.frax.com"
       },
     })
+
+    const tools = toolset.getTools()
     ```
   </Tab>
-  
+
   <Tab value="Verbose">
     ```typescript
-    new McpToolset({
+    import {McpToolset} from "@iqai/adk";
+
+    const toolset = new McpToolset({
       name: "ABI MCP Client",
       description: "Client for smart contract ABI interactions",
       transport: {
@@ -75,9 +81,11 @@ The server automatically creates tools for each function in the provided ABI:
         },
       },
     })
+
+    const tools = toolset.getTools()
     ```
   </Tab>
-  
+
   <Tab value="Claude Desktop">
     ```json
     {

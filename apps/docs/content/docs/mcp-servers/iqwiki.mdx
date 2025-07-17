@@ -53,10 +53,12 @@ N/A - This server does not require environment variables.
     McpIqWiki()
     ```
   </Tab>
-  
+
   <Tab value="Verbose">
     ```typescript
-    new McpToolset({
+    import {McpToolset} from "@iqai/adk";
+
+    const toolset = new McpToolset({
       name: "IQWiki MCP Client",
       description: "Client for IQ.wiki data access",
       transport: {
@@ -68,9 +70,11 @@ N/A - This server does not require environment variables.
         },
       },
     })
+
+    const tools = toolset.getTools()
     ```
   </Tab>
-  
+
   <Tab value="Claude Desktop">
     ```json
     {

@@ -32,19 +32,25 @@ npx @iqai/mcp-near-agent
 <Tabs items={['Simple', 'Verbose', 'Claude Desktop']}>
   <Tab value="Simple">
     ```typescript
-    McpNearAgent({
+    import {McpNearAgent} from "@iqai/adk";
+
+    const toolset = McpNearAgent({
       env: {
         ACCOUNT_ID: "your-account.testnet",
         ACCOUNT_KEY: "ed25519:your-private-key-here",
         NEAR_NETWORK_ID: "testnet",
       },
     })
+
+    const tools = toolset.getTools()
     ```
   </Tab>
-  
+
   <Tab value="Verbose">
     ```typescript
-    new McpToolset({
+    import {McpToolset} from "@iqai/adk";
+
+    const toolset = new McpToolset({
       name: "NEAR Agent MCP Client",
       description: "Client for NEAR blockchain operations",
       transport: {
@@ -59,9 +65,11 @@ npx @iqai/mcp-near-agent
         },
       },
     })
+
+    const tools = toolset.getTools()
     ```
   </Tab>
-  
+
   <Tab value="Claude Desktop">
     ```json
     {

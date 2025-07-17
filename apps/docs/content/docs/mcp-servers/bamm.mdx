@@ -78,17 +78,23 @@ Handle the private key with extreme care. Ensure it is stored securely and only 
 <Tabs items={['Simple', 'Verbose', 'Claude Desktop']}>
   <Tab value="Simple">
     ```typescript
-    McpBamm({
+    import {McpBamm} from "@iqai/adk";
+
+    const toolset = McpBamm({
       env: {
         WALLET_PRIVATE_KEY: process.env.WALLET_PRIVATE_KEY,
       },
-    })
+      })
+
+    const tools = toolset.getTools()
     ```
   </Tab>
-  
+
   <Tab value="Verbose">
     ```typescript
-    new McpToolset({
+    import {McpToolset} from "@iqai/adk";
+
+    const toolset = new McpToolset({
       name: "BAMM MCP Client",
       description: "Client for BAMM DeFi operations",
       transport: {
@@ -101,9 +107,11 @@ Handle the private key with extreme care. Ensure it is stored securely and only 
         },
       },
     })
+
+    const tools = toolset.getTools()
     ```
   </Tab>
-  
+
   <Tab value="Claude Desktop">
     ```json
     {

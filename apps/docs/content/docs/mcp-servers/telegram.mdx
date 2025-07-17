@@ -52,17 +52,23 @@ Get channel administrators (limited by Telegram API).
 <Tabs items={['Simple', 'Verbose', 'Claude Desktop']}>
   <Tab value="Simple">
     ```typescript
-    McpTelegram({
+    import {McpTelegram} from "@iqai/adk";
+
+    const toolset = McpTelegram({
       env: {
         TELEGRAM_BOT_TOKEN: process.env.TELEGRAM_BOT_TOKEN,
       },
     })
+
+    const tools = toolset.getTools()
     ```
   </Tab>
-  
+
   <Tab value="Verbose">
     ```typescript
-    new McpToolset({
+    import {McpToolset} from "@iqai/adk";
+
+    const toolset = new McpToolset({
       name: "Telegram MCP Client",
       description: "Client for Telegram bot operations",
       transport: {
@@ -75,9 +81,11 @@ Get channel administrators (limited by Telegram API).
         },
       },
     })
+
+    const tools = toolset.getTools()
     ```
   </Tab>
-  
+
   <Tab value="Claude Desktop">
     ```json
     {
