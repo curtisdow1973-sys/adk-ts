@@ -17,7 +17,7 @@ export default function DocsPage(): React.ReactElement {
         />
       </div>
       <h1 className="mb-4 text-4xl font-semibold md:text-5xl">
-        ADK TypeScript Framework
+        ADK TS
       </h1>
       <p className="text-fd-muted-foreground">
         Build powerful AI agents with our comprehensive framework and MCP server integrations.
