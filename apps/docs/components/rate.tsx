@@ -63,6 +63,7 @@ export function Rate() {
 
     startTransition(async () => {
       const feedback: Feedback = {
+        url,
         opinion,
         message,
       };
