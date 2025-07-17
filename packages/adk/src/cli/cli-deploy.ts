@@ -1,11 +1,9 @@
 import * as fs from "node:fs";
 import * as path from "node:path";
 import * as child_process from "node:child_process";
-import * as os from "node:os";
-import { promisify } from "node:util";
 
 const DOCKERFILE_TEMPLATE = `
-FROM python:3.11-slim
+FROM node:18-slim
 WORKDIR /app
 
 # Create a non-root user
@@ -26,20 +24,29 @@ ENV GOOGLE_CLOUD_LOCATION={gcp_region}
 
 # Set up environment variables - End
 
+# Install pnpm and tsx globally
+RUN npm install -g pnpm tsx
+
 # Install ADK - Start
-RUN pip install google-adk=={adk_version}
+RUN pnpm install -g @iqai/adk@{adk_version}
 # Install ADK - End
 
 # Copy agent - Start
-
 COPY "agents/{app_name}/" "/app/agents/{app_name}/"
 {install_agent_deps}
-
 # Copy agent - End
 
 EXPOSE {port}
 
-CMD adk {command} --port={port} --host=0.0.0.0 {session_db_option} {trace_to_cloud_option} "/app/agents"
+CMD npx tsx -e "
+const { {start_function} } = require('/usr/local/lib/node_modules/@iqai/adk/src/cli/{server_file}');
+{start_function}({
+  agentDir: '/app/agents/{app_name}',
+  port: {port},
+  allowOrigins: ['*'],
+  {additional_options}
+});
+"
 `;
 
 async function resolveProject(projectInOption?: string): Promise<string> {
@@ -103,13 +110,27 @@ export async function toCloudRun({
 		const agentSrcPath = path.join(tempFolder, "agents", appName);
 		fs.mkdirSync(path.dirname(agentSrcPath), { recursive: true });
 		copyDir(agentFolder, agentSrcPath);
-		const requirementsTxtPath = path.join(agentSrcPath, "requirements.txt");
-		const installAgentDeps = fs.existsSync(requirementsTxtPath)
-			? `RUN pip install -r "/app/agents/${appName}/requirements.txt"`
+		const packageJsonPath = path.join(agentSrcPath, "package.json");
+		const installAgentDeps = fs.existsSync(packageJsonPath)
+			? `WORKDIR /app/agents/${appName}
+RUN pnpm install
+WORKDIR /app`
 			: "";
 		console.log("Copying agent source code complete.");
 		// Create Dockerfile
 		console.log("Creating Dockerfile...");
+		const serverConfig = withUi
+			? {
+					startFunction: "startWebServer",
+					serverFile: "web-server",
+					additionalOptions: "",
+				}
+			: {
+					startFunction: "createApiServer",
+					serverFile: "api-server",
+					additionalOptions: "web: false,",
+				};
+
 		const dockerfileContent = DOCKERFILE_TEMPLATE.replace(
 			/{gcp_project_id}/g,
 			project || "",
@@ -117,16 +138,10 @@ export async function toCloudRun({
 			.replace(/{gcp_region}/g, region || "")
 			.replace(/{app_name}/g, appName)
 			.replace(/{port}/g, String(port))
-			.replace(/{command}/g, withUi ? "web" : "api_server")
+			.replace(/{start_function}/g, serverConfig.startFunction)
+			.replace(/{server_file}/g, serverConfig.serverFile)
+			.replace(/{additional_options}/g, serverConfig.additionalOptions)
 			.replace(/{install_agent_deps}/g, installAgentDeps)
-			.replace(
-				/{session_db_option}/g,
-				sessionDbUrl ? `--db_url=${sessionDbUrl}` : "",
-			)
-			.replace(
-				/{trace_to_cloud_option}/g,
-				traceToCloud ? "--trace_to_cloud" : "",
-			)
 			.replace(/{adk_version}/g, adkVersion);
 		const dockerfilePath = path.join(tempFolder, "Dockerfile");
 		fs.mkdirSync(tempFolder, { recursive: true });

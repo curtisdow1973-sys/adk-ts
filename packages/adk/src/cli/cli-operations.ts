@@ -1,8 +1,7 @@
 import fs from "node:fs";
 import path from "node:path";
 import { promisify } from "node:util";
-import { v4 as uuidv4 } from "uuid";
-import { intro, outro, text, spinner, log, note } from "@clack/prompts";
+import { text } from "@clack/prompts";
 import chalk from "chalk";
 import type { LlmAgent } from "../agents/llm-agent";
 import type { BaseArtifactService } from "../artifacts/base-artifact-service";
@@ -12,7 +11,7 @@ import { Runner } from "../runners";
 import type { BaseSessionService } from "../sessions/base-session-service";
 import { InMemorySessionService } from "../sessions/in-memory-session-service";
 import type { Session } from "../sessions";
-import { State } from "../sessions/state";
+
 import * as envs from "./utils/envs";
 
 // Import ts-node programmatically to register TypeScript support
@@ -246,12 +245,6 @@ export async function runCli({
 	saveSession: boolean;
 	sessionId?: string;
 }): Promise<void> {
-	// Add agent parent directory to the module search path
-	if (!process.env.PYTHONPATH?.includes(agentParentDir)) {
-		process.env.PYTHONPATH =
-			(process.env.PYTHONPATH || "") + path.delimiter + agentParentDir;
-	}
-
 	// Initialize services
 	const artifactService = new InMemoryArtifactService();
 	const sessionService = new InMemorySessionService();

@@ -10,8 +10,7 @@ import { InMemoryArtifactService } from "../artifacts/in-memory-artifact-service
 import { Runner } from "../runners";
 import type { BaseAgent } from "../agents/base-agent";
 import type { Content, Part } from "@google/genai";
-import { LLMRegistry } from "../models";
-import { createEmptyState, loadDotenvForAgent } from "./utils";
+import { loadDotenvForAgent } from "./utils";
 
 /**
  * Checks if a directory is a valid agent directory (contains agent.ts)

@@ -15,9 +15,8 @@ import { createDatabaseSessionService } from "../sessions/database-factories";
 import { InMemorySessionService } from "../sessions/in-memory-session-service";
 import { Runner } from "../runners";
 import type { Content } from "@google/genai";
-import type { DatabaseSessionService, Session } from "../sessions";
-import { createEmptyState, loadDotenvForAgent } from "./utils";
-import { v4 as uuidv4 } from "uuid";
+import type { DatabaseSessionService } from "../sessions";
+import { loadDotenvForAgent } from "./utils";
 
 // Fix for the Event type conflict - import directly from events directory
 import type { Event as RunnerEvent } from "../events/Event";
@@ -645,11 +644,13 @@ export function createApiServer(options: ApiServerOptions): {
 			// Dynamically import the agent module
 			const agentModule = require(path.join(agentDir, appName));
 
-			if (!agentModule.agent?.rootAgent) {
-				throw new Error(`Unable to find "rootAgent" from ${appName}.`);
-			}
+			const rootAgent = agentModule.rootAgent || agentModule.default?.rootAgent;
 
-			const rootAgent = agentModule.agent.rootAgent;
+			if (!rootAgent) {
+				throw new Error(
+					`Unable to find "rootAgent" from ${appName}. Make sure it exports a 'rootAgent' property.`,
+				);
+			}
 			rootAgentDict[appName] = rootAgent;
 
 			// Collect all toolsets for cleanup
