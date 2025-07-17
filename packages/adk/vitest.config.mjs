@@ -23,18 +23,22 @@ export default defineConfig({
 			reportsDirectory: "./coverage",
 			// Uncomment when coverage improves:
 			/*
-      thresholds: {
-        branches: 70,
-        functions: 80,
-        lines: 80,
-        statements: 80,
-      },
-      */
+			thresholds: {
+				branches: 70,
+				functions: 80,
+				lines: 80,
+				statements: 80,
+			},
+			*/
 		},
 		setupFiles: ["dotenv/config"],
 		testTimeout: 10000,
 		clearMocks: true,
 		restoreMocks: true,
-		exclude: ["**/dist/**"],
+		exclude: ["**/dist/**", "**/node_modules/**"],
+	},
+	// Add explicit rollup options to avoid native dependency issues
+	optimizeDeps: {
+		exclude: ["rollup"]
 	},
 });

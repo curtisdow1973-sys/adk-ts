@@ -9,6 +9,8 @@ import { notFound } from 'next/navigation';
 import { createRelativeLink } from 'fumadocs-ui/mdx';
 import { getMDXComponents } from '@/mdx-components';
 import { LLMCopyButton, ViewOptions } from './page.client';
+import { Rate } from '@/components/rate';
+import posthog from 'posthog-js';
 
 export default async function Page(props: {
   params: Promise<{ slug?: string[] }>;
@@ -38,6 +40,9 @@ export default async function Page(props: {
           })}
         />
       </DocsBody>
+      <Rate
+
+      />
     </DocsPage>
   );
 }
