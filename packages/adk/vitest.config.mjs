@@ -39,6 +39,6 @@ export default defineConfig({
 	},
 	// Add explicit rollup options to avoid native dependency issues
 	optimizeDeps: {
-		exclude: ["rollup"]
+		exclude: ["rollup"],
 	},
 });
