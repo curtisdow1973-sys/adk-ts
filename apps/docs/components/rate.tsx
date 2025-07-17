@@ -9,6 +9,7 @@ import {
 import { cva } from 'class-variance-authority';
 import { usePathname } from 'next/navigation';
 import { cn } from 'fumadocs-ui/utils/cn';
+import posthog from 'posthog-js';
 
 const rateButtonVariants = cva(
   'inline-flex items-center gap-2 px-3 py-2 rounded-full font-medium border text-sm [&_svg]:size-4 disabled:cursor-not-allowed',
@@ -36,11 +37,7 @@ interface Result extends Feedback {
   response?: ActionResponse;
 }
 
-export function Rate({
-  onRateAction,
-}: {
-  onRateAction: (url: string, feedback: Feedback) => Promise<ActionResponse | void>;
-}) {
+export function Rate() {
   const url = usePathname();
   const [previous, setPrevious] = useState<Result | null>(null);
   const [opinion, setOpinion] = useState<'good' | 'bad' | null>(null);
@@ -69,15 +66,10 @@ export function Rate({
         opinion,
         message,
       };
-
-      void onRateAction(url, feedback).then((response) => {
-        setPrevious({
-          response: response ?? undefined,
-          ...feedback,
-        });
-        setMessage('');
-        setOpinion(null);
-      });
+      posthog.capture('on_rate_docs', feedback);
+      setPrevious(feedback);
+      setMessage('');
+      setOpinion(null);
     });
 
     e?.preventDefault();

@@ -41,10 +41,7 @@ export default async function Page(props: {
         />
       </DocsBody>
       <Rate
-        onRateAction={async (_,feedback) => {
-           "use server"
-           posthog.capture('on_rate_docs', feedback);
-        }}
+
       />
     </DocsPage>
   );
