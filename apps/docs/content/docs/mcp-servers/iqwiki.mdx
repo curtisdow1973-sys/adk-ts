@@ -3,6 +3,8 @@ title: MCP IQWiki
 description: Model Context Protocol Server for IQ.wiki
 ---
 
+import { Tabs, Tab } from 'fumadocs-ui/components/tabs';
+
 - **Package**: [`@iqai/mcp-iqwiki`](https://www.npmjs.com/package/@iqai/mcp-iqwiki)
 - **Purpose**: Interacting with IQ.wiki data using the Model Context Protocol.
 
@@ -43,33 +45,119 @@ Get detailed wiki activities (creations or edits) for a user on IQ.wiki.
 
 N/A - This server does not require environment variables.
 
-## Configuration Example
+## Usage with ADK TypeScript
 
-```json
-{
-  "mcpServers": {
-    "iq-wiki-mcp-server": {
-      "command": "pnpm",
-      "args": ["dlx", "@iqai/mcp-iqwiki"]
+<Tabs items={['Simple', 'Verbose', 'Claude Desktop']}>
+  <Tab value="Simple">
+    ### Using McpIqWiki Wrapper
+
+    The simplest way to use MCP IQWiki with ADK TypeScript:
+
+    ```typescript
+    import { McpIqWiki } from "@iqai/adk";
+
+    // Create IQWiki toolset with simplified syntax
+    const toolset = McpIqWiki({
+      debug: false,
+      retryOptions: {
+        maxRetries: 2,
+        initialDelay: 200,
+      },
+    });
+
+    // Get available tools
+    const mcpTools = await toolset.getTools();
+
+    // Now you can use mcpTools with your LlmAgent
+    console.log(`Retrieved ${mcpTools.length} IQWiki tools`);
+
+    // Remember to clean up when done
+    // await toolset.close();
+    ```
+  </Tab>
+  
+  <Tab value="Verbose">
+    ### Using McpToolset Class
+
+    For more control over the MCP configuration:
+
+    ```typescript
+    import { McpToolset, type McpConfig } from "@iqai/adk";
+
+    // Configure MCP connection
+    const mcpConfig: McpConfig = {
+      name: "IQWiki MCP Client",
+      description: "Client for IQ.wiki data access",
+      debug: false,
+      retryOptions: {
+        maxRetries: 2,
+        initialDelay: 200,
+      },
+      transport: {
+        mode: "stdio",
+        command: "pnpm",
+        args: ["dlx", "@iqai/mcp-iqwiki"],
+        env: {
+          PATH: process.env.PATH || "",
+        },
+      },
+    };
+
+    // Initialize toolset
+    const toolset = new McpToolset(mcpConfig);
+
+    // Get available tools
+    const mcpTools = await toolset.getTools();
+
+    // Now you can use mcpTools with your LlmAgent
+    console.log(`Retrieved ${mcpTools.length} IQWiki tools`);
+
+    // Remember to clean up when done
+    // await toolset.close();
+    ```
+  </Tab>
+  
+  <Tab value="Claude Desktop">
+    ### Claude Desktop Configuration
+
+    Add this to your Claude Desktop `claude_desktop_config.json`:
+
+    ```json
+    {
+      "mcpServers": {
+        "iq-wiki-mcp-server": {
+          "command": "pnpm",
+          "args": ["dlx", "@iqai/mcp-iqwiki"]
+        }
+      }
     }
-  }
-}
-```
+    ```
 
-**Alternative if Globally Installed:**
+    **Alternative if Globally Installed:**
 
-If you have installed `@iqai/mcp-iqwiki` globally, you can simplify the command:
+    If you have installed `@iqai/mcp-iqwiki` globally:
 
-```json
-{
-  "mcpServers": {
-    "iq-wiki-mcp-server": {
-      "command": "mcp-iqwiki",
-      "args": []
+    ```json
+    {
+      "mcpServers": {
+        "iq-wiki-mcp-server": {
+          "command": "mcp-iqwiki",
+          "args": []
+        }
+      }
     }
-  }
-}
-```
+    ```
+
+    Then restart Claude Desktop and you'll have access to IQ.wiki tools directly in your conversations.
+
+    **Example prompts:**
+    - "Get information about the Bitcoin wiki"
+    - "Show me wikis created by user 0x8AF7a19a26d8FBC48dEfB35AEfb15Ec8c407f889"
+    - "What wikis has user 0x123... edited in the last 24 hours?"
+    - "Show me all wiki activities for user 0xabc... that were created"
+    - "Get details about the Ethereum wiki page"
+  </Tab>
+</Tabs>
 
 ## Usage Examples
 

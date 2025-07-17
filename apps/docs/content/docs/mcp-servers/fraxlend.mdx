@@ -4,6 +4,7 @@ description: Interact with the Fraxlend lending platform
 ---
 
 import { Callout } from 'fumadocs-ui/components/callout';
+import { Tabs, Tab } from 'fumadocs-ui/components/tabs';
 
 - **Package**: [`@iqai/mcp-fraxlend`](https://www.npmjs.com/package/@iqai/mcp-fraxlend)
 - **Purpose**: Interact with the Fraxlend lending platform
@@ -84,21 +85,112 @@ The private key is used for signing transactions for lending, borrowing, etc. Ha
 
 - `WALLET_PRIVATE_KEY`: Required for `LEND`, `BORROW`, `ADD_COLLATERAL`, `REMOVE_COLLATERAL`, `REPAY`, `WITHDRAW`
 
-## Configuration Example
+## Usage with ADK TypeScript
 
-```json
-{
-  "mcpServers": {
-    "fraxlend-server": {
-      "command": "pnpm",
-      "args": ["dlx", "@iqai/mcp-fraxlend"],
-      "env": {
-        "WALLET_PRIVATE_KEY": "your_wallet_private_key_here"
+<Tabs items={['Simple', 'Verbose', 'Claude Desktop']}>
+  <Tab value="Simple">
+    ### Using McpFraxlend Wrapper
+
+    The simplest way to use MCP Fraxlend with ADK TypeScript:
+
+    ```typescript
+    import { McpFraxlend } from "@iqai/adk";
+
+    // Create Fraxlend toolset with simplified syntax
+    const toolset = McpFraxlend({
+      env: {
+        WALLET_PRIVATE_KEY: process.env.WALLET_PRIVATE_KEY,
+      },
+      debug: false,
+      retryOptions: {
+        maxRetries: 2,
+        initialDelay: 200,
+      },
+    });
+
+    // Get available tools
+    const mcpTools = await toolset.getTools();
+
+    // Now you can use mcpTools with your LlmAgent
+    console.log(`Retrieved ${mcpTools.length} Fraxlend tools`);
+
+    // Remember to clean up when done
+    // await toolset.close();
+    ```
+  </Tab>
+  
+  <Tab value="Verbose">
+    ### Using McpToolset Class
+
+    For more control over the MCP configuration:
+
+    ```typescript
+    import { McpToolset, type McpConfig } from "@iqai/adk";
+
+    // Configure MCP connection
+    const mcpConfig: McpConfig = {
+      name: "Fraxlend MCP Client",
+      description: "Client for Fraxlend lending operations",
+      debug: false,
+      retryOptions: {
+        maxRetries: 2,
+        initialDelay: 200,
+      },
+      transport: {
+        mode: "stdio",
+        command: "pnpm",
+        args: ["dlx", "@iqai/mcp-fraxlend"],
+        env: {
+          WALLET_PRIVATE_KEY: process.env.WALLET_PRIVATE_KEY,
+          PATH: process.env.PATH || "",
+        },
+      },
+    };
+
+    // Initialize toolset
+    const toolset = new McpToolset(mcpConfig);
+
+    // Get available tools
+    const mcpTools = await toolset.getTools();
+
+    // Now you can use mcpTools with your LlmAgent
+    console.log(`Retrieved ${mcpTools.length} Fraxlend tools`);
+
+    // Remember to clean up when done
+    // await toolset.close();
+    ```
+  </Tab>
+  
+  <Tab value="Claude Desktop">
+    ### Claude Desktop Configuration
+
+    Add this to your Claude Desktop `claude_desktop_config.json`:
+
+    ```json
+    {
+      "mcpServers": {
+        "fraxlend-server": {
+          "command": "pnpm",
+          "args": ["dlx", "@iqai/mcp-fraxlend"],
+          "env": {
+            "WALLET_PRIVATE_KEY": "your_wallet_private_key_here"
+          }
+        }
       }
     }
-  }
-}
-```
+    ```
+
+    Then restart Claude Desktop and you'll have access to Fraxlend tools directly in your conversations.
+
+    **Example prompts:**
+    - "Show me statistics for Fraxlend pair 0x123..."
+    - "Lend 100 FRAX to the FRAX-ETH pool at 0x123...abc"
+    - "Borrow 1000 FRAX using 2 ETH as collateral from pool 0x123...abc"
+    - "What's the pair address for FRAX-ETH pool?"
+    - "Add 1 ETH as collateral to pair 0x456..."
+    - "Withdraw 50 FRAX from my lending position at 0x789..."
+  </Tab>
+</Tabs>
 
 ## Usage Examples
 

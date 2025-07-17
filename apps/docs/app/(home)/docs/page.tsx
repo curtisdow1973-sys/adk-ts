@@ -24,20 +24,20 @@ export default function DocsPage(): React.ReactElement {
       </p>
       <div className="mt-8 flex justify-center">
         <Link
-          href="/docs/framework/framework/get-started"
+          href="/docs/framework/get-started"
           className={cn(buttonVariants(), 'px-6')}
         >
           Get Started
         </Link>
         <Link
-          href="/docs/framework/framework/quickstart"
+          href="/docs/framework/quickstart"
           className={cn(buttonVariants({ variant: 'outline' }), 'ml-4 px-6')}
         >
           Quickstart Guide
         </Link>
       </div>
       <div className="mt-16 grid grid-cols-1 gap-6 text-left md:grid-cols-2 max-w-4xl mx-auto">
-        <Item href="/docs/framework/framework">
+        <Item href="/docs/framework">
           <Icon>
             <Building2 className="size-full" />
           </Icon>

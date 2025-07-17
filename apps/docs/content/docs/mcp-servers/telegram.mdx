@@ -4,6 +4,7 @@ description: An MCP server for interacting with Telegram bots and channels
 ---
 
 import { Callout } from 'fumadocs-ui/components/callout';
+import { Tabs, Tab } from 'fumadocs-ui/components/tabs';
 
 - **Package**: [`@iqai/mcp-telegram`](https://www.npmjs.com/package/@iqai/mcp-telegram)
 - **Purpose**: Interacting with Telegram bots and channels using the Telegraf library.
@@ -46,21 +47,108 @@ Get channel administrators (limited by Telegram API).
 
 - `TELEGRAM_BOT_TOKEN`: Your Telegram bot token (required)
 
-## Configuration Example
+## Usage with ADK TypeScript
 
-```json
-{
-  "mcpServers": {
-    "telegram-mcp-server": {
-      "command": "pnpm",
-      "args": ["dlx", "@iqai/mcp-telegram"],
-      "env": {
-        "TELEGRAM_BOT_TOKEN": "your_bot_token_here"
+<Tabs items={['Simple', 'Verbose', 'Claude Desktop']}>
+  <Tab value="Simple">
+    ### Using McpTelegram Wrapper
+
+    The simplest way to use MCP Telegram with ADK TypeScript:
+
+    ```typescript
+    import { McpTelegram } from "@iqai/adk";
+
+    // Create Telegram toolset with simplified syntax
+    const toolset = McpTelegram({
+      env: {
+        TELEGRAM_BOT_TOKEN: process.env.TELEGRAM_BOT_TOKEN,
+      },
+      debug: false,
+      retryOptions: {
+        maxRetries: 2,
+        initialDelay: 200,
+      },
+    });
+
+    // Get available tools
+    const mcpTools = await toolset.getTools();
+
+    // Now you can use mcpTools with your LlmAgent
+    console.log(`Retrieved ${mcpTools.length} Telegram tools`);
+    ```
+  </Tab>
+  
+  <Tab value="Verbose">
+    ### Using McpToolset Class
+
+    For more control over the MCP configuration:
+
+    ```typescript
+    import { McpToolset, type McpConfig } from "@iqai/adk";
+
+    // Configure MCP connection
+    const mcpConfig: McpConfig = {
+      name: "Telegram MCP Client",
+      description: "Client for Telegram bot operations",
+      debug: false,
+      retryOptions: {
+        maxRetries: 2,
+        initialDelay: 200,
+      },
+      transport: {
+        mode: "stdio",
+        command: "pnpm",
+        args: ["dlx", "@iqai/mcp-telegram"],
+        env: {
+          TELEGRAM_BOT_TOKEN: process.env.TELEGRAM_BOT_TOKEN,
+          PATH: process.env.PATH || "",
+        },
+      },
+    };
+
+    // Initialize toolset
+    const toolset = new McpToolset(mcpConfig);
+
+    // Get available tools
+    const mcpTools = await toolset.getTools();
+
+    // Now you can use mcpTools with your LlmAgent
+    console.log(`Retrieved ${mcpTools.length} Telegram tools`);
+
+    // Remember to clean up when done
+    // await toolset.close();
+    ```
+  </Tab>
+  
+  <Tab value="Claude Desktop">
+    ### Claude Desktop Configuration
+
+    Add this to your Claude Desktop `claude_desktop_config.json`:
+
+    ```json
+    {
+      "mcpServers": {
+        "telegram-mcp-server": {
+          "command": "pnpm",
+          "args": ["dlx", "@iqai/mcp-telegram"],
+          "env": {
+            "TELEGRAM_BOT_TOKEN": "your_bot_token_here"
+          }
+        }
       }
     }
-  }
-}
-```
+    ```
+
+    Then restart Claude Desktop and you'll have access to Telegram tools directly in your conversations.
+
+    **Example prompts:**
+    - "Send a message to @mychannel saying 'Hello from Claude!'"
+    - "Get information about channel @mychannel"
+    - "Forward message 123 from @channel1 to @channel2"
+    - "Pin message 456 in @mychannel"
+    - "Get the administrators of @mychannel"
+  </Tab>
+</Tabs>
 
 ## Usage Examples
 

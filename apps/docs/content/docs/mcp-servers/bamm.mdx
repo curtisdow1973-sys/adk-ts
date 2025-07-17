@@ -4,6 +4,7 @@ description: Model Context Protocol Server for Borrow Automated Market Maker
 ---
 
 import { Callout } from 'fumadocs-ui/components/callout';
+import { Tabs, Tab } from 'fumadocs-ui/components/tabs';
 
 - **Package**: [`@iqai/mcp-bamm`](https://www.npmjs.com/package/@iqai/mcp-bamm)
 - **Purpose**: Interacting with Borrow Automated Market Maker (BAMM) contracts on the Fraxtal blockchain.
@@ -72,39 +73,129 @@ Handle the private key with extreme care. Ensure it is stored securely and only 
 - `WALLET_PRIVATE_KEY`: (Required for all blockchain operations)
   - The private key of the wallet to be used for interacting with BAMM contracts (signing transactions for lending, borrowing, etc.).
 
-## Configuration Example
+## Usage with ADK TypeScript
 
-```json
-{
-  "mcpServers": {
-    "bamm-mcp-server": {
-      "command": "pnpm",
-      "args": ["dlx", "@iqai/mcp-bamm"],
-      "env": {
-        "WALLET_PRIVATE_KEY": "your_wallet_private_key_here"
+<Tabs items={['Simple', 'Verbose', 'Claude Desktop']}>
+  <Tab value="Simple">
+    ### Using McpBamm Wrapper
+
+    The simplest way to use MCP BAMM with ADK TypeScript:
+
+    ```typescript
+    import { McpBamm } from "@iqai/adk";
+
+    // Create BAMM toolset with simplified syntax
+    const toolset = McpBamm({
+      env: {
+        WALLET_PRIVATE_KEY: process.env.WALLET_PRIVATE_KEY,
+      },
+      debug: false,
+      retryOptions: {
+        maxRetries: 2,
+        initialDelay: 200,
+      },
+    });
+
+    // Get available tools
+    const mcpTools = await toolset.getTools();
+
+    // Now you can use mcpTools with your LlmAgent
+    console.log(`Retrieved ${mcpTools.length} BAMM tools`);
+
+    // Remember to clean up when done
+    // await toolset.close();
+    ```
+  </Tab>
+  
+  <Tab value="Verbose">
+    ### Using McpToolset Class
+
+    For more control over the MCP configuration:
+
+    ```typescript
+    import { McpToolset, type McpConfig } from "@iqai/adk";
+
+    // Configure MCP connection
+    const mcpConfig: McpConfig = {
+      name: "BAMM MCP Client",
+      description: "Client for BAMM DeFi operations",
+      debug: false,
+      retryOptions: {
+        maxRetries: 2,
+        initialDelay: 200,
+      },
+      transport: {
+        mode: "stdio",
+        command: "pnpm",
+        args: ["dlx", "@iqai/mcp-bamm"],
+        env: {
+          WALLET_PRIVATE_KEY: process.env.WALLET_PRIVATE_KEY,
+          PATH: process.env.PATH || "",
+        },
+      },
+    };
+
+    // Initialize toolset
+    const toolset = new McpToolset(mcpConfig);
+
+    // Get available tools
+    const mcpTools = await toolset.getTools();
+
+    // Now you can use mcpTools with your LlmAgent
+    console.log(`Retrieved ${mcpTools.length} BAMM tools`);
+
+    // Remember to clean up when done
+    // await toolset.close();
+    ```
+  </Tab>
+  
+  <Tab value="Claude Desktop">
+    ### Claude Desktop Configuration
+
+    Add this to your Claude Desktop `claude_desktop_config.json`:
+
+    ```json
+    {
+      "mcpServers": {
+        "bamm-mcp-server": {
+          "command": "pnpm",
+          "args": ["dlx", "@iqai/mcp-bamm"],
+          "env": {
+            "WALLET_PRIVATE_KEY": "your_wallet_private_key_here"
+          }
+        }
       }
     }
-  }
-}
-```
+    ```
 
-**Alternative if Globally Installed:**
+    **Alternative if Globally Installed:**
 
-If you have installed `@iqai/mcp-bamm` globally (`pnpm add -g @iqai/mcp-bamm`), you can simplify the `command` and `args`:
+    If you have installed `@iqai/mcp-bamm` globally (`pnpm add -g @iqai/mcp-bamm`):
 
-```json
-{
-  "mcpServers": {
-    "bamm-mcp-server": {
-      "command": "mcp-bamm",
-      "args": [],
-      "env": {
-        "WALLET_PRIVATE_KEY": "your_wallet_private_key_here"
+    ```json
+    {
+      "mcpServers": {
+        "bamm-mcp-server": {
+          "command": "mcp-bamm",
+          "args": [],
+          "env": {
+            "WALLET_PRIVATE_KEY": "your_wallet_private_key_here"
+          }
+        }
       }
     }
-  }
-}
-```
+    ```
+
+    Then restart Claude Desktop and you'll have access to BAMM tools directly in your conversations.
+
+    **Example prompts:**
+    - "Show me my BAMM positions"
+    - "Add 100 FRAX as collateral to BAMM 0xC5B225cF058915BF28D7d9DFA3043BD53C63Ea84"
+    - "Borrow 50 USDC from my BAMM position"
+    - "Get statistics for all BAMM pools"
+    - "Withdraw 25 LP tokens from BAMM 0x123..."
+  </Tab>
+</Tabs>
 
 ## Usage Examples
 
