@@ -16,6 +16,7 @@ import { LlmAgent } from "./llm-agent.js";
 import { LoopAgent } from "./loop-agent.js";
 import { ParallelAgent } from "./parallel-agent.js";
 import { SequentialAgent } from "./sequential-agent.js";
+import type { LlmRequest } from "@adk/models";
 
 /**
  * Configuration options for the AgentBuilder
@@ -62,7 +63,7 @@ export interface FullMessage extends Content {
  * Enhanced runner interface with simplified API
  */
 export interface EnhancedRunner {
-	ask(message: string | FullMessage): Promise<string>;
+	ask(message: string | FullMessage | LlmRequest): Promise<string>;
 	runAsync(params: {
 		userId: string;
 		sessionId: string;
@@ -453,12 +454,13 @@ export class AgentBuilder {
 		const sessionConfig = this.sessionConfig; // Capture sessionConfig in closure
 
 		return {
-			async ask(message: string | FullMessage): Promise<string> {
-				const fullMessage: FullMessage =
+			async ask(message: string | FullMessage | LlmRequest): Promise<string> {
+				const newMessage: FullMessage =
 					typeof message === "string"
 						? { parts: [{ text: message }] }
-						: message;
-
+						: typeof message === "object" && "contents" in message
+							? { parts: message.contents[message.contents.length - 1].parts }
+							: message;
 				let response = "";
 
 				if (!sessionConfig) {
@@ -468,7 +470,7 @@ export class AgentBuilder {
 				for await (const event of baseRunner.runAsync({
 					userId: sessionConfig.userId,
 					sessionId: session.id,
-					newMessage: fullMessage,
+					newMessage,
 				})) {
 					if (event.content?.parts && Array.isArray(event.content.parts)) {
 						const content = event.content.parts

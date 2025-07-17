@@ -289,6 +289,21 @@ export function McpTelegram(config: McpServerConfig = {}): McpToolset {
 }
 
 /**
+ * MCP Discord - Interact with Discord via MCP protocol
+ *
+ * Required env vars: DISCORD_TOKEN
+ * Optional env vars: PATH
+ */
+export function McpDiscord(config: McpServerConfig = {}): McpToolset {
+	const mcpConfig = createMcpConfig(
+		"Discord MCP Client",
+		"@iqai/mcp-discord",
+		config,
+	);
+	return new McpToolset(mcpConfig);
+}
+
+/**
  * MCP CoinGecko - Access cryptocurrency market data and analytics
  *
  * Optional env vars: COINGECKO_PRO_API_KEY, COINGECKO_DEMO_API_KEY, COINGECKO_ENVIRONMENT
