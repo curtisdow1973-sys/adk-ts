@@ -2,4 +2,4 @@
 "@iqai/adk": patch
 ---
 
-adds @iqai/mcp-discord mcp defination
+adds @iqai/mcp-discord mcp definition
