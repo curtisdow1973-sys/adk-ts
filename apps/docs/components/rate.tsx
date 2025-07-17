@@ -39,7 +39,7 @@ interface Result extends Feedback {
 export function Rate({
   onRateAction,
 }: {
-  onRateAction: (url: string, feedback: Feedback) => Promise<ActionResponse>;
+  onRateAction: (url: string, feedback: Feedback) => Promise<ActionResponse | void>;
 }) {
   const url = usePathname();
   const [previous, setPrevious] = useState<Result | null>(null);
@@ -72,7 +72,7 @@ export function Rate({
 
       void onRateAction(url, feedback).then((response) => {
         setPrevious({
-          response,
+          response: response ?? undefined,
           ...feedback,
         });
         setMessage('');
