@@ -13,7 +13,11 @@ import { Tabs, Tab } from 'fumadocs-ui/components/tabs';
 <Tabs items={['Simple', 'Verbose', 'Claude Desktop']}>
   <Tab value="Simple">
     ```typescript
-    McpIqWiki()
+    import {McpIqWiki} from "@iqai/adk";
+
+    const toolset = McpIqWiki()
+
+    const tools = toolset.getTools()
     ```
   </Tab>
 
