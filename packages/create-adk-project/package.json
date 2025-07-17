@@ -17,14 +17,7 @@
 		"type": "git",
 		"url": "https://github.com/IQAIcom/adk-ts.git"
 	},
-	"keywords": [
-		"ai",
-		"llm",
-		"agent",
-		"cli",
-		"typescript",
-		"create-project"
-	],
+	"keywords": ["ai", "llm", "agent", "cli", "typescript", "create-project"],
 	"author": "IQAI",
 	"license": "MIT",
 	"dependencies": {

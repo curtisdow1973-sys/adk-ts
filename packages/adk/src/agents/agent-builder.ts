@@ -103,7 +103,7 @@ interface RunnerConfig {
 /**
  * AgentBuilder - A fluent interface for creating AI agents with automatic session management
  *
- * Provides a simple, chainable API for building different types of agents (LLM, Sequential, 
+ * Provides a simple, chainable API for building different types of agents (LLM, Sequential,
  * Parallel, Loop, LangGraph) with tools, custom instructions, and multi-agent workflows.
  * Sessions are automatically created using in-memory storage by default.
  *
