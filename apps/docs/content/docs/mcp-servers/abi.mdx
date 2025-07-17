@@ -41,75 +41,25 @@ The server automatically creates tools for each function in the provided ABI:
 
 <Tabs items={['Simple', 'Verbose', 'Claude Desktop']}>
   <Tab value="Simple">
-    ### Using McpAbi Wrapper
-
-    The simplest way to use MCP ABI with ADK TypeScript:
-
     ```typescript
-    import { McpAbi } from "@iqai/adk";
-
-    // ERC20 contract ABI (simplified example)
-    const erc20Abi = [
-      {
-        "inputs": [{"internalType": "address", "name": "account", "type": "address"}],
-        "name": "balanceOf",
-        "outputs": [{"internalType": "uint256", "name": "", "type": "uint256"}],
-        "stateMutability": "view",
-        "type": "function"
-      },
-      {
-        "inputs": [
-          {"internalType": "address", "name": "to", "type": "address"},
-          {"internalType": "uint256", "name": "amount", "type": "uint256"}
-        ],
-        "name": "transfer",
-        "outputs": [{"internalType": "bool", "name": "", "type": "bool"}],
-        "stateMutability": "nonpayable",
-        "type": "function"
-      }
-    ];
-
-    // Create ABI toolset with simplified syntax
-    const toolset = McpAbi({
+    McpAbi({
       env: {
         WALLET_PRIVATE_KEY: process.env.WALLET_PRIVATE_KEY,
-        CONTRACT_ABI: JSON.stringify(erc20Abi),
-        CONTRACT_ADDRESS: "0xaB195B090Cc60C1EFd4d1cEE94Bf441F5931C01b",
+        CONTRACT_ABI: process.env.CONTRACT_ABI,
+        CONTRACT_ADDRESS: process.env.CONTRACT_ADDRESS,
         CONTRACT_NAME: "ERC20",
         CHAIN_ID: "252",
         RPC_URL: "https://rpc.frax.com"
       },
-      debug: false,
-    });
-
-    // Get available tools
-    const mcpTools = await toolset.getTools();
-
-    // Now you can use mcpTools with your LlmAgent
-    console.log(`Retrieved ${mcpTools.length} ABI tools`);
-
-    // Remember to clean up when done
-    // await toolset.close();
+    })
     ```
   </Tab>
   
   <Tab value="Verbose">
-    ### Using McpToolset Class
-
-    For more control over the MCP configuration:
-
     ```typescript
-    import { McpToolset, type McpConfig } from "@iqai/adk";
-
-    // Configure MCP connection
-    const mcpConfig: McpConfig = {
+    new McpToolset({
       name: "ABI MCP Client",
       description: "Client for smart contract ABI interactions",
-      debug: false,
-      retryOptions: {
-        maxRetries: 2,
-        initialDelay: 200,
-      },
       transport: {
         mode: "stdio",
         command: "pnpm",
@@ -124,27 +74,11 @@ The server automatically creates tools for each function in the provided ABI:
           PATH: process.env.PATH || "",
         },
       },
-    };
-
-    // Initialize toolset
-    const toolset = new McpToolset(mcpConfig);
-
-    // Get available tools
-    const mcpTools = await toolset.getTools();
-
-    // Now you can use mcpTools with your LlmAgent
-    console.log(`Retrieved ${mcpTools.length} ABI tools`);
-
-    // Remember to clean up when done
-    // await toolset.close();
+    })
     ```
   </Tab>
   
   <Tab value="Claude Desktop">
-    ### Claude Desktop Configuration
-
-    Add this to your Claude Desktop `claude_desktop_config.json`:
-
     ```json
     {
       "mcpServers": {
@@ -163,14 +97,6 @@ The server automatically creates tools for each function in the provided ABI:
       }
     }
     ```
-
-    Then restart Claude Desktop and you'll have access to contract interaction tools directly in your conversations.
-
-    **Example prompts:**
-    - "Check the balance of address 0x123... for this ERC20 token"
-    - "Transfer 100 tokens to address 0xabc..."
-    - "What's the total supply of this token?"
-    - "Approve 1000 tokens for spender 0xdef..."
   </Tab>
 </Tabs>
 

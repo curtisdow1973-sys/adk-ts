@@ -51,50 +51,20 @@ Get channel administrators (limited by Telegram API).
 
 <Tabs items={['Simple', 'Verbose', 'Claude Desktop']}>
   <Tab value="Simple">
-    ### Using McpTelegram Wrapper
-
-    The simplest way to use MCP Telegram with ADK TypeScript:
-
     ```typescript
-    import { McpTelegram } from "@iqai/adk";
-
-    // Create Telegram toolset with simplified syntax
-    const toolset = McpTelegram({
+    McpTelegram({
       env: {
         TELEGRAM_BOT_TOKEN: process.env.TELEGRAM_BOT_TOKEN,
       },
-      debug: false,
-      retryOptions: {
-        maxRetries: 2,
-        initialDelay: 200,
-      },
-    });
-
-    // Get available tools
-    const mcpTools = await toolset.getTools();
-
-    // Now you can use mcpTools with your LlmAgent
-    console.log(`Retrieved ${mcpTools.length} Telegram tools`);
+    })
     ```
   </Tab>
   
   <Tab value="Verbose">
-    ### Using McpToolset Class
-
-    For more control over the MCP configuration:
-
     ```typescript
-    import { McpToolset, type McpConfig } from "@iqai/adk";
-
-    // Configure MCP connection
-    const mcpConfig: McpConfig = {
+    new McpToolset({
       name: "Telegram MCP Client",
       description: "Client for Telegram bot operations",
-      debug: false,
-      retryOptions: {
-        maxRetries: 2,
-        initialDelay: 200,
-      },
       transport: {
         mode: "stdio",
         command: "pnpm",
@@ -104,27 +74,11 @@ Get channel administrators (limited by Telegram API).
           PATH: process.env.PATH || "",
         },
       },
-    };
-
-    // Initialize toolset
-    const toolset = new McpToolset(mcpConfig);
-
-    // Get available tools
-    const mcpTools = await toolset.getTools();
-
-    // Now you can use mcpTools with your LlmAgent
-    console.log(`Retrieved ${mcpTools.length} Telegram tools`);
-
-    // Remember to clean up when done
-    // await toolset.close();
+    })
     ```
   </Tab>
   
   <Tab value="Claude Desktop">
-    ### Claude Desktop Configuration
-
-    Add this to your Claude Desktop `claude_desktop_config.json`:
-
     ```json
     {
       "mcpServers": {
@@ -138,15 +92,6 @@ Get channel administrators (limited by Telegram API).
       }
     }
     ```
-
-    Then restart Claude Desktop and you'll have access to Telegram tools directly in your conversations.
-
-    **Example prompts:**
-    - "Send a message to @mychannel saying 'Hello from Claude!'"
-    - "Get information about channel @mychannel"
-    - "Forward message 123 from @channel1 to @channel2"
-    - "Pin message 456 in @mychannel"
-    - "Get the administrators of @mychannel"
   </Tab>
 </Tabs>
 

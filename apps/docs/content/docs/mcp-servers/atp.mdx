@@ -69,54 +69,21 @@ Add a new log entry for a specific AI agent:
 
 <Tabs items={['Simple', 'Verbose', 'Claude Desktop']}>
   <Tab value="Simple">
-    ### Using McpAtp Wrapper
-
-    The simplest way to use MCP ATP with ADK TypeScript:
-
     ```typescript
-    import { McpAtp } from "@iqai/adk";
-
-    // Create ATP toolset with simplified syntax
-    const toolset = McpAtp({
+    McpAtp({
       env: {
         ATP_WALLET_PRIVATE_KEY: process.env.WALLET_PRIVATE_KEY,
         ATP_API_KEY: process.env.ATP_API_KEY,
       },
-      debug: false,
-      retryOptions: {
-        maxRetries: 2,
-        initialDelay: 200,
-      },
-    });
-
-    // Get available tools
-    const mcpTools = await toolset.getTools();
-
-    // Now you can use mcpTools with your LlmAgent
-    console.log(`Retrieved ${mcpTools.length} ATP tools`);
-
-    // Remember to clean up when done
-    // await toolset.close();
+    })
     ```
   </Tab>
   
   <Tab value="Verbose">
-    ### Using McpToolset Class
-
-    For more control over the MCP configuration:
-
     ```typescript
-    import { McpToolset, type McpConfig } from "@iqai/adk";
-
-    // Configure MCP connection
-    const mcpConfig: McpConfig = {
+    new McpToolset({
       name: "ATP MCP Client",
       description: "Client for the @iqai/mcp-atp server",
-      debug: false,
-      retryOptions: {
-        maxRetries: 2,
-        initialDelay: 200,
-      },
       transport: {
         mode: "stdio",
         command: "pnpm",
@@ -127,27 +94,11 @@ Add a new log entry for a specific AI agent:
           PATH: process.env.PATH || "",
         },
       },
-    };
-
-    // Initialize toolset
-    const toolset = new McpToolset(mcpConfig);
-
-    // Get available tools
-    const mcpTools = await toolset.getTools();
-
-    // Now you can use mcpTools with your LlmAgent
-    console.log(`Retrieved ${mcpTools.length} ATP tools`);
-
-    // Remember to clean up when done
-    // await toolset.close();
+    })
     ```
   </Tab>
   
   <Tab value="Claude Desktop">
-    ### Claude Desktop Configuration
-
-    Add this to your Claude Desktop `claude_desktop_config.json`:
-
     ```json
     {
       "mcpServers": {
@@ -162,14 +113,6 @@ Add a new log entry for a specific AI agent:
       }
     }
     ```
-
-    Then restart Claude Desktop and you'll have access to ATP tools directly in your conversations.
-
-    **Example prompts:**
-    - "Get statistics for ATP agent 0x1234...5678"
-    - "Show my current ATP token positions"
-    - "Buy 1000 IQ worth of tokens for agent 0xabc...def"
-    - "Add a log entry for agent 0x123...456: Updated trading strategy"
   </Tab>
 </Tabs>
 

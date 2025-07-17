@@ -89,53 +89,20 @@ The private key is used for signing transactions for lending, borrowing, etc. Ha
 
 <Tabs items={['Simple', 'Verbose', 'Claude Desktop']}>
   <Tab value="Simple">
-    ### Using McpFraxlend Wrapper
-
-    The simplest way to use MCP Fraxlend with ADK TypeScript:
-
     ```typescript
-    import { McpFraxlend } from "@iqai/adk";
-
-    // Create Fraxlend toolset with simplified syntax
-    const toolset = McpFraxlend({
+    McpFraxlend({
       env: {
         WALLET_PRIVATE_KEY: process.env.WALLET_PRIVATE_KEY,
       },
-      debug: false,
-      retryOptions: {
-        maxRetries: 2,
-        initialDelay: 200,
-      },
-    });
-
-    // Get available tools
-    const mcpTools = await toolset.getTools();
-
-    // Now you can use mcpTools with your LlmAgent
-    console.log(`Retrieved ${mcpTools.length} Fraxlend tools`);
-
-    // Remember to clean up when done
-    // await toolset.close();
+    })
     ```
   </Tab>
   
   <Tab value="Verbose">
-    ### Using McpToolset Class
-
-    For more control over the MCP configuration:
-
     ```typescript
-    import { McpToolset, type McpConfig } from "@iqai/adk";
-
-    // Configure MCP connection
-    const mcpConfig: McpConfig = {
+    new McpToolset({
       name: "Fraxlend MCP Client",
       description: "Client for Fraxlend lending operations",
-      debug: false,
-      retryOptions: {
-        maxRetries: 2,
-        initialDelay: 200,
-      },
       transport: {
         mode: "stdio",
         command: "pnpm",
@@ -145,27 +112,11 @@ The private key is used for signing transactions for lending, borrowing, etc. Ha
           PATH: process.env.PATH || "",
         },
       },
-    };
-
-    // Initialize toolset
-    const toolset = new McpToolset(mcpConfig);
-
-    // Get available tools
-    const mcpTools = await toolset.getTools();
-
-    // Now you can use mcpTools with your LlmAgent
-    console.log(`Retrieved ${mcpTools.length} Fraxlend tools`);
-
-    // Remember to clean up when done
-    // await toolset.close();
+    })
     ```
   </Tab>
   
   <Tab value="Claude Desktop">
-    ### Claude Desktop Configuration
-
-    Add this to your Claude Desktop `claude_desktop_config.json`:
-
     ```json
     {
       "mcpServers": {
@@ -179,16 +130,6 @@ The private key is used for signing transactions for lending, borrowing, etc. Ha
       }
     }
     ```
-
-    Then restart Claude Desktop and you'll have access to Fraxlend tools directly in your conversations.
-
-    **Example prompts:**
-    - "Show me statistics for Fraxlend pair 0x123..."
-    - "Lend 100 FRAX to the FRAX-ETH pool at 0x123...abc"
-    - "Borrow 1000 FRAX using 2 ETH as collateral from pool 0x123...abc"
-    - "What's the pair address for FRAX-ETH pool?"
-    - "Add 1 ETH as collateral to pair 0x456..."
-    - "Withdraw 50 FRAX from my lending position at 0x789..."
   </Tab>
 </Tabs>
 

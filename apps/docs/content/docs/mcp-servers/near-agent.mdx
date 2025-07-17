@@ -31,56 +31,22 @@ npx @iqai/mcp-near-agent
 
 <Tabs items={['Simple', 'Verbose', 'Claude Desktop']}>
   <Tab value="Simple">
-    ### Using McpNearAgent Wrapper
-
-    The simplest way to use MCP NEAR Agent with ADK TypeScript:
-
     ```typescript
-    import { McpNearAgent } from "@iqai/adk";
-
-    // Create NEAR Agent toolset with simplified syntax
-    const toolset = McpNearAgent({
+    McpNearAgent({
       env: {
         ACCOUNT_ID: "your-account.testnet",
         ACCOUNT_KEY: "ed25519:your-private-key-here",
         NEAR_NETWORK_ID: "testnet",
-        NEAR_NODE_URL: "https://rpc.testnet.near.org",
       },
-      debug: false,
-      retryOptions: {
-        maxRetries: 2,
-        initialDelay: 200,
-      },
-    });
-
-    // Get available tools
-    const mcpTools = await toolset.getTools();
-
-    // Now you can use mcpTools with your LlmAgent
-    console.log(`Retrieved ${mcpTools.length} NEAR Agent tools`);
-
-    // Remember to clean up when done
-    // await toolset.close();
+    })
     ```
   </Tab>
-
+  
   <Tab value="Verbose">
-    ### Using McpToolset Class
-
-    For more control over the MCP configuration:
-
     ```typescript
-    import { McpToolset, type McpConfig } from "@iqai/adk";
-
-    // Configure MCP connection
-    const mcpConfig: McpConfig = {
+    new McpToolset({
       name: "NEAR Agent MCP Client",
       description: "Client for NEAR blockchain operations",
-      debug: false,
-      retryOptions: {
-        maxRetries: 2,
-        initialDelay: 200,
-      },
       transport: {
         mode: "stdio",
         command: "pnpm",
@@ -89,31 +55,14 @@ npx @iqai/mcp-near-agent
           ACCOUNT_ID: process.env.NEAR_ACCOUNT_ID,
           ACCOUNT_KEY: process.env.NEAR_ACCOUNT_KEY,
           NEAR_NETWORK_ID: "testnet",
-          NEAR_NODE_URL: "https://rpc.testnet.near.org",
           PATH: process.env.PATH || "",
         },
       },
-    };
-
-    // Initialize toolset
-    const toolset = new McpToolset(mcpConfig);
-
-    // Get available tools
-    const mcpTools = await toolset.getTools();
-
-    // Now you can use mcpTools with your LlmAgent
-    console.log(`Retrieved ${mcpTools.length} NEAR Agent tools`);
-
-    // Remember to clean up when done
-    // await toolset.close();
+    })
     ```
   </Tab>
-
+  
   <Tab value="Claude Desktop">
-    ### Claude Desktop Configuration
-
-    Add this to your Claude Desktop `claude_desktop_config.json`:
-
     ```json
     {
       "mcpServers": {
@@ -123,42 +72,13 @@ npx @iqai/mcp-near-agent
           "env": {
             "ACCOUNT_ID": "your-account.testnet",
             "ACCOUNT_KEY": "ed25519:your-private-key-here",
-            "NEAR_NETWORK_ID": "testnet",
-            "NEAR_NODE_URL": "https://rpc.testnet.near.org"
+            "NEAR_NETWORK_ID": "testnet"
           }
         }
       }
     }
     ```
-
-    **For Mainnet:**
-    ```json
-    {
-      "mcpServers": {
-        "near-agent-server": {
-          "command": "pnpm",
-          "args": ["dlx", "@iqai/mcp-near-agent"],
-          "env": {
-            "ACCOUNT_ID": "your-account.near",
-            "ACCOUNT_KEY": "ed25519:your-private-key-here",
-            "NEAR_NETWORK_ID": "mainnet"
-          }
-        }
-      }
-    }
-    ```
-
-    Then restart Claude Desktop and you'll have access to NEAR blockchain tools directly in your conversations.
-
-    **Example prompts:**
-    - "Check my NEAR account balance"
-    - "Transfer 2 NEAR tokens to bob.testnet"
-    - "What's my account information?"
-    - "Call the get_greeting method on contract.testnet"
-    - "Show me my recent transaction history"
-    - "Get information about the current network validators"
-  </Tab>
-</Tabs>
+  </Tab></Tabs>
 
 ## Configuration
 

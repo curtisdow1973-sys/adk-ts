@@ -52,50 +52,20 @@ The private key is used for signing transactions. Handle with care.
 
 <Tabs items={['Simple', 'Verbose', 'Claude Desktop']}>
   <Tab value="Simple">
-    ### Using McpOdos Wrapper
-
-    The simplest way to use MCP ODOS with ADK TypeScript:
-
     ```typescript
-    import { McpOdos } from "@iqai/adk";
-
-    // Create ODOS toolset with simplified syntax
-    const toolset = McpOdos({
+    McpOdos({
       env: {
         WALLET_PRIVATE_KEY: process.env.WALLET_PRIVATE_KEY,
       },
-      debug: false,
-      retryOptions: {
-        maxRetries: 2,
-        initialDelay: 200,
-      },
-    });
-
-    // Get available tools
-    const mcpTools = await toolset.getTools();
-
-    // Now you can use mcpTools with your LlmAgent
-    console.log(`Retrieved ${mcpTools.length} ODOS tools`);
+    })
     ```
   </Tab>
   
   <Tab value="Verbose">
-    ### Using McpToolset Class
-
-    For more control over the MCP configuration:
-
     ```typescript
-    import { McpToolset, type McpConfig } from "@iqai/adk";
-
-    // Configure MCP connection
-    const mcpConfig: McpConfig = {
+    new McpToolset({
       name: "ODOS MCP Client",
       description: "Client for ODOS DEX aggregation",
-      debug: false,
-      retryOptions: {
-        maxRetries: 2,
-        initialDelay: 200,
-      },
       transport: {
         mode: "stdio",
         command: "pnpm",
@@ -105,27 +75,11 @@ The private key is used for signing transactions. Handle with care.
           PATH: process.env.PATH || "",
         },
       },
-    };
-
-    // Initialize toolset
-    const toolset = new McpToolset(mcpConfig);
-
-    // Get available tools
-    const mcpTools = await toolset.getTools();
-
-    // Now you can use mcpTools with your LlmAgent
-    console.log(`Retrieved ${mcpTools.length} ODOS tools`);
-
-    // Remember to clean up when done
-    // await toolset.close();
+    })
     ```
   </Tab>
   
   <Tab value="Claude Desktop">
-    ### Claude Desktop Configuration
-
-    Add this to your Claude Desktop `claude_desktop_config.json`:
-
     ```json
     {
       "mcpServers": {
@@ -139,14 +93,6 @@ The private key is used for signing transactions. Handle with care.
       }
     }
     ```
-
-    Then restart Claude Desktop and you'll have access to ODOS tools directly in your conversations.
-
-    **Example prompts:**
-    - "Get me a quote for swapping 1 wfrxEth to FRAX on Fraxtal"
-    - "What rate would I get for trading 0.5 ETH to USDC?"
-    - "Swap 100 DAI to FXS"
-    - "Exchange 0.1 ETH for USDT"
   </Tab>
 </Tabs>
 
