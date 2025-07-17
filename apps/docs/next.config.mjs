@@ -8,6 +8,10 @@ const config = {
   async rewrites() {
     return [
       {
+        source: '/docs',
+        destination: '/docs/framework',
+      },
+      {
         source: '/docs/:path*.mdx',
         destination: '/llms.mdx/:path*',
       },
