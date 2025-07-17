@@ -19,7 +19,7 @@ import { tracer } from "./telemetry";
 /**
  * Find function call event if last event is function response.
  */
-function _findFunctionCallEventIfLastEventIsFunctionResponse(
+export function _findFunctionCallEventIfLastEventIsFunctionResponse(
 	session: Session,
 ): Event | null {
 	const events = session.events;

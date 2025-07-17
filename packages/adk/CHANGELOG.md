@@ -1,5 +1,17 @@
 # @iqai/adk
 
+## 0.1.8
+
+### Patch Changes
+
+- 38e6ec5: Improve type safety in AgentBuilder by removing undefined types from BuiltAgent interface
+
+## 0.1.7
+
+### Patch Changes
+
+- 6e97c5a: Improve agent builder to take minimal params and improved experience with runner.ask
+
 ## 0.1.6
 
 ### Patch Changes
