@@ -1,5 +1,13 @@
 # @iqai/adk
 
+## 0.1.9
+
+### Patch Changes
+
+- 2711998: - adds @iqai/mcp-discord mcp definition
+  - update EnhancedRunner.ask() to take in message type LlmRequest
+  - update SamplingHandler response type to be LlmResponse | string for more flexibility when used with enhanced runner
+
 ## 0.1.8
 
 ### Patch Changes
