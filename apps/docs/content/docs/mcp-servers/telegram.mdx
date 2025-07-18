@@ -100,6 +100,18 @@ Get channel administrators (limited by Telegram API).
 
 - Parameters: `channelId` (string), `limit` (number, optional)
 
+## Sampling
+
+Sampling enables an mcp server to request llm sampling (generations or completions) from the client.
+The mcp-telegram server listens to new messages and uses sampling to get llm responses and responds to them, basically in a nutshell allowing for bi-directional communication.
+
+This is useful when you want agentic capabilities ie building a telegram bot that can respond to messages and also send messages to other users.
+
+### Resources
+
+- An example telegram bot written with adk-ts that makes use of sampling: [Telegram bot example](https://github.com/IQAIcom/adk-ts/tree/main/apps/examples/src/mcp-telegram-agent/index.ts)
+- For more info on sampling please refer to: [MCP Sampling](https://modelcontextprotocol.io/specification/2025-06-18/client/sampling)
+
 ## Environment Variables
 
 - `TELEGRAM_BOT_TOKEN`: Your Telegram bot token (required)
