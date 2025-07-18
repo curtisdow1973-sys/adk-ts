@@ -55,7 +55,7 @@ npm install @iqai/adk
 import { AgentBuilder } from '@iqai/adk';
 
 const response = await AgentBuilder
-  .withModel("gpt-4")
+  .withModel("gpt-4.1")
   .ask("What is the primary function of an AI agent?");
 
 console.log(response);

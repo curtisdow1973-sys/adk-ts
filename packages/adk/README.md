@@ -58,7 +58,7 @@ npm install @iqai/adk
 import { AgentBuilder } from '@iqai/adk';
 
 const response = await AgentBuilder
-  .withModel("gpt-4")
+  .withModel("gpt-4.1")
   .ask("What is the primary function of an AI agent?");
 
 console.log(response);
@@ -129,7 +129,6 @@ async function quickQuery() {
     .create("query_assistant")
     .withModel("gemini-2.5-flash")
     .withInstruction("You are a helpful AI. Respond clearly and concisely.")
-    .withQuickSession("my-app", "user-123")
     .ask("What is the capital of France?");
 
   console.log(response);
