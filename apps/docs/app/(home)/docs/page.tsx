@@ -46,7 +46,7 @@ export default function DocsPage(): React.ReactElement {
             Build intelligent AI agents with our comprehensive TypeScript framework featuring tools, sessions, and runtime management.
           </p>
         </Item>
-        <Item href="/docs/framework/mcp-servers">
+        <Item href="/docs/mcp-servers">
           <Icon>
             <Server className="size-full" />
           </Icon>
