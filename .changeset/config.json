@@ -7,5 +7,13 @@
 	"access": "public",
 	"baseBranch": "main",
 	"updateInternalDependencies": "patch",
-	"ignore": ["@iqai/examples"]
+	"ignore": [
+		"@iqai/examples",
+		"docs",
+		"adk-discord-bot",
+		"adk-hono-server",
+		"adk-telegram-bot",
+		"mcp-server-template",
+		"adk-simple-agent"
+	]
 }

@@ -1,7 +1,7 @@
 {
-	"name": "adk-agent-starter",
+	"name": "adk-simple-agent",
 	"version": "0.0.1",
-	"description": "adk-agent-starter is a starter project for creating adk agents",
+	"description": "adk-simple-agent is a starter project for creating simple adk agent",
 	"main": "dist/index.js",
 	"private": true,
 	"scripts": {
