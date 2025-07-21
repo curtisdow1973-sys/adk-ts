@@ -7,9 +7,17 @@ import type { ToolContext } from "../tool-context";
 import { BaseTool } from "./base-tool";
 
 /**
- * Configuration options for createTool
+ * Configuration for creating a tool
  */
-export interface CreateToolOptions {
+export interface CreateToolConfig<T extends Record<string, any>> {
+	/** The name of the tool */
+	name: string;
+	/** A description of what the tool does */
+	description: string;
+	/** Zod schema for validating tool arguments */
+	schema: z.ZodSchema<T>;
+	/** The function to execute (can be sync or async) */
+	fn: (args: T, context?: ToolContext) => any;
 	/** Whether the tool is a long running operation */
 	isLongRunning?: boolean;
 	/** Whether the tool execution should be retried on failure */
@@ -26,23 +34,17 @@ class CreatedTool<T extends Record<string, any>> extends BaseTool {
 	private schema: z.ZodSchema<T>;
 	private functionDeclaration: FunctionDeclaration;
 
-	constructor(
-		name: string,
-		description: string,
-		schema: z.ZodSchema<T>,
-		func: (args: T, context?: ToolContext) => any,
-		options: CreateToolOptions = {},
-	) {
+	constructor(config: CreateToolConfig<T>) {
 		super({
-			name,
-			description,
-			isLongRunning: options.isLongRunning || false,
-			shouldRetryOnFailure: options.shouldRetryOnFailure || false,
-			maxRetryAttempts: options.maxRetryAttempts || 3,
+			name: config.name,
+			description: config.description,
+			isLongRunning: config.isLongRunning || false,
+			shouldRetryOnFailure: config.shouldRetryOnFailure || false,
+			maxRetryAttempts: config.maxRetryAttempts || 3,
 		});
 
-		this.func = func;
-		this.schema = schema;
+		this.func = config.fn;
+		this.schema = config.schema;
 		this.functionDeclaration = this.buildDeclaration();
 	}
 
@@ -119,7 +121,7 @@ class CreatedTool<T extends Record<string, any>> extends BaseTool {
 }
 
 /**
- * Creates a tool from a name, description, Zod schema, and function.
+ * Creates a tool from a configuration object.
  *
  * This is a more user-friendly alternative to FunctionTool that provides:
  * - Automatic argument validation using Zod schemas
@@ -128,11 +130,7 @@ class CreatedTool<T extends Record<string, any>> extends BaseTool {
  * - Support for both sync and async functions
  * - Optional ToolContext parameter support
  *
- * @param name The name of the tool
- * @param description A description of what the tool does
- * @param schema Zod schema for validating tool arguments
- * @param func The function to execute (can be sync or async)
- * @param options Optional configuration for the tool
+ * @param config The tool configuration object
  * @returns A BaseTool instance ready for use with agents
  *
  * @example
@@ -140,15 +138,15 @@ class CreatedTool<T extends Record<string, any>> extends BaseTool {
  * import { createTool } from '@iqai/adk';
  * import { z } from 'zod';
  *
- * const calculatorTool = createTool(
- *   'calculator',
- *   'Performs basic arithmetic operations',
- *   z.object({
+ * const calculatorTool = createTool({
+ *   name: 'calculator',
+ *   description: 'Performs basic arithmetic operations',
+ *   schema: z.object({
  *     operation: z.enum(['add', 'subtract', 'multiply', 'divide']),
  *     a: z.number().describe('First number'),
  *     b: z.number().describe('Second number')
  *   }),
- *   ({ operation, a, b }) => {
+ *   fn: ({ operation, a, b }) => {
  *     switch (operation) {
  *       case 'add': return { result: a + b };
  *       case 'subtract': return { result: a - b };
@@ -157,15 +155,11 @@ class CreatedTool<T extends Record<string, any>> extends BaseTool {
  *       default: return { error: 'Unknown operation' };
  *     }
  *   }
- * );
+ * });
  * ```
  */
 export function createTool<T extends Record<string, any>>(
-	name: string,
-	description: string,
-	schema: z.ZodSchema<T>,
-	func: (args: T, context?: ToolContext) => any,
-	options: CreateToolOptions = {},
+	config: CreateToolConfig<T>,
 ): BaseTool {
-	return new CreatedTool(name, description, schema, func, options);
+	return new CreatedTool(config);
 }
