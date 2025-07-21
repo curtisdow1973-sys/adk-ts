@@ -3,6 +3,7 @@
 	"version": "0.0.1",
 	"description": "adk-agent-starter is a starter project for creating adk agents",
 	"main": "dist/index.js",
+	"private": true,
 	"scripts": {
 		"build": "tsc",
 		"dev": "tsx watch src/index.ts",

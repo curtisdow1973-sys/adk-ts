@@ -3,6 +3,7 @@
 	"version": "0.0.1",
 	"description": "ADK Discord Bot - A starter project for creating AI-powered Discord bots with ADK",
 	"main": "dist/index.js",
+	"private": true,
 	"scripts": {
 		"build": "tsc",
 		"dev": "tsx watch src/index.ts",
