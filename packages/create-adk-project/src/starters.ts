@@ -8,31 +8,38 @@ export interface StarterOption {
 
 export const starters: StarterOption[] = [
 	{
-		value: "basic-agent",
-		label: "🤖 Basic Agent",
-		hint: "Simple agent starter template",
-		template: "apps/starter-templates/basic-agent",
+		value: "simple-agent",
+		label: "🤖 Simple Agent",
+		hint: "Basic agent starter template",
+		template: "apps/starter-templates/simple-agent",
 		isLocal: true,
 	},
 	{
-		value: "advanced-agent",
-		label: "🚀 Advanced Agent",
-		hint: "Advanced agent with tools and memory",
-		template: "apps/starter-templates/advanced-agent",
+		value: "hono-server",
+		label: "🌐 Hono Server",
+		hint: "Web server with AI agent using Hono framework",
+		template: "apps/starter-templates/hono-server",
 		isLocal: true,
 	},
 	{
-		value: "mcp-server",
+		value: "telegram-bot",
+		label: "📨 Telegram Bot",
+		hint: "AI-powered Telegram bot template",
+		template: "apps/starter-templates/telegram-bot",
+		isLocal: true,
+	},
+	{
+		value: "discord-bot",
+		label: "💬 Discord Bot",
+		hint: "AI-powered Discord bot template",
+		template: "apps/starter-templates/discord-bot",
+		isLocal: true,
+	},
+	{
+		value: "mcp-starter",
 		label: "🔌 MCP Server",
 		hint: "Model Context Protocol server template",
-		template: "apps/starter-templates/mcp-server",
+		template: "apps/starter-templates/mcp-starter",
 		isLocal: true,
-	},
-	{
-		value: "adk-agent-starter",
-		label: "🤖 Legacy ADK Agent Starter",
-		hint: "Complete agent development starter template (GitHub)",
-		template: "github:IQAIcom/adk-agent-starter",
-		isLocal: false,
-	},
+	}
 ];
