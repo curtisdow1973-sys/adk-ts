@@ -1,4 +1,4 @@
-import { Logger } from "@adk/helpers/logger";
+import { Logger } from "@adk/logger";
 import { BaseTool } from "../base/base-tool";
 import type { ToolContext } from "../tool-context";
 

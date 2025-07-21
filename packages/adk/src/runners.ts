@@ -8,7 +8,7 @@ import { RunConfig } from "./agents/run-config";
 import type { BaseArtifactService } from "./artifacts/base-artifact-service";
 import { InMemoryArtifactService } from "./artifacts/in-memory-artifact-service";
 import { Event } from "./events/event";
-import { Logger } from "./helpers/logger";
+import { Logger } from "./logger";
 import type { BaseMemoryService } from "./memory/base-memory-service";
 import { InMemoryMemoryService } from "./memory/in-memory-memory-service";
 import type { BaseSessionService } from "./sessions/base-session-service";

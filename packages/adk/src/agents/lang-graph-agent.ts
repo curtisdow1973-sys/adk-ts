@@ -1,4 +1,4 @@
-import { Logger } from "@adk/helpers/logger";
+import { Logger } from "@adk/logger";
 import { Event } from "../events/event";
 import { BaseAgent } from "./base-agent";
 import type { InvocationContext } from "./invocation-context";
