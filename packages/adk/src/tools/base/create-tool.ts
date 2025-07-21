@@ -38,9 +38,9 @@ class CreatedTool<T extends Record<string, any>> extends BaseTool {
 		super({
 			name: config.name,
 			description: config.description,
-			isLongRunning: config.isLongRunning || false,
-			shouldRetryOnFailure: config.shouldRetryOnFailure || false,
-			maxRetryAttempts: config.maxRetryAttempts || 3,
+			isLongRunning: config.isLongRunning ?? false,
+			shouldRetryOnFailure: config.shouldRetryOnFailure ?? false,
+			maxRetryAttempts: config.maxRetryAttempts ?? 3,
 		});
 
 		this.func = config.fn;
@@ -56,24 +56,13 @@ class CreatedTool<T extends Record<string, any>> extends BaseTool {
 			// Validate arguments using Zod schema
 			const validatedArgs = this.schema.parse(args);
 
-			// Check if function accepts context parameter
-			const funcAcceptsContext = this.func.length > 1;
-
-			// Call the function with validated arguments
-			let result: any;
-			if (funcAcceptsContext) {
-				if (this.isAsyncFunction(this.func)) {
-					result = await this.func(validatedArgs, context);
-				} else {
-					result = this.func(validatedArgs, context);
-				}
-			} else {
-				if (this.isAsyncFunction(this.func)) {
-					result = await this.func(validatedArgs);
-				} else {
-					result = this.func(validatedArgs);
-				}
-			}
+			// Call the function with validated arguments.
+			// `Promise.resolve` handles both sync and async functions gracefully.
+			const result = await Promise.resolve(
+				this.func.length > 1
+					? this.func(validatedArgs, context)
+					: this.func(validatedArgs),
+			);
 
 			// Ensure we return an object
 			return result || {};
@@ -112,12 +101,6 @@ class CreatedTool<T extends Record<string, any>> extends BaseTool {
 		};
 	}
 
-	/**
-	 * Checks if the function is async
-	 */
-	private isAsyncFunction(func: (...args: any[]) => any): boolean {
-		return func.constructor.name === "AsyncFunction";
-	}
 }
 
 /**
