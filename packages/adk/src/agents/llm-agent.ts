@@ -1,4 +1,4 @@
-import { Logger } from "@adk/helpers/logger";
+import { Logger } from "@adk/logger";
 import type { GenerateContentConfig } from "@google/genai";
 import type { LanguageModel } from "ai";
 import type { BaseArtifactService } from "../artifacts/base-artifact-service";

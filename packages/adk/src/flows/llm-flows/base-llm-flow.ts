@@ -6,7 +6,8 @@ import {
 	StreamingMode,
 } from "@adk/agents";
 import { Event } from "@adk/events";
-import { Logger } from "@adk/helpers/logger";
+import { Logger } from "@adk/logger";
+import { LogFormatter } from "@adk/logger/log-formatter";
 import { type BaseLlm, LlmRequest, type LlmResponse } from "@adk/models";
 import { traceLlmCall } from "@adk/telemetry";
 import { ToolContext } from "@adk/tools";
@@ -409,7 +410,7 @@ export abstract class BaseLlmFlow {
 		// Format content preview (show first message content)
 		const contentPreview =
 			llmRequest.contents?.length > 0
-				? this._formatContentPreview(llmRequest.contents[0])
+				? LogFormatter.formatContentPreview(llmRequest.contents[0])
 				: "none";
 
 		this.logger.debugStructured("📤 LLM Request", {
@@ -441,17 +442,20 @@ export abstract class BaseLlmFlow {
 			// Log LLM response in a clean format
 			const tokenCount =
 				llmResponse.usageMetadata?.totalTokenCount || "unknown";
-			const functionCallCount =
-				llmResponse.content?.parts?.filter((part: any) => part.functionCall)
-					.length || 0;
+			const functionCalls =
+				llmResponse.content?.parts?.filter((part) => part.functionCall) || [];
+
+			// Format function calls for display using LogFormatter utility
+			const functionCallsDisplay =
+				LogFormatter.formatFunctionCalls(functionCalls);
 
 			// Format response content preview
-			const responsePreview = this._formatResponsePreview(llmResponse);
+			const responsePreview = LogFormatter.formatResponsePreview(llmResponse);
 
 			this.logger.debugStructured("📥 LLM Response", {
 				Model: llm.model,
 				"Token Count": tokenCount,
-				"Function Calls": functionCallCount,
+				"Function Calls": functionCallsDisplay,
 				"Response Preview": responsePreview,
 				"Finish Reason": llmResponse.finishReason || "unknown",
 				"Response #": responseCount,
@@ -574,62 +578,6 @@ export abstract class BaseLlmFlow {
 		}
 
 		return event;
-	}
-
-	/**
-	 * Logs data in a visually appealing format that works well in any terminal size.
-	 * Uses vertical layout for better readability and respects debug settings.
-	 */
-	_formatContentPreview(content: any): string {
-		if (!content) return "none";
-
-		// Handle Content type with parts
-		if (content.parts && Array.isArray(content.parts)) {
-			const textParts = content.parts
-				.filter((part: any) => part.text)
-				.map((part: any) => part.text)
-				.join(" ");
-
-			return textParts.length > 80
-				? `${textParts.substring(0, 80)}...`
-				: textParts || "no text content";
-		}
-
-		// Handle string content
-		if (typeof content === "string") {
-			return content.length > 80 ? `${content.substring(0, 80)}...` : content;
-		}
-
-		// Handle other types
-		const stringified = JSON.stringify(content);
-		return stringified.length > 80
-			? `${stringified.substring(0, 80)}...`
-			: stringified;
-	}
-
-	/**
-	 * Formats response content preview for debug logging
-	 */
-	_formatResponsePreview(llmResponse: LlmResponse): string {
-		if (!llmResponse.content) return "none";
-
-		// Handle Content type with parts
-		if (llmResponse.content.parts && Array.isArray(llmResponse.content.parts)) {
-			const textParts = llmResponse.content.parts
-				.filter((part: any) => part.text)
-				.map((part: any) => part.text)
-				.join(" ");
-
-			return textParts.length > 80
-				? `${textParts.substring(0, 80)}...`
-				: textParts || "no text content";
-		}
-
-		// Handle other types
-		const stringified = JSON.stringify(llmResponse.content);
-		return stringified.length > 80
-			? `${stringified.substring(0, 80)}...`
-			: stringified;
 	}
 
 	__getLlm(invocationContext: InvocationContext): BaseLlm {
