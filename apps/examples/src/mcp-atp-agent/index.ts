@@ -105,7 +105,9 @@ function validateEnvironmentVariables(): {
 	isValid: boolean;
 	exampleTokenContract: string | undefined;
 } {
-	const exampleTokenContract = env.EXAMPLE_ATP_TOKEN_CONTRACT;
+	const exampleTokenContract =
+		env.EXAMPLE_ATP_TOKEN_CONTRACT ||
+		"0x4dBcC239b265295500D2Fe2d0900629BDcBBD0fB"; // Defaults to Sophia's token contract
 	const walletPrivateKey = env.WALLET_PRIVATE_KEY;
 	const atpApiKey = env.ATP_API_KEY;
 
