@@ -74,9 +74,9 @@ class CreatedTool<T extends Record<string, any>> extends BaseTool {
 						.join(", ")}`,
 				};
 			}
-
-			// Re-throw execution errors so `safeExecute` can handle retries
-			throw error;
+			return {
+				error: `Error executing ${this.name}: ${error instanceof Error ? error.message : String(error)}`,
+			};
 		}
 	}
 
@@ -99,7 +99,6 @@ class CreatedTool<T extends Record<string, any>> extends BaseTool {
 			parameters,
 		};
 	}
-
 }
 
 /**
