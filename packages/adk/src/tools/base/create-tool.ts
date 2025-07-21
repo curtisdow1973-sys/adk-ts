@@ -69,9 +69,7 @@ class CreatedTool<T extends Record<string, any>> extends BaseTool {
 		} catch (error) {
 			if (error instanceof z.ZodError) {
 				return {
-					error: `Invalid arguments for ${this.name}: ${error.issues
-						.map((e) => `${e.path.join(".")}: ${e.message}`)
-						.join(", ")}`,
+					error: `Invalid arguments for ${this.name}: ${z.prettifyError(error)}`,
 				};
 			}
 			return {
