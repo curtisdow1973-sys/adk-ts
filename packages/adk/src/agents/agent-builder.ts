@@ -304,7 +304,7 @@ export class AgentBuilder {
 
 		// If no session config is provided, create a default in-memory session
 		if (!this.sessionConfig) {
-			this;
+			this.withQuickSession();
 		}
 
 		if (this.sessionConfig) {
