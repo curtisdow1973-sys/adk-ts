@@ -1,4 +1,4 @@
 packages:
-  - 'apps/*'
-  - 'apps/starter-templates/*'
+  - 'apps/docs'
+  - 'apps/examples'
   - 'packages/*'
