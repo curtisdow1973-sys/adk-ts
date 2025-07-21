@@ -1,5 +1,5 @@
 import { existsSync } from "node:fs";
-import { join } from "node:path";
+import { dirname, join } from "node:path";
 import { confirm, intro, outro, select, spinner, text } from "@clack/prompts";
 import chalk from "chalk";
 import dedent from "dedent";
@@ -19,6 +19,44 @@ const packageManagers: PackageManager[] = [
 	{ name: "yarn", command: "yarn", args: ["install"], label: "🧶 yarn" },
 	{ name: "bun", command: "bun", args: ["install"], label: "🍞 bun" },
 ];
+
+async function copyLocalTemplate(
+	templatePath: string,
+	targetDir: string,
+): Promise<void> {
+	const { cp } = await import("node:fs/promises");
+
+	// Find the root of the ADK project
+	// We'll look for the workspace root by finding the pnpm-workspace.yaml file
+	const currentDir = process.cwd();
+	let rootDir = currentDir;
+
+	// Search upwards for the workspace root
+	while (rootDir !== "/" && !existsSync(join(rootDir, "pnpm-workspace.yaml"))) {
+		rootDir = dirname(rootDir);
+	}
+
+	// If not found, try using relative path from typical CLI usage
+	if (!existsSync(join(rootDir, "pnpm-workspace.yaml"))) {
+		// Fallback: assume CLI is being run from within the workspace
+		rootDir = process.cwd();
+		// Look for apps/starter-templates relative to current directory
+		while (
+			rootDir !== "/" &&
+			!existsSync(join(rootDir, "apps", "starter-templates"))
+		) {
+			rootDir = dirname(rootDir);
+		}
+	}
+
+	const fullTemplatePath = join(rootDir, templatePath);
+
+	if (!existsSync(fullTemplatePath)) {
+		throw new Error(`Local template not found: ${fullTemplatePath}`);
+	}
+
+	await cp(fullTemplatePath, targetDir, { recursive: true });
+}
 
 async function detectAvailablePackageManagers(): Promise<PackageManager[]> {
 	const { spawn } = await import("node:child_process");
@@ -144,11 +182,17 @@ async function main() {
 		const templatePath = selectedStarter.template;
 		const targetDir = join(process.cwd(), projectName);
 
-		await downloadTemplate(templatePath, {
-			dir: targetDir,
-			offline: false,
-			preferOffline: false,
-		});
+		if (selectedStarter.isLocal) {
+			// Handle local template
+			await copyLocalTemplate(templatePath, targetDir);
+		} else {
+			// Handle remote template (GitHub, etc.)
+			await downloadTemplate(templatePath, {
+				dir: targetDir,
+				offline: false,
+				preferOffline: false,
+			});
+		}
 
 		s.stop("Project created successfully!");
 
