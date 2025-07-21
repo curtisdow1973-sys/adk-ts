@@ -1,42 +1,5 @@
 import { env } from "node:process";
-import {
-	FunctionTool,
-	InMemorySessionService,
-	LlmAgent,
-	Runner,
-} from "@iqai/adk";
-import { v4 as uuidv4 } from "uuid";
-
-/**
- * Application configuration constants
- */
-const APP_NAME = "function-tool-example";
-const USER_ID = uuidv4();
-
-/**
- * Function Tool Example
- *
- * This example demonstrates how to create and use custom function tools with the
- * ADK framework. Function tools allow you to wrap JavaScript functions and make
- * them available to LLM agents for execution.
- *
- * The example:
- * 1. Creates custom functions for calculations, weather, and user info
- * 2. Wraps these functions using FunctionTool
- * 3. Creates an agent with access to these tools
- * 4. Demonstrates various tool usage scenarios
- * 5. Shows tool chaining and complex interactions
- *
- * Expected Output:
- * - Agent responses using the calculator tool
- * - Simulated weather API calls
- * - User information retrieval
- * - Complex multi-tool interactions
- *
- * Prerequisites:
- * - Node.js environment
- * - LLM_MODEL environment variable (optional, defaults to gemini-2.5-flash)
- */
+import { AgentBuilder, FunctionTool, type EnhancedRunner } from "@iqai/adk";
 
 /**
  * Example function to calculate the sum of two numbers.
@@ -89,109 +52,76 @@ function getUserInfo(userName: string, toolContext: any): Record<string, any> {
 	};
 }
 
-/**
- * Creates function tools from JavaScript functions
- * @returns Array of configured FunctionTool instances
- */
-function createFunctionTools() {
-	const calculatorTool = new FunctionTool(calculateSum, {
-		name: "calculator",
-		description: "Calculates the sum of two numbers",
-		parameterTypes: {
-			a: "number",
-			b: "number",
-		},
-	});
+async function main() {
+	console.log("🛠️ Starting Function Tool example...");
 
-	const weatherTool = new FunctionTool(getWeather, {
-		name: "get_weather",
-		description: "Gets current weather information for a city",
-		isLongRunning: true,
-	});
+	try {
+		/**
+		 * Create function tools from JavaScript functions using AgentBuilder
+		 * Wraps native functions to make them available to the agent
+		 */
+		const calculatorTool = new FunctionTool(calculateSum, {
+			name: "calculator",
+			description: "Calculates the sum of two numbers",
+			parameterTypes: {
+				a: "number",
+				b: "number",
+			},
+		});
 
-	const userInfoTool = new FunctionTool(getUserInfo, {
-		name: "get_user_info",
-		description: "Gets information about a user by name",
-	});
+		const weatherTool = new FunctionTool(getWeather, {
+			name: "get_weather",
+			description: "Gets current weather information for a city",
+			isLongRunning: true,
+		});
 
-	return [calculatorTool, weatherTool, userInfoTool];
-}
+		const userInfoTool = new FunctionTool(getUserInfo, {
+			name: "get_user_info",
+			description: "Gets information about a user by name",
+		});
 
-/**
- * Creates and configures the LLM agent with function tools
- * @param tools Array of function tools to provide to the agent
- * @returns Configured LlmAgent instance
- */
-function createFunctionAgent(tools: any[]): LlmAgent {
-	return new LlmAgent({
-		name: "function_tool_demo",
-		model: env.LLM_MODEL || "gemini-2.5-flash",
-		description:
-			"An agent that demonstrates function tools using Google Gemini",
-		instruction: `You are a helpful assistant that can perform calculations, fetch weather data, and retrieve user information.
+		/**
+		 * Create agent with function tools using AgentBuilder
+		 * The agent can now call the wrapped functions
+		 */
+		const { runner } = await AgentBuilder.create("function_tool_demo")
+			.withModel(env.LLM_MODEL || "gemini-2.5-flash")
+			.withDescription(
+				"An agent that demonstrates function tools using Google Gemini",
+			)
+			.withInstruction(`You are a helpful assistant that can perform calculations, fetch weather data, and retrieve user information.
 Use the calculator tool to solve math problems.
 Use the weather tool to get weather information for cities.
 Use the user info tool to retrieve information about a user.
-Be clear and informative in your responses about the operations you perform.`,
-		tools,
-	});
-}
+Be clear and informative in your responses about the operations you perform.`)
+			.withTools(calculatorTool, weatherTool, userInfoTool)
+			.withQuickSession()
+			.build();
 
-/**
- * Executes a user message through the agent and returns the response
- * @param runner The Runner instance for executing agent tasks
- * @param sessionId The current session identifier
- * @param userMessage The message to send to the agent
- * @returns The agent's response as a string
- */
-async function runAgentTask(
-	runner: Runner,
-	sessionId: string,
-	userMessage: string,
-): Promise<string> {
-	const newMessage = {
-		parts: [{ text: userMessage }],
-	};
+		/**
+		 * Run comprehensive function tool demonstrations
+		 * Shows various scenarios and tool interactions
+		 */
+		await runFunctionToolExamples(runner);
 
-	let agentResponse = "";
-
-	try {
-		for await (const event of runner.runAsync({
-			userId: USER_ID,
-			sessionId,
-			newMessage,
-		})) {
-			if (event.author === "function_tool_demo" && event.content?.parts) {
-				const content = event.content.parts
-					.map((part) => part.text || "")
-					.join("");
-				if (content) {
-					agentResponse += content;
-				}
-			}
-		}
+		console.log("\n🎉 Function tool example completed!");
 	} catch (error) {
-		return `❌ Error: ${error instanceof Error ? error.message : String(error)}`;
+		console.error("❌ Error in function tool example:", error);
+		process.exit(1);
 	}
-
-	return agentResponse || "No response from agent";
 }
 
 /**
  * Runs demonstration examples of function tool usage
- * @param runner The Runner instance for executing agent tasks
- * @param sessionId The current session identifier
+ * @param runner The AgentBuilder runner for executing agent tasks
  */
-async function runFunctionToolExamples(
-	runner: Runner,
-	sessionId: string,
-): Promise<void> {
+async function runFunctionToolExamples(runner: EnhancedRunner): Promise<void> {
 	/**
 	 * Example 1: Calculator Tool Usage
 	 * Demonstrates basic mathematical operations
 	 */
 	console.log("\n--- Example 1: Using the calculator tool ---");
-	const calcResult = await runAgentTask(runner, sessionId, "What is 42 + 17?");
+	const calcResult = await runner.ask("What is 42 + 17?");
 	console.log("Agent response:", calcResult);
 
 	/**
@@ -199,9 +129,7 @@ async function runFunctionToolExamples(
 	 * Shows async function tool execution
 	 */
 	console.log("\n--- Example 2: Using the weather tool ---");
-	const weatherResult = await runAgentTask(
-		runner,
-		sessionId,
+	const weatherResult = await runner.ask(
 		"What's the weather like in New York today?",
 	);
 	console.log("Agent response:", weatherResult);
@@ -211,11 +139,7 @@ async function runFunctionToolExamples(
 	 * Demonstrates context-aware function tools
 	 */
 	console.log("\n--- Example 3: Using the user info tool ---");
-	const userResult = await runAgentTask(
-		runner,
-		sessionId,
-		"Get information about user Sarah",
-	);
+	const userResult = await runner.ask("Get information about user Sarah");
 	console.log("Agent response:", userResult);
 
 	/**
@@ -223,9 +147,7 @@ async function runFunctionToolExamples(
 	 * Shows multiple tool calls in sequence
 	 */
 	console.log("\n--- Example 4: Multiple calculations ---");
-	const complexCalcResult = await runAgentTask(
-		runner,
-		sessionId,
+	const complexCalcResult = await runner.ask(
 		"Calculate 15 + 25, then tell me what that result plus 10 would be",
 	);
 	console.log("Agent response:", complexCalcResult);
@@ -235,9 +157,7 @@ async function runFunctionToolExamples(
 	 * Demonstrates multiple calls to the same tool
 	 */
 	console.log("\n--- Example 5: Weather comparison ---");
-	const weatherCompareResult = await runAgentTask(
-		runner,
-		sessionId,
+	const weatherCompareResult = await runner.ask(
 		"Compare the weather between London and Tokyo",
 	);
 	console.log("Agent response:", weatherCompareResult);
@@ -247,58 +167,10 @@ async function runFunctionToolExamples(
 	 * Shows coordination between different types of tools
 	 */
 	console.log("\n--- Example 6: Mixed tool usage ---");
-	const mixedResult = await runAgentTask(
-		runner,
-		sessionId,
+	const mixedResult = await runner.ask(
 		"Get info for user John and calculate what his access level plus 5 would be",
 	);
 	console.log("Agent response:", mixedResult);
-}
-
-async function main() {
-	console.log("🛠️ Starting Function Tool example...");
-
-	try {
-		/**
-		 * Set up session management
-		 * Creates a persistent session for the conversation
-		 */
-		const sessionService = new InMemorySessionService();
-		const session = await sessionService.createSession(APP_NAME, USER_ID);
-
-		/**
-		 * Create function tools from JavaScript functions
-		 * Wraps native functions to make them available to the agent
-		 */
-		const functionTools = createFunctionTools();
-
-		/**
-		 * Create agent with function tools
-		 * The agent can now call the wrapped functions
-		 */
-		const agent = createFunctionAgent(functionTools);
-
-		/**
-		 * Set up runner for agent execution
-		 * Handles the communication and execution flow
-		 */
-		const runner = new Runner({
-			appName: APP_NAME,
-			agent,
-			sessionService,
-		});
-
-		/**
-		 * Run comprehensive function tool demonstrations
-		 * Shows various scenarios and tool interactions
-		 */
-		await runFunctionToolExamples(runner, session.id);
-
-		console.log("\n🎉 Function tool example completed!");
-	} catch (error) {
-		console.error("❌ Error in function tool example:", error);
-		process.exit(1);
-	}
 }
 
 /**
