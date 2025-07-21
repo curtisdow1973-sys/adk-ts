@@ -6,7 +6,6 @@ A minimal starter template for building Model Context Protocol (MCP) servers usi
 
 * Basic project structure with `src/lib`, `src/services`, `src/tools`.
 * TypeScript setup (compiles to `dist/`).
-* Biome for linting and formatting.
 * `fastmcp` for MCP server implementation.
 * A weather service example demonstrating:
   * Proper folder structure (lib, services, tools)
@@ -54,7 +53,7 @@ A minimal starter template for building Model Context Protocol (MCP) servers usi
    Get an API key from [OpenWeather](https://openweathermap.org/api).
 
 7. **Initial Commit:**
-    It's a good idea to make an initial commit at this stage before setting up Husky and Changesets.
+    It's a good idea to make an initial commit at this stage.
 
     ```bash
     git add .
@@ -100,58 +99,6 @@ pnpm run start
 # Connect with an MCP client and use the GET_WEATHER tool
 # with parameter: { "city": "London" }
 ```
-
-## Pre-commit Linting (Husky & lint-staged)
-
-This template includes `husky` and `lint-staged` in its `devDependencies` for running Biome on staged files before committing. To set it up:
-
-1. **Ensure your package.json has the prepare script for husky:**
-
-   ```json
-   {
-     "scripts": {
-       "prepare": "husky"
-     }
-   }
-   ```
-
-2. **Install dependencies and initialize husky:**
-
-   ```bash
-   pnpm install
-   pnpm dlx husky init
-   ```
-
-   This creates a `.husky` directory with the necessary setup.
-
-3. **Create the pre-commit hook for lint-staged:**
-
-   ```bash
-   # Create or edit the pre-commit file
-   echo '#!/usr/bin/env sh' > .husky/pre-commit
-   echo '. "$(dirname -- "$0")/_/husky.sh"
-   
-   pnpm lint-staged' >> .husky/pre-commit
-   
-   # Make it executable
-   chmod +x .husky/pre-commit
-
-   ```
-
-4. **Configure `lint-staged` in `package.json`:**
-   ```json
-   // In package.json
-   "lint-staged": {
-     "*.{js,ts,cjs,mjs,jsx,tsx,json,jsonc}": [
-       "biome check --write --organize-imports-enabled=false --no-errors-on-unmatched"
-     ]
-   }
-   ```
-
-   *Adjust the Biome command as needed. The one above is a common example.*
-
-5. **Test it:**
-   Stage some changes to a `.ts` file and try to commit. Biome should run on the staged file.
 
 ## Release Management (Changesets)
 
@@ -200,8 +147,6 @@ This template is ready for release management using [Changesets](https://github.
 * `pnpm run build`: Compiles TypeScript to JavaScript in `dist/` and makes the output executable.
 * `pnpm run dev`: Runs the server in development mode using `tsx` (hot-reloading for TypeScript).
 * `pnpm run start`: Runs the built server (from `dist/`) using Node.
-* `pnpm run lint`: Lints the codebase using Biome.
-* `pnpm run format`: Formats the codebase using Biome.
 
 ## Using the Server
 

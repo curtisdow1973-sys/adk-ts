@@ -9,15 +9,7 @@
 		"dev": "tsx watch src/index.ts",
 		"start": "node dist/index.js",
 		"clean": "rimraf dist",
-		"prebuild": "pnpm clean",
-		"lint": "biome check .",
-		"lint:fix": "biome check --write .",
-		"format": "biome format --write .",
-		"prepare": "husky",
-		"precommit": "lint-staged"
-	},
-	"lint-staged": {
-		"*.{ts,js,json}": ["biome check --write"]
+		"prebuild": "pnpm clean"
 	},
 	"repository": {
 		"type": "git",
@@ -38,10 +30,7 @@
 		"zod": "^4.0.5"
 	},
 	"devDependencies": {
-		"@biomejs/biome": "^2.1.1",
 		"@types/node": "^22.16.0",
-		"husky": "^9.1.7",
-		"lint-staged": "^16.1.2",
 		"rimraf": "^6.0.1",
 		"tsx": "^4.20.3",
 		"typescript": "^5.8.3"

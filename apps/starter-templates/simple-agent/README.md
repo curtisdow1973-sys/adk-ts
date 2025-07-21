@@ -46,9 +46,7 @@ cp .env.example .env
 
 ## 🧰 Dev Tools
 This starter includes:
-- 🐕 **Husky**: Git hooks for code quality
-- 🎨 **Biome**: Linting and formatting
-- 🚀 **GitHub Actions**: CI/CD pipeline
+-  **GitHub Actions**: CI/CD pipeline
 - 📦 **PNPM**: Fast package manager
 
 ## 🏗️ Building Your Agent
