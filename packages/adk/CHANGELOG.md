@@ -1,5 +1,11 @@
 # @iqai/adk
 
+## 0.1.10
+
+### Patch Changes
+
+- 83e8a58: Add create tool function to easily create tools with zod schema
+
 ## 0.1.9
 
 ### Patch Changes
