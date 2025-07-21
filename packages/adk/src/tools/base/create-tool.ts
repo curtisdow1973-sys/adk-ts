@@ -64,8 +64,8 @@ class CreatedTool<T extends Record<string, any>> extends BaseTool {
 					: this.func(validatedArgs),
 			);
 
-			// Ensure we return an object
-			return result || {};
+			// Ensure we return an object, but preserve falsy values like 0, false, ""
+			return result ?? {};
 		} catch (error) {
 			if (error instanceof z.ZodError) {
 				return {
@@ -75,9 +75,8 @@ class CreatedTool<T extends Record<string, any>> extends BaseTool {
 				};
 			}
 
-			return {
-				error: `Error executing ${this.name}: ${error instanceof Error ? error.message : String(error)}`,
-			};
+			// Re-throw execution errors so `safeExecute` can handle retries
+			throw error;
 		}
 	}
 
