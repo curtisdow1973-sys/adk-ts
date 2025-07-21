@@ -59,11 +59,6 @@ export function Footer() {
                   Context & Memory
                 </Link>
               </li>
-              <li>
-                <Link href="/docs/framework/deploy" className="text-sm text-muted-foreground hover:text-primary transition-colors">
-                  Deployment
-                </Link>
-              </li>
             </ul>
           </div>
 
