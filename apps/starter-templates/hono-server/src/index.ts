@@ -32,7 +32,8 @@ app.post("/ask", askHandler);
 
 const port = Number(env.PORT) || 3000;
 
-console.log(`🚀 Starting Hono server on port ${port}...`);
+console.log(`🚀 Started Hono server on port ${port}`);
+console.log(`👉 Visit http://localhost:${port} to see the server in action`);
 
 serve({
 	fetch: app.fetch,
