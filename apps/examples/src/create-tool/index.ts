@@ -38,7 +38,6 @@ async function main() {
 				"You can add numbers and check weather. Be helpful and clear.",
 			)
 			.withTools(calculatorTool, weatherTool)
-			.withQuickSession()
 			.build();
 
 		// Simple examples
