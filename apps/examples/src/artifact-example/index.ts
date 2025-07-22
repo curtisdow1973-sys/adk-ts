@@ -6,6 +6,7 @@ import {
 	LoadArtifactsTool,
 	createTool,
 } from "@iqai/adk";
+import dedent from "dedent";
 import { v4 as uuidv4 } from "uuid";
 import * as z from "zod/v4";
 
@@ -59,17 +60,18 @@ async function main() {
 		const { runner } = await AgentBuilder.create("file_assistant")
 			.withModel(env.LLM_MODEL)
 			.withDescription("Assistant that manages files using artifacts")
-			.withInstruction(`You help users save, load, and manage files using artifacts.
+			.withInstruction(dedent`
+				You help users save, load, and manage files using artifacts.
 
-Available functions:
-- saveArtifact(filename, content): Save content to a file
-- listArtifacts(): List all available artifacts
-- deleteArtifact(filename): Delete an artifact
-- load_artifacts: Load specific artifacts (via LoadArtifactsTool)
+				Available functions:
+				- saveArtifact(filename, content): Save content to a file
+				- listArtifacts(): List all available artifacts
+				- deleteArtifact(filename): Delete an artifact
+				- load_artifacts: Load specific artifacts (via LoadArtifactsTool)
 
-When users ask to save files, use saveArtifact function.
-When users ask to see files, use listArtifacts or load_artifacts.
-Always confirm operations and provide helpful feedback about what was accomplished.`)
+				When users ask to save files, use saveArtifact function.
+				When users ask to see files, use listArtifacts or load_artifacts.
+				Always confirm operations and provide helpful feedback about what was accomplished.`)
 			.withTools(
 				createTool({
 					name: "saveArtifact",
@@ -102,13 +104,11 @@ Always confirm operations and provide helpful feedback about what was accomplish
 				}),
 				new LoadArtifactsTool(),
 			)
-			.withSession(
-				sessionService,
-				USER_ID,
-				APP_NAME,
-				undefined,
-				artifactService,
-			)
+			.withSession(sessionService, {
+				userId: USER_ID,
+				appName: APP_NAME,
+			})
+			.withArtifactService(artifactService)
 			.build();
 
 		/**
@@ -199,12 +199,15 @@ async function demonstrateCrossSessionPersistence(
 	const { runner: newRunner } = await AgentBuilder.create("file_assistant_new")
 		.withModel(env.LLM_MODEL)
 		.withDescription("Assistant that manages files using artifacts")
-		.withInstruction(`You help users save, load, and manage files using artifacts.
-
-When users ask to load files, use the load_artifacts tool.
-Always confirm operations and provide helpful feedback about what was found.`)
+		.withInstruction(
+			dedent`
+				You help users save, load, and manage files using artifacts.
+				When users ask to load files, use the load_artifacts tool.
+				Always confirm operations and provide helpful feedback about what was found.`,
+		)
 		.withTools(new LoadArtifactsTool())
-		.withSession(sessionService, USER_ID, APP_NAME, undefined, artifactService)
+		.withArtifactService(artifactService)
+		.withSession(sessionService, { userId: USER_ID, appName: APP_NAME })
 		.build();
 
 	const crossSession = await newRunner.ask(
