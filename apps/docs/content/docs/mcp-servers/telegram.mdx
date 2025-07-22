@@ -22,7 +22,7 @@ import { Tabs, Tab } from 'fumadocs-ui/components/tabs';
       },
     })
 
-    const tools = toolset.getTools()
+    const tools = await toolset.getTools()
     ```
   </Tab>
 
@@ -44,7 +44,7 @@ import { Tabs, Tab } from 'fumadocs-ui/components/tabs';
       },
     })
 
-    const tools = toolset.getTools()
+    const tools = await toolset.getTools()
     ```
   </Tab>
 
@@ -109,7 +109,7 @@ This is useful when you want agentic capabilities ie building a telegram bot tha
 
 ### Resources
 
-- An example telegram bot written with adk-ts that makes use of sampling: [Telegram bot example](https://github.com/IQAIcom/adk-ts/tree/main/apps/examples/src/mcp-telegram-agent/index.ts)
+- An example telegram bot written with adk-ts that makes use of sampling: <a href="https://github.com/IQAIcom/adk-ts/tree/main/apps/examples/src/mcp-telegram-agent/index.ts" target="_blank" rel="noopener noreferrer">Telegram bot example</a>
 - For more info on sampling please refer to: [MCP Sampling](https://modelcontextprotocol.io/specification/2025-06-18/client/sampling)
 
 ## Environment Variables

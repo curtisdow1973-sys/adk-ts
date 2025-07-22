@@ -8,7 +8,7 @@ import { Tabs, Tab } from 'fumadocs-ui/components/tabs';
 
 - **Package**: [`@iqai/mcp-atp`](https://www.npmjs.com/package/@iqai/mcp-atp)
 - **Purpose**: Interact with the IQ AI Agent Tokenization Platform
-- **Example**: 🚀 [MCP-ATP Agent Example](https://github.com/IQAIcom/adk-ts/tree/main/apps/examples/src/mcp-atp-agent)
+- **Example**: 🚀 <a href="https://github.com/IQAIcom/adk-ts/tree/main/apps/examples/src/mcp-atp-agent" target="_blank" rel="noopener noreferrer">MCP-ATP Agent Example</a>
 
 ## Usage with ADK TypeScript
 
@@ -23,7 +23,7 @@ import { Tabs, Tab } from 'fumadocs-ui/components/tabs';
         ATP_API_KEY: process.env.ATP_API_KEY,
       },
     })
-    const tools = toolset.getTools()
+    const tools = await toolset.getTools()
     ```
   </Tab>
 
@@ -46,7 +46,7 @@ import { Tabs, Tab } from 'fumadocs-ui/components/tabs';
       },
     })
 
-    const tools = toolset.getTools()
+    const tools = await toolset.getTools()
     ```
   </Tab>
 
