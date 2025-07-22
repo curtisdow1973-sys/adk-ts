@@ -1,4 +1,4 @@
-import { Logger } from "../../helpers/logger";
+import { Logger } from "@adk/logger";
 import type { FunctionDeclaration } from "../../models/function-declaration";
 import type { LlmAgent } from "../../agents/llm-agent";
 import { InvocationContext } from "../../agents/invocation-context";
