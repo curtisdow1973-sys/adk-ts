@@ -4,6 +4,9 @@
 	"description": "Agent Development Kit for TypeScript with multi-provider LLM support",
 	"main": "dist/index.js",
 	"types": "dist/index.d.ts",
+	"bin": {
+    "adk": "./dist/cli/index.js"
+  },
 	"scripts": {
 		"build": "tsup",
 		"test": "vitest run",

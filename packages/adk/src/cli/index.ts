@@ -1,3 +1,5 @@
+#!/usr/bin/env node
+
 import { runAdkCli } from "./cli";
 
 runAdkCli().catch((error) => {
