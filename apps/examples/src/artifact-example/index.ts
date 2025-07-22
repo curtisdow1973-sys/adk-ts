@@ -1,12 +1,13 @@
 import { env } from "node:process";
 import {
-	FunctionTool,
+	AgentBuilder,
 	InMemoryArtifactService,
 	InMemorySessionService,
 	LoadArtifactsTool,
-	AgentBuilder,
+	createTool,
 } from "@iqai/adk";
 import { v4 as uuidv4 } from "uuid";
+import * as z from "zod/v4";
 
 /**
  * Application configuration constants
@@ -70,20 +71,33 @@ When users ask to save files, use saveArtifact function.
 When users ask to see files, use listArtifacts or load_artifacts.
 Always confirm operations and provide helpful feedback about what was accomplished.`)
 			.withTools(
-				new FunctionTool(saveArtifact, {
+				createTool({
 					name: "saveArtifact",
 					description:
 						"Save text content to an artifact file with a specified filename",
+					schema: z.object({
+						filename: z.string().describe("Name of the file to save"),
+						content: z.string().describe("Content to save in the file"),
+					}),
+					fn: ({ filename, content }, toolContext) =>
+						saveArtifact(filename, content, toolContext),
 					isLongRunning: true,
 				}),
-				new FunctionTool(listArtifacts, {
+				createTool({
 					name: "listArtifacts",
 					description: "List all available artifacts in the current session",
+					schema: z.object({}),
+					fn: (_args, toolContext) => listArtifacts(toolContext),
 					isLongRunning: true,
 				}),
-				new FunctionTool(deleteArtifact, {
+				createTool({
 					name: "deleteArtifact",
 					description: "Delete an artifact file by filename",
+					schema: z.object({
+						filename: z.string().describe("Name of the file to delete"),
+					}),
+					fn: ({ filename }, toolContext) =>
+						deleteArtifact(filename, toolContext),
 					isLongRunning: true,
 				}),
 				new LoadArtifactsTool(),
@@ -172,7 +186,7 @@ async function demonstrateFileOperations(runner: any): Promise<void> {
  * @param sessionService The session service for creating new sessions
  */
 async function demonstrateCrossSessionPersistence(
-	runner: any,
+	_runner: any,
 	artifactService: InMemoryArtifactService,
 	sessionService: InMemorySessionService,
 ): Promise<void> {

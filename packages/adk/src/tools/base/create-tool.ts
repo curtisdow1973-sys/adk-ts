@@ -9,7 +9,29 @@ import { BaseTool } from "./base-tool";
 /**
  * Configuration for creating a tool
  */
-export interface CreateToolConfig<T extends Record<string, any>> {
+export interface CreateToolConfig<
+	T extends Record<string, any> = Record<string, never>,
+> {
+	/** The name of the tool */
+	name: string;
+	/** A description of what the tool does */
+	description: string;
+	/** Zod schema for validating tool arguments (optional) */
+	schema?: z.ZodSchema<T>;
+	/** The function to execute (can be sync or async) */
+	fn: (args: T, context?: ToolContext) => any;
+	/** Whether the tool is a long running operation */
+	isLongRunning?: boolean;
+	/** Whether the tool execution should be retried on failure */
+	shouldRetryOnFailure?: boolean;
+	/** Maximum retry attempts */
+	maxRetryAttempts?: number;
+}
+
+/**
+ * Configuration for creating a tool with schema
+ */
+export interface CreateToolConfigWithSchema<T extends Record<string, any>> {
 	/** The name of the tool */
 	name: string;
 	/** A description of what the tool does */
@@ -18,6 +40,24 @@ export interface CreateToolConfig<T extends Record<string, any>> {
 	schema: z.ZodSchema<T>;
 	/** The function to execute (can be sync or async) */
 	fn: (args: T, context?: ToolContext) => any;
+	/** Whether the tool is a long running operation */
+	isLongRunning?: boolean;
+	/** Whether the tool execution should be retried on failure */
+	shouldRetryOnFailure?: boolean;
+	/** Maximum retry attempts */
+	maxRetryAttempts?: number;
+}
+
+/**
+ * Configuration for creating a tool without schema (no parameters)
+ */
+export interface CreateToolConfigWithoutSchema {
+	/** The name of the tool */
+	name: string;
+	/** A description of what the tool does */
+	description: string;
+	/** The function to execute (can be sync or async) */
+	fn: (args: Record<string, never>, context?: ToolContext) => any;
 	/** Whether the tool is a long running operation */
 	isLongRunning?: boolean;
 	/** Whether the tool execution should be retried on failure */
@@ -44,7 +84,7 @@ class CreatedTool<T extends Record<string, any>> extends BaseTool {
 		});
 
 		this.func = config.fn;
-		this.schema = config.schema;
+		this.schema = (config.schema ?? z.object({})) as z.ZodSchema<T>;
 		this.functionDeclaration = this.buildDeclaration();
 	}
 
@@ -117,6 +157,7 @@ class CreatedTool<T extends Record<string, any>> extends BaseTool {
  * import { createTool } from '@iqai/adk';
  * import { z } from 'zod';
  *
+ * // Tool with parameters
  * const calculatorTool = createTool({
  *   name: 'calculator',
  *   description: 'Performs basic arithmetic operations',
@@ -135,10 +176,27 @@ class CreatedTool<T extends Record<string, any>> extends BaseTool {
  *     }
  *   }
  * });
+ *
+ * // Tool without parameters (schema is optional)
+ * const timestampTool = createTool({
+ *   name: 'timestamp',
+ *   description: 'Gets the current timestamp',
+ *   fn: () => ({ timestamp: Date.now() })
+ * });
  * ```
  */
+
+// Function overload for tools with schema
 export function createTool<T extends Record<string, any>>(
-	config: CreateToolConfig<T>,
-): BaseTool {
+	config: CreateToolConfigWithSchema<T>,
+): BaseTool;
+
+// Function overload for tools without schema
+export function createTool(config: CreateToolConfigWithoutSchema): BaseTool;
+
+// Implementation
+export function createTool<
+	T extends Record<string, any> = Record<string, never>,
+>(config: CreateToolConfig<T>): BaseTool {
 	return new CreatedTool(config);
 }
