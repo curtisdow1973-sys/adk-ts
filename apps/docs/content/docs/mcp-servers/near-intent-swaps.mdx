@@ -1,10 +1,66 @@
 ---
-title: Near Intents
+title: MCP Near Intents
 description: MCP server for Near Intents-based cross-chain swaps
 ---
 
+import { Tabs, Tab } from 'fumadocs-ui/components/tabs';
 
-An MCP server for Near Intents swaps using the [Defuse Protocol one-click SDK](https://github.com/defuse-protocol/one-click-sdk-typescript). This server provides tools for cross-chain token swaps through NEAR's intent-based architecture.
+- **Package**: [`@iqai/mcp-near-intent-swaps`](https://www.npmjs.com/package/@iqai/mcp-near-intent-swaps)
+- **Purpose**: An MCP server for Near Intents swaps using the [Defuse Protocol one-click SDK](https://github.com/defuse-protocol/one-click-sdk-typescript). This server provides tools for cross-chain token swaps through NEAR's intent-based architecture.
+- **Example**: 🚀 [Near Intents Swaps Example](https://github.com/IQAIcom/near-intent-swap-agent)
+
+## Usage with ADK TypeScript
+
+<Tabs items={['Simple', 'Verbose', 'Claude Desktop']}>
+  <Tab value="Simple">
+    ```typescript
+    McpNearIntentSwaps({
+      env: {
+        NEAR_SWAP_JWT_TOKEN: process.env.NEAR_SWAP_JWT_TOKEN,
+      },
+    })
+    ```
+  </Tab>
+
+  <Tab value="Verbose">
+    ```typescript
+    import {McpToolset} from "@iqai/adk";
+
+    const toolset = new McpToolset({
+      name: "Near Intents Swaps MCP Client",
+      description: "Client for Near Intents cross-chain swaps",
+      transport: {
+        mode: "stdio",
+        command: "pnpm",
+        args: ["dlx", "@iqai/mcp-near-intent-swaps"],
+        env: {
+          NEAR_SWAP_JWT_TOKEN: process.env.NEAR_SWAP_JWT_TOKEN,
+          PATH: process.env.PATH || "",
+        },
+      },
+    })
+
+    const tools = toolset.getTools()
+    ```
+  </Tab>
+
+  <Tab value="Claude Desktop">
+    ```json
+    {
+      "mcpServers": {
+        "near-intent-swaps-server": {
+          "command": "pnpm",
+          "args": ["dlx", "@iqai/mcp-near-intent-swaps"],
+          "env": {
+            "NEAR_SWAP_JWT_TOKEN": "your-jwt-token-here"
+          }
+        }
+      }
+    }
+    ```
+  </Tab>
+</Tabs>
+
 
 ## Features
 
