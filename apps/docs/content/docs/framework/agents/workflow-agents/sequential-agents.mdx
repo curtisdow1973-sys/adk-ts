@@ -6,77 +6,68 @@ description: Execute agents one after another in a specific order
 import { Callout } from 'fumadocs-ui/components/callout';
 import { Cards, Card } from 'fumadocs-ui/components/card';
 
-Sequential agents execute a list of sub-agents one after another in a predetermined order. Each agent runs after the previous one completes, creating a predictable pipeline workflow.
+Sequential agents execute sub-agents one after another in a predetermined order, creating predictable pipeline workflows where each step builds on the previous one.
 
-## How Sequential Agents Work
+## Quick Example
 
-1. **Ordered Execution**: Agents run in the exact order you specify
-2. **Sequential Processing**: Each agent waits for the previous one to complete
-3. **Context Sharing**: Results flow through the conversation context
-4. **State Passing**: Use session state to pass structured data between agents
+Here's how to create a research pipeline that processes information through multiple sequential steps:
 
-## When to Use Sequential Agents
+```typescript
+// Create specialized agents for each step
+const { agent: researchAgent } = await AgentBuilder
+  .create("researcher")
+  .withModel("gemini-2.5-flash")
+  .withTools(new GoogleSearchTool(), new WikipediaTool())
+  .withInstruction("Gather comprehensive information about the topic")
+  .build();
 
-Sequential agents are perfect for:
+const { agent: analysisAgent } = await AgentBuilder
+  .create("analyst")
+  .withModel("gemini-2.5-flash")
+  .withInstruction("Analyze the research data and identify key insights")
+  .build();
 
-- **Multi-step pipelines** - Research → Analysis → Summary
-- **Data processing workflows** - Extract → Transform → Load
-- **Quality assurance** - Generate → Review → Approve
-- **Progressive refinement** - Draft → Edit → Finalize
+const { agent: summaryAgent } = await AgentBuilder
+  .create("summarizer")
+  .withModel("gemini-2.5-flash")
+  .withInstruction("Create a concise summary with actionable recommendations")
+  .build();
+
+// Create sequential pipeline that runs research → analysis → summary
+const { runner } = await AgentBuilder
+  .create("research-pipeline")
+  .withDescription("Comprehensive research pipeline with analysis and summary")
+  .asSequential([researchAgent, analysisAgent, summaryAgent])
+  .build();
+
+// Each agent processes the output from the previous one
+const result = await runner.ask("Analyze the current state of renewable energy adoption");
+```
+
+## Key Benefits
+
+- **Ordered Processing**: Each step builds on the previous agent's output
+- **Predictable Flow**: Deterministic execution order for reliable workflows
+- **Context Continuity**: Information flows naturally through the conversation
+- **Specialized Roles**: Each agent can focus on its specific expertise
+
+## When to Use
 
 <Callout type="info" title="Order Matters">
 Use sequential agents when the order of execution is important and each step depends on the previous ones.
 </Callout>
 
-## Configuration
+**Ideal for:**
+- Multi-step pipelines (research → analysis → summary)
+- Data processing workflows (extract → transform → load)
+- Content creation (draft → review → finalize)
+- Quality assurance (generate → validate → approve)
 
-### Basic Setup
-- **agents**: List of agents to execute in order
-- **name**: Unique identifier for the workflow
-- **description**: Summary for other agents to understand the workflow
+**Avoid when:**
+- Tasks are independent and can run simultaneously
+- Order doesn't matter for the final result
+- You need faster parallel processing
 
-### Advanced Options
-- **max_iterations**: Limit the number of execution cycles
-- **global_instruction**: Instructions that apply to all sub-agents
-- **disallow_transfer**: Control agent delegation behavior
-
-## Common Patterns
-
-### Research Pipeline
-Execute research, then analysis, then summarization in sequence.
-
-### Content Creation Workflow
-Generate content, review for accuracy, then format for publication.
-
-### Data Processing Pipeline
-Extract data, transform it, then load it into the target system.
-
-### Quality Assurance Workflow
-Create initial content, perform quality checks, then make final adjustments.
-
-## Best Practices
-
-<Callout type="warn" title="Design Considerations">
-- Keep the number of sequential steps reasonable (3-7 agents typically)
-- Ensure each agent has a clear, specific purpose
-- Use descriptive names and instructions for better coordination
-- Consider error handling between steps
-</Callout>
-
-### Agent Design
-- Make each agent's purpose clear and specific
-- Design agents to work well with the outputs of previous agents
-- Use consistent naming conventions across the workflow
-
-### Data Flow
-- Plan how data will flow between agents
-- Use session state for structured data passing
-- Consider what context each agent needs
-
-### Error Handling
-- Design agents to handle unexpected inputs gracefully
-- Consider retry logic for critical steps
-- Plan for partial failure scenarios
 
 ## Related Topics
 
@@ -94,8 +85,8 @@ Create initial content, perform quality checks, then make final adjustments.
   />
 
   <Card
-    title="💾 Sessions"
-    description="Manage state and context between agents"
-    href="/docs/framework/sessions"
+    title="🏗️ Agent Builder"
+    description="Fluent API for creating and configuring agents"
+    href="/docs/framework/agents/agent-builder"
   />
 </Cards>
