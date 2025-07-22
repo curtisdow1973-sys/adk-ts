@@ -1,5 +1,11 @@
 # @iqai/adk
 
+## 0.1.11
+
+### Patch Changes
+
+- 4a93c0a: Makes schema optional for createTool function
+
 ## 0.1.10
 
 ### Patch Changes
