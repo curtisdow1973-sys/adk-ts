@@ -63,9 +63,6 @@ const main = async () => {
 				fn: async ({ firstPassword, secondPassword, thirdPassword }) => {
 					return `${firstPassword}-${secondPassword}-${thirdPassword}`;
 				},
-				isLongRunning: true,
-				shouldRetryOnFailure: true,
-				maxRetryAttempts: 3,
 			}),
 		)
 		.build();
