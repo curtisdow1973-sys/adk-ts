@@ -1,5 +1,11 @@
 # @iqai/adk
 
+## 0.1.13
+
+### Patch Changes
+
+- 89db602: Update mcp server name for near intents
+
 ## 0.1.12
 
 ### Patch Changes
