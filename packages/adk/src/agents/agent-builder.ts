@@ -2,6 +2,7 @@ import type { LlmRequest } from "@adk/models";
 import type { Content, Part } from "@google/genai";
 import { type LanguageModel, generateId } from "ai";
 import type { BaseArtifactService } from "../artifacts/base-artifact-service.js";
+import type { BaseCodeExecutor } from "../code-executors/base-code-executor.js";
 import type { Event } from "../events/event.js";
 import type { BaseMemoryService } from "../memory/base-memory-service.js";
 import type { BaseLlm } from "../models/base-llm.js";
@@ -28,10 +29,12 @@ export interface AgentBuilderConfig {
 	instruction?: string;
 	tools?: BaseTool[];
 	planner?: BasePlanner;
+	codeExecutor?: BaseCodeExecutor;
 	subAgents?: BaseAgent[];
 	maxIterations?: number;
 	nodes?: LangGraphNode[];
 	rootNode?: string;
+	outputKey?: string;
 }
 
 /**
@@ -125,6 +128,14 @@ interface RunnerConfig {
  *   .withModel("gemini-2.5-flash")
  *   .withTools(new GoogleSearch())
  *   .withInstruction("You are a research assistant")
+ *   .build();
+ *
+ * // With code executor for running code
+ * const { runner } = await AgentBuilder
+ *   .create("code-agent")
+ *   .withModel("gemini-2.5-flash")
+ *   .withCodeExecutor(new ContainerCodeExecutor())
+ *   .withInstruction("You can execute code to solve problems")
  *   .build();
  *
  * // With memory and artifact services
@@ -226,6 +237,26 @@ export class AgentBuilder {
 	}
 
 	/**
+	 * Set the code executor for the agent
+	 * @param codeExecutor The code executor to use for running code
+	 * @returns This builder instance for chaining
+	 */
+	withCodeExecutor(codeExecutor: BaseCodeExecutor): this {
+		this.config.codeExecutor = codeExecutor;
+		return this;
+	}
+
+	/**
+	 * Set the output key for the agent
+	 * @param outputKey The output key in session state to store the output of the agent
+	 * @returns This builder instance for chaining
+	 */
+	withOutputKey(outputKey: string): this {
+		this.config.outputKey = outputKey;
+		return this;
+	}
+
+	/**
 	 * Configure as a sequential agent
 	 * @param subAgents Sub-agents to execute in sequence
 	 * @returns This builder instance for chaining
@@ -295,14 +326,20 @@ export class AgentBuilder {
 	 * Configure with an existing session instance
 	 * @param session Existing session to use
 	 * @returns This builder instance for chaining
+	 * @throws Error if no session service has been configured via withSessionService()
 	 */
 	withSession(session: Session): this {
-		// Extract session service from the session if available, otherwise use InMemorySessionService
-		const sessionService =
-			(session as any).sessionService || new InMemorySessionService();
+		// Require that withSessionService() was called first
+		if (!this.sessionConfig?.service) {
+			throw new Error(
+				"Session service must be configured before using withSession(). " +
+					"Call withSessionService() first, or use withQuickSession() for in-memory sessions.",
+			);
+		}
 
+		// Use the existing session service that was already configured
 		this.sessionConfig = {
-			service: sessionService,
+			service: this.sessionConfig.service,
 			userId: session.userId,
 			appName: session.appName,
 		};
@@ -417,7 +454,11 @@ export class AgentBuilder {
 					instruction: this.config.instruction,
 					tools: this.config.tools,
 					planner: this.config.planner,
+					codeExecutor: this.config.codeExecutor,
 					memoryService: this.memoryService,
+					artifactService: this.artifactService,
+					outputKey: this.config.outputKey,
+					sessionService: this.sessionConfig.service,
 				});
 			}
 			case "sequential":
@@ -543,9 +584,14 @@ export class AgentBuilder {
 							response += content;
 						}
 					}
+
+					// Stop on first non-empty response
+					if (response.trim()) {
+						break;
+					}
 				}
 
-				return response;
+				return response.trim();
 			},
 
 			runAsync(params: {
