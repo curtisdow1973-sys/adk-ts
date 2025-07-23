@@ -81,40 +81,34 @@ const main = async () => {
 		)
 		.withSessionService(sessionService, sessionConfig)
 		.withSession(session)
-		// .asLangGraph(
-		// 	[
-		// 		{
-		// 			name: "getFirstPassword",
-		// 			condition: () => true,
-		// 			agent: firstPasswordAgent.agent,
-		// 			targets: ["getSecondPassword"],
-		// 		},
-		// 		{
-		// 			name: "getSecondPassword",
-		// 			condition: () => true,
-		// 			agent: secondPasswordAgent.agent,
-		// 			targets: ["getThirdPassword"],
-		// 		},
-		// 		{
-		// 			name: "getThirdPassword",
-		// 			condition: () => true,
-		// 			agent: thirdPasswordAgent.agent,
-		// 			targets: ["getFullPassword"],
-		// 		},
-		// 		{
-		// 			name: "getFullPassword",
-		// 			condition: () => true,
-		// 			agent: fullPasswordAgent.agent,
-		// 		},
-		// 	],
-		// 	"getFirstPassword",
-		// )
-		.asSequential([
-			firstPasswordAgent.agent,
-			secondPasswordAgent.agent,
-			thirdPasswordAgent.agent,
-			fullPasswordAgent.agent,
-		])
+		.asLangGraph(
+			[
+				{
+					name: "getFirstPassword",
+					condition: () => true,
+					agent: firstPasswordAgent.agent,
+					targets: ["getSecondPassword"],
+				},
+				{
+					name: "getSecondPassword",
+					condition: () => true,
+					agent: secondPasswordAgent.agent,
+					targets: ["getThirdPassword"],
+				},
+				{
+					name: "getThirdPassword",
+					condition: () => true,
+					agent: thirdPasswordAgent.agent,
+					targets: ["getFullPassword"],
+				},
+				{
+					name: "getFullPassword",
+					condition: () => true,
+					agent: fullPasswordAgent.agent,
+				},
+			],
+			"getFirstPassword",
+		)
 		.ask("What is the full password?");
 
 	console.log("Full password:", response);
