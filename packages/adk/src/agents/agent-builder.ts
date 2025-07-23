@@ -160,6 +160,7 @@ export class AgentBuilder {
 	private memoryService?: BaseMemoryService;
 	private artifactService?: BaseArtifactService;
 	private agentType: AgentType = "llm";
+	private existingSession?: Session;
 
 	/**
 	 * Private constructor - use static create() method
@@ -345,7 +346,7 @@ export class AgentBuilder {
 		};
 
 		// Store the existing session to use directly in build()
-		(this as any).existingSession = session;
+		this.existingSession = session;
 		return this;
 	}
 
@@ -395,11 +396,8 @@ export class AgentBuilder {
 
 		if (this.sessionConfig) {
 			// Use existing session if provided, otherwise create a new one
-			const existingSession = (this as any).existingSession as
-				| Session
-				| undefined;
-			if (existingSession) {
-				session = existingSession;
+			if (this.existingSession) {
+				session = this.existingSession;
 			} else {
 				session = await this.sessionConfig.service.createSession(
 					this.sessionConfig.appName,

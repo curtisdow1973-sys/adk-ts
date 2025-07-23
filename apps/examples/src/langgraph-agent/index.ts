@@ -21,6 +21,7 @@ const main = async () => {
 		)
 		.withSessionService(sessionService, sessionConfig)
 		.withSession(session)
+		.withOutputKey(sessionConfig.appName)
 		.build();
 
 	const secondPasswordAgent = await AgentBuilder.create("second_password")
@@ -36,6 +37,7 @@ const main = async () => {
 		)
 		.withSessionService(sessionService, sessionConfig)
 		.withSession(session)
+		.withOutputKey(sessionConfig.appName)
 		.build();
 
 	const thirdPasswordAgent = await AgentBuilder.create("third_password")
@@ -51,6 +53,7 @@ const main = async () => {
 		)
 		.withSessionService(sessionService, sessionConfig)
 		.withSession(session)
+		.withOutputKey(sessionConfig.appName)
 		.build();
 
 	const fullPasswordAgent = await AgentBuilder.create("full_password")
@@ -58,6 +61,7 @@ const main = async () => {
 		.withModel("gemini-2.5-flash")
 		.withSessionService(sessionService, sessionConfig)
 		.withSession(session)
+		.withOutputKey(sessionConfig.appName)
 		.withTools(
 			createTool({
 				name: "getFullPassword",
@@ -81,6 +85,7 @@ const main = async () => {
 		)
 		.withSessionService(sessionService, sessionConfig)
 		.withSession(session)
+		.withOutputKey(sessionConfig.appName)
 		.asLangGraph(
 			[
 				{
