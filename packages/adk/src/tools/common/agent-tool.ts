@@ -1,12 +1,12 @@
 import { Logger } from "@adk/logger";
-import type { FunctionDeclaration } from "../../models/function-declaration";
-import type { LlmAgent } from "../../agents/llm-agent";
+import { type Part, Type } from "@google/genai";
+import { v4 as uuidv4 } from "uuid";
 import { InvocationContext } from "../../agents/invocation-context";
+import type { LlmAgent } from "../../agents/llm-agent";
 import { Event } from "../../events/event";
+import type { FunctionDeclaration } from "../../models/function-declaration";
 import { BaseTool } from "../base/base-tool";
 import type { ToolContext } from "../tool-context";
-import { v4 as uuidv4 } from "uuid";
-import type { Part } from "@google/genai";
 
 /**
  * Type for agents that can be used as tools
@@ -138,10 +138,10 @@ export class AgentTool extends BaseTool {
 			name: this.name,
 			description: description,
 			parameters: {
-				type: "object",
+				type: Type.OBJECT,
 				properties: {
 					input: {
-						type: "string",
+						type: Type.STRING,
 						description: "The input to provide to the agent",
 					},
 				},

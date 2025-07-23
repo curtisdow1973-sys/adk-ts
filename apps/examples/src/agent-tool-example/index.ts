@@ -1,12 +1,13 @@
 import { env } from "node:process";
+import { Type } from "@google/genai";
 import {
-	LlmAgent,
-	InMemorySessionService,
-	InvocationContext,
-	ToolContext,
 	AgentTool,
 	FunctionTool,
+	InMemorySessionService,
+	InvocationContext,
+	LlmAgent,
 	RunConfig,
+	ToolContext,
 } from "@iqai/adk";
 
 function calculateBasic(expression: string): string {
@@ -138,14 +139,14 @@ async function demonstrateAgentTool() {
 						name: "custom_math_tool",
 						description: "Performs advanced mathematical calculations",
 						parameters: {
-							type: "object",
+							type: Type.OBJECT,
 							properties: {
 								problem: {
-									type: "string",
+									type: Type.STRING,
 									description: "The mathematical problem to solve",
 								},
 								complexity: {
-									type: "string",
+									type: Type.STRING,
 									enum: ["basic", "intermediate", "advanced"],
 									description: "Complexity level of the problem",
 								},
