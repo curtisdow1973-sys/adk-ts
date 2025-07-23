@@ -8,7 +8,7 @@
 
 **A comprehensive TypeScript framework for building sophisticated AI agents with multi-LLM support, advanced tools, and flexible conversation flows.**
 
-*Production-ready • Multi-Agent Systems • Extensible Architecture*
+_Production-ready • Multi-Agent Systems • Extensible Architecture_
 
 <p align="center">
   <a href="https://www.npmjs.com/package/@iqai/adk">
@@ -52,11 +52,9 @@ npm install @iqai/adk
 ### Simple Example
 
 ```typescript
-import { AgentBuilder } from '@iqai/adk';
+import { AgentBuilder } from "@iqai/adk";
 
-const response = await AgentBuilder
-  .withModel("gpt-4.1")
-  .ask("What is the primary function of an AI agent?");
+const response = await AgentBuilder.withModel("gpt-4.1").ask("What is the primary function of an AI agent?");
 
 console.log(response);
 ```
@@ -68,6 +66,7 @@ For comprehensive guides, API reference, and advanced examples, visit our docume
 **[https://adk.iqai.com](https://adk.iqai.com)**
 
 The documentation includes:
+
 - Getting started tutorials
 - API reference
 - Advanced usage patterns
@@ -81,16 +80,34 @@ The documentation includes:
 Explore comprehensive examples in the `apps/examples` directory:
 
 ```bash
+# 1. Clone and setup
 git clone https://github.com/IQAIcom/adk-ts.git
 cd adk-ts
 pnpm install
+
+# 2. Build the ADK package (required for examples to work)
+pnpm build
+
+# 3. Setup API keys
 cd apps/examples
-pnpm dev
+echo "GOOGLE_API_KEY=your_google_api_key_here" > .env
+
+# 4. Run examples
+pnpm start
 ```
+
+**⚠️ Important:** The examples require API keys from at least one LLM provider. Create a `.env` file in the `apps/examples` directory with your chosen provider's API key.
+
+**Get API Keys:**
+
+- **Google AI**: [https://makersuite.google.com/app/apikey](https://makersuite.google.com/app/apikey)
+- **OpenAI**: [https://platform.openai.com/api-keys](https://platform.openai.com/api-keys)
+- **Anthropic**: [https://console.anthropic.com/](https://console.anthropic.com/)
 
 ## 🤝 Contributing
 
 We welcome contributions! See our [Contributing Guide](CONTRIBUTION.md) for details on:
+
 - Framework architecture
 - Development setup
 - Implementation patterns
