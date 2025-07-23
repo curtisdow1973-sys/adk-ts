@@ -50,7 +50,7 @@ async function main() {
 				- Suggest relevant resources when appropriate
 				- Maintain context from previous messages in the conversation
 			`)
-			.withSession(
+			.withSessionService(
 				createDatabaseSessionService(getSqliteConnectionString("telegram_bot")),
 			)
 			.build();

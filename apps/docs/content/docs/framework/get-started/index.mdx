@@ -116,7 +116,7 @@ const workflow = await AgentBuilder
 const { runner } = await AgentBuilder
   .create("chat_assistant")
   .withModel("gemini-2.5-flash")
-  .withSession(sessionService, userId, "chat-app")
+  .withSessionService(sessionService, userId, "chat-app")
   .build();
 ```
 

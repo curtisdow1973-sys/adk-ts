@@ -133,7 +133,7 @@ interface RunnerConfig {
  *   .withModel("gemini-2.5-flash")
  *   .withMemory(new RedisMemoryService())
  *   .withArtifactService(new S3ArtifactService())
- *   .withSession(new DatabaseSessionService(), { userId: "user123", appName: "myapp" })
+ *   .withSessionService(new DatabaseSessionService(), { userId: "user123", appName: "myapp" })
  *   .build();
  *
  * // Multi-agent workflow
@@ -279,7 +279,10 @@ export class AgentBuilder {
 	 * @param options Session configuration options (userId and appName)
 	 * @returns This builder instance for chaining
 	 */
-	withSession(service: BaseSessionService, options: SessionOptions = {}): this {
+	withSessionService(
+		service: BaseSessionService,
+		options: SessionOptions = {},
+	): this {
 		this.sessionConfig = {
 			service,
 			userId: options.userId || this.generateDefaultUserId(),
@@ -315,7 +318,7 @@ export class AgentBuilder {
 	 * @returns This builder instance for chaining
 	 */
 	withQuickSession(options: SessionOptions = {}): this {
-		return this.withSession(new InMemorySessionService(), options);
+		return this.withSessionService(new InMemorySessionService(), options);
 	}
 
 	/**
