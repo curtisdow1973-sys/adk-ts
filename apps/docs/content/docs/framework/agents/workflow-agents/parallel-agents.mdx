@@ -6,90 +6,69 @@ description: Run multiple agents simultaneously for faster processing
 import { Callout } from 'fumadocs-ui/components/callout';
 import { Cards, Card } from 'fumadocs-ui/components/card';
 
-Parallel agents execute multiple sub-agents simultaneously, allowing independent tasks to run concurrently for improved performance and efficiency.
+Parallel agents execute multiple sub-agents simultaneously, allowing independent tasks to run concurrently for improved performance.
 
-## How Parallel Agents Work
+## Quick Example
 
-1. **Concurrent Execution**: All agents start at the same time
-2. **Independent Processing**: Agents run without waiting for each other
-3. **Result Aggregation**: Collect and combine results when all agents complete
-4. **Performance Optimization**: Reduce total execution time for independent tasks
+Here's how to create a research workflow that runs three specialized agents in parallel:
 
-## When to Use Parallel Agents
+```typescript
+// Create three specialized research agents
+const { agent: webAgent } = await AgentBuilder
+  .create("web-researcher")
+  .withModel("gemini-2.5-flash")
+  .withTools(new GoogleSearchTool())
+  .withInstruction("Search the web for current information")
+  .build();
 
-Parallel agents are ideal for:
+const { agent: wikiAgent } = await AgentBuilder
+  .create("wiki-researcher")
+  .withModel("gemini-2.5-flash")
+  .withTools(new WikipediaTool())
+  .withInstruction("Find comprehensive background information")
+  .build();
 
-- **Independent tasks** - Multiple research queries that don't depend on each other
-- **Data validation** - Simultaneous fact-checking and grammar review
-- **Distributed processing** - Processing different data partitions
-- **Comparative analysis** - Getting multiple perspectives on the same topic
+const { agent: newsAgent } = await AgentBuilder
+  .create("news-researcher")
+  .withModel("gemini-2.5-flash")
+  .withTools(new NewsTool())
+  .withInstruction("Find latest news and developments")
+  .build();
+
+// Create parallel coordinator that runs all three simultaneously
+const { runner } = await AgentBuilder
+  .create("research-coordinator")
+  .withDescription("Coordinates parallel research across multiple sources")
+  .asParallel([webAgent, wikiAgent, newsAgent])
+  .build();
+
+// All three agents will research simultaneously
+const result = await runner.ask("Research the latest developments in quantum computing");
+```
+
+## Key Benefits
+
+- **Speed**: Independent tasks run concurrently instead of sequentially
+- **Efficiency**: Better resource utilization for unrelated work
+- **Scalability**: Handle multiple data sources or perspectives simultaneously
+
+## When to Use
 
 <Callout type="info" title="Independence Required">
 Use parallel agents only when tasks are truly independent and don't need to share results during execution.
 </Callout>
 
-## Configuration
+**Ideal for:**
+- Multi-source research (web, news, academic papers)
+- Content analysis (fact-checking + grammar + style review)
+- Data validation across different systems
+- Getting multiple expert perspectives
 
-### Basic Setup
-- **agents**: List of agents to execute in parallel
-- **name**: Unique identifier for the workflow
-- **description**: Summary for other agents to understand the workflow
+**Avoid when:**
+- Tasks depend on each other's results
+- Sequential processing is required
+- Resource constraints limit concurrent execution
 
-### Advanced Options
-- **max_concurrent**: Limit the number of agents running simultaneously
-- **timeout**: Set maximum execution time for the parallel execution
-- **fail_fast**: Stop all agents if one fails (default: false)
-
-## Common Patterns
-
-### Multi-Source Research
-Query different information sources simultaneously for comprehensive research.
-
-### Content Review Workflow
-Run fact-checking, grammar review, and style analysis in parallel.
-
-### Distributed Data Processing
-Process different data sets or partitions simultaneously.
-
-### Comparative Analysis
-Get multiple expert opinions or analysis perspectives on the same input.
-
-## Result Handling
-
-### Aggregation Strategies
-- **Combine all results**: Merge outputs from all agents
-- **Best result selection**: Choose the highest quality response
-- **Consensus building**: Find common themes across results
-- **Structured compilation**: Organize results by agent type or topic
-
-### Error Handling
-- **Graceful degradation**: Continue with successful results if some agents fail
-- **Retry mechanisms**: Restart failed agents while others continue
-- **Partial results**: Handle scenarios where not all agents complete
-
-## Best Practices
-
-<Callout type="warn" title="Design Considerations">
-- Ensure tasks are truly independent before using parallel execution
-- Consider resource usage when running many agents simultaneously
-- Plan how to handle varying completion times
-- Design clear result aggregation strategies
-</Callout>
-
-### Performance Optimization
-- Limit concurrent agents based on system resources
-- Use timeouts to prevent hanging executions
-- Consider the trade-off between parallelism and resource usage
-
-### Result Quality
-- Design consistent output formats across parallel agents
-- Plan for varying result quality and completeness
-- Consider how to handle conflicting information
-
-### Resource Management
-- Monitor system resource usage with parallel execution
-- Consider rate limits for external API calls
-- Plan for network and memory constraints
 
 ## Related Topics
 
@@ -107,8 +86,8 @@ Get multiple expert opinions or analysis perspectives on the same input.
   />
 
   <Card
-    title="🚀 Performance"
-    description="Optimize agent performance and resource usage"
-    href="/docs/framework/advanced/performance"
+    title="🏗️ Agent Builder"
+    description="Fluent API for creating and configuring agents"
+    href="/docs/framework/agents/agent-builder"
   />
 </Cards>
