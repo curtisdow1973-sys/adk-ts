@@ -2,6 +2,7 @@ import type { LlmRequest } from "@adk/models";
 import type { Content, Part } from "@google/genai";
 import { type LanguageModel, generateId } from "ai";
 import type { BaseArtifactService } from "../artifacts/base-artifact-service.js";
+import type { BaseCodeExecutor } from "../code-executors/base-code-executor.js";
 import type { Event } from "../events/event.js";
 import type { BaseMemoryService } from "../memory/base-memory-service.js";
 import type { BaseLlm } from "../models/base-llm.js";
@@ -28,10 +29,12 @@ export interface AgentBuilderConfig {
 	instruction?: string;
 	tools?: BaseTool[];
 	planner?: BasePlanner;
+	codeExecutor?: BaseCodeExecutor;
 	subAgents?: BaseAgent[];
 	maxIterations?: number;
 	nodes?: LangGraphNode[];
 	rootNode?: string;
+	outputKey?: string;
 }
 
 /**
@@ -127,13 +130,21 @@ interface RunnerConfig {
  *   .withInstruction("You are a research assistant")
  *   .build();
  *
+ * // With code executor for running code
+ * const { runner } = await AgentBuilder
+ *   .create("code-agent")
+ *   .withModel("gemini-2.5-flash")
+ *   .withCodeExecutor(new ContainerCodeExecutor())
+ *   .withInstruction("You can execute code to solve problems")
+ *   .build();
+ *
  * // With memory and artifact services
  * const { runner } = await AgentBuilder
  *   .create("persistent-agent")
  *   .withModel("gemini-2.5-flash")
  *   .withMemory(new RedisMemoryService())
  *   .withArtifactService(new S3ArtifactService())
- *   .withSession(new DatabaseSessionService(), { userId: "user123", appName: "myapp" })
+ *   .withSessionService(new DatabaseSessionService(), { userId: "user123", appName: "myapp" })
  *   .build();
  *
  * // Multi-agent workflow
@@ -149,6 +160,7 @@ export class AgentBuilder {
 	private memoryService?: BaseMemoryService;
 	private artifactService?: BaseArtifactService;
 	private agentType: AgentType = "llm";
+	private existingSession?: Session;
 
 	/**
 	 * Private constructor - use static create() method
@@ -226,6 +238,26 @@ export class AgentBuilder {
 	}
 
 	/**
+	 * Set the code executor for the agent
+	 * @param codeExecutor The code executor to use for running code
+	 * @returns This builder instance for chaining
+	 */
+	withCodeExecutor(codeExecutor: BaseCodeExecutor): this {
+		this.config.codeExecutor = codeExecutor;
+		return this;
+	}
+
+	/**
+	 * Set the output key for the agent
+	 * @param outputKey The output key in session state to store the output of the agent
+	 * @returns This builder instance for chaining
+	 */
+	withOutputKey(outputKey: string): this {
+		this.config.outputKey = outputKey;
+		return this;
+	}
+
+	/**
 	 * Configure as a sequential agent
 	 * @param subAgents Sub-agents to execute in sequence
 	 * @returns This builder instance for chaining
@@ -279,12 +311,42 @@ export class AgentBuilder {
 	 * @param options Session configuration options (userId and appName)
 	 * @returns This builder instance for chaining
 	 */
-	withSession(service: BaseSessionService, options: SessionOptions = {}): this {
+	withSessionService(
+		service: BaseSessionService,
+		options: SessionOptions = {},
+	): this {
 		this.sessionConfig = {
 			service,
 			userId: options.userId || this.generateDefaultUserId(),
 			appName: options.appName || this.generateDefaultAppName(),
 		};
+		return this;
+	}
+
+	/**
+	 * Configure with an existing session instance
+	 * @param session Existing session to use
+	 * @returns This builder instance for chaining
+	 * @throws Error if no session service has been configured via withSessionService()
+	 */
+	withSession(session: Session): this {
+		// Require that withSessionService() was called first
+		if (!this.sessionConfig?.service) {
+			throw new Error(
+				"Session service must be configured before using withSession(). " +
+					"Call withSessionService() first, or use withQuickSession() for in-memory sessions.",
+			);
+		}
+
+		// Use the existing session service that was already configured
+		this.sessionConfig = {
+			service: this.sessionConfig.service,
+			userId: session.userId,
+			appName: session.appName,
+		};
+
+		// Store the existing session to use directly in build()
+		this.existingSession = session;
 		return this;
 	}
 
@@ -315,7 +377,7 @@ export class AgentBuilder {
 	 * @returns This builder instance for chaining
 	 */
 	withQuickSession(options: SessionOptions = {}): this {
-		return this.withSession(new InMemorySessionService(), options);
+		return this.withSessionService(new InMemorySessionService(), options);
 	}
 
 	/**
@@ -333,10 +395,15 @@ export class AgentBuilder {
 		}
 
 		if (this.sessionConfig) {
-			session = await this.sessionConfig.service.createSession(
-				this.sessionConfig.appName,
-				this.sessionConfig.userId,
-			);
+			// Use existing session if provided, otherwise create a new one
+			if (this.existingSession) {
+				session = this.existingSession;
+			} else {
+				session = await this.sessionConfig.service.createSession(
+					this.sessionConfig.appName,
+					this.sessionConfig.userId,
+				);
+			}
 
 			const runnerConfig: RunnerConfig = {
 				appName: this.sessionConfig.appName,
@@ -385,6 +452,11 @@ export class AgentBuilder {
 					instruction: this.config.instruction,
 					tools: this.config.tools,
 					planner: this.config.planner,
+					codeExecutor: this.config.codeExecutor,
+					memoryService: this.memoryService,
+					artifactService: this.artifactService,
+					outputKey: this.config.outputKey,
+					sessionService: this.sessionConfig?.service,
 				});
 			}
 			case "sequential":
@@ -512,7 +584,7 @@ export class AgentBuilder {
 					}
 				}
 
-				return response;
+				return response.trim();
 			},
 
 			runAsync(params: {
