@@ -19,7 +19,7 @@ class SharedMemoryRequestProcessor extends BaseLlmRequestProcessor {
 
 		if (!lastUserEvent) return;
 
-		const query = lastUserEvent.content.parts.map((p) => p.text).join(" ");
+		const query = (lastUserEvent.content.parts ?? []).map((p) => p.text || "").join(" ");
 
 		// Search shared memory
 		const results = await memoryService.searchMemory({
@@ -36,7 +36,7 @@ class SharedMemoryRequestProcessor extends BaseLlmRequestProcessor {
 		);
 
 		for (const memory of results.memories) {
-			const memoryText = memory.content.parts?.map((p) => p.text).join(" ");
+			const memoryText = (memory.content.parts ?? []).map((p) => p.text || "").join(" ");
 			if (!sessionTexts.has(memoryText)) {
 				llmRequest.contents = llmRequest.contents || [];
 				llmRequest.contents.push({
