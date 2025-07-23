@@ -458,7 +458,7 @@ export class AgentBuilder {
 					memoryService: this.memoryService,
 					artifactService: this.artifactService,
 					outputKey: this.config.outputKey,
-					sessionService: this.sessionConfig.service,
+					sessionService: this.sessionConfig?.service,
 				});
 			}
 			case "sequential":
