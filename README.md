@@ -101,8 +101,6 @@ pnpm start
 **Get API Keys:**
 
 - **Google AI**: [https://makersuite.google.com/app/apikey](https://makersuite.google.com/app/apikey)
-- **OpenAI**: [https://platform.openai.com/api-keys](https://platform.openai.com/api-keys)
-- **Anthropic**: [https://console.anthropic.com/](https://console.anthropic.com/)
 
 ## 🤝 Contributing
 
