@@ -4,9 +4,27 @@ import {
 	InMemorySessionService,
 } from "@iqai/adk";
 
-// suppress warnings on process
-process.removeAllListeners("warning");
-process.on("warning", () => {});
+// Note: If specific warnings need to be suppressed, handle them locally rather than globally
+
+async function createAgentRunner(
+	name: string,
+	description: string,
+	instruction: string,
+	memory: InMemoryMemoryService,
+	session: any,
+	sessionService: InMemorySessionService,
+	sessionOptions: { userId: string; appName: string }
+) {
+	const { runner } = await AgentBuilder.create(name)
+		.withModel(process.env.LLM_MODEL || "gemini-2.5-flash")
+		.withDescription(description)
+		.withInstruction(instruction)
+		.withMemory(memory)
+		.withSession(session)
+		.withSessionService(sessionService, sessionOptions)
+		.build();
+	return runner;
+}
 
 async function main() {
 	const appName = "SharedMemoryDemo";
@@ -16,46 +34,34 @@ async function main() {
 	const sharedSession = await sessionService.createSession(appName, userId);
 
 	// Agent Alice: answers about books, can recall Bob's movie
-	const { runner: alice } = await AgentBuilder.create("alice")
-		.withModel(process.env.LLM_MODEL || "gemini-2.5-flash")
-		.withDescription(
-			"Alice is a book lover. Bob is her friend and loves movies.",
-		)
-		.withInstruction(
-			`You are Alice. Bob is your friend.
-			You love books and answer questions about your favorite books.
-			Attribute facts to your friend Bob if you recall them.
-			DO NOT ADD EXTRA INFORMATION UNLESS ASKED. KEEP RESPONSES SHORT AND CONCISE.
-			 `,
-		)
-		.withMemory(sharedMemory)
-		.withSession(sharedSession)
-		.withSessionService(sessionService, {
-			userId,
-			appName,
-		})
-		.build();
+	const alice = await createAgentRunner(
+		"alice",
+		"Alice is a book lover. Bob is her friend and loves movies.",
+		`You are Alice. Bob is your friend.
+		You love books and answer questions about your favorite books.
+		Attribute facts to your friend Bob if you recall them.
+		DO NOT ADD EXTRA INFORMATION UNLESS ASKED. KEEP RESPONSES SHORT AND CONCISE.
+		 `,
+		sharedMemory,
+		sharedSession,
+		sessionService,
+		{ userId, appName }
+	);
 
 	// Agent Bob: answers about movies, can recall Alice's book
-	const { runner: bob } = await AgentBuilder.create("bob")
-		.withModel(process.env.LLM_MODEL || "gemini-2.5-flash")
-		.withDescription(
-			"Bob is a movie lover. Alice is his friend and loves books.",
-		)
-		.withInstruction(
-			`You are Bob. Alice is your friend.
-			You love movies and answer questions about your favorite movies.
-			Attribute facts to your friend Alice if you recall them.
-			DO NOT ADD EXTRA INFORMATION UNLESS ASKED. KEEP RESPONSES SHORT AND CONCISE.
-			`,
-		)
-		.withMemory(sharedMemory)
-		.withSession(sharedSession)
-		.withSessionService(sessionService, {
-			userId,
-			appName,
-		})
-		.build();
+	const bob = await createAgentRunner(
+		"bob",
+		"Bob is a movie lover. Alice is his friend and loves books.",
+		`You are Bob. Alice is your friend.
+		You love movies and answer questions about your favorite movies.
+		Attribute facts to your friend Alice if you recall them.
+		DO NOT ADD EXTRA INFORMATION UNLESS ASKED. KEEP RESPONSES SHORT AND CONCISE.
+		`,
+		sharedMemory,
+		sharedSession,
+		sessionService,
+		{ userId, appName }
+	);
 
 	// Simulate a conversation between Alice and Bob
 	const conversation = [

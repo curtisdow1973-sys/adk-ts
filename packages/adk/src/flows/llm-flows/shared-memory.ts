@@ -13,9 +13,7 @@ class SharedMemoryRequestProcessor extends BaseLlmRequestProcessor {
 
 		// Use the latest user message as the query
 		const lastUserEvent = invocationContext.session.events
-			.slice()
-			.reverse()
-			.find((e) => e.author === "user" && e.content?.parts?.length);
+			.findLast((e) => e.author === "user" && e.content?.parts?.length);
 
 		if (!lastUserEvent) return;
 
