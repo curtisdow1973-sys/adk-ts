@@ -582,11 +582,6 @@ export class AgentBuilder {
 							response += content;
 						}
 					}
-
-					// Stop on first non-empty response
-					if (response.trim()) {
-						break;
-					}
 				}
 
 				return response.trim();
