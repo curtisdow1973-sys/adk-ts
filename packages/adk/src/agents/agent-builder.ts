@@ -292,6 +292,26 @@ export class AgentBuilder {
 	}
 
 	/**
+	 * Configure with an existing session instance
+	 * @param session Existing session to use
+	 * @returns This builder instance for chaining
+	 */
+	withSession(session: Session): this {
+		// Extract session service from the session if available, otherwise use InMemorySessionService
+		const sessionService = (session as any).sessionService || new InMemorySessionService();
+		
+		this.sessionConfig = {
+			service: sessionService,
+			userId: session.userId,
+			appName: session.appName,
+		};
+		
+		// Store the existing session to use directly in build()
+		(this as any).existingSession = session;
+		return this;
+	}
+
+	/**
 	 * Configure memory service for the agent
 	 * @param memoryService Memory service to use for conversation history and context
 	 * @returns This builder instance for chaining
@@ -336,10 +356,16 @@ export class AgentBuilder {
 		}
 
 		if (this.sessionConfig) {
-			session = await this.sessionConfig.service.createSession(
-				this.sessionConfig.appName,
-				this.sessionConfig.userId,
-			);
+			// Use existing session if provided, otherwise create a new one
+			const existingSession = (this as any).existingSession as Session | undefined;
+			if (existingSession) {
+				session = existingSession;
+			} else {
+				session = await this.sessionConfig.service.createSession(
+					this.sessionConfig.appName,
+					this.sessionConfig.userId,
+				);
+			}
 
 			const runnerConfig: RunnerConfig = {
 				appName: this.sessionConfig.appName,
