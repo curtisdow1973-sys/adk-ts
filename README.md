@@ -90,7 +90,7 @@ pnpm build
 
 # 3. Setup API keys
 cd apps/examples
-echo "GOOGLE_API_KEY=your_google_api_key_here" > .env
+echo "GOOGLE_GENERATIVE_AI_API_KEY=your_google_api_key_here" > .env
 
 # 4. Run examples
 pnpm start
