@@ -298,14 +298,15 @@ export class AgentBuilder {
 	 */
 	withSession(session: Session): this {
 		// Extract session service from the session if available, otherwise use InMemorySessionService
-		const sessionService = (session as any).sessionService || new InMemorySessionService();
-		
+		const sessionService =
+			(session as any).sessionService || new InMemorySessionService();
+
 		this.sessionConfig = {
 			service: sessionService,
 			userId: session.userId,
 			appName: session.appName,
 		};
-		
+
 		// Store the existing session to use directly in build()
 		(this as any).existingSession = session;
 		return this;
@@ -357,7 +358,9 @@ export class AgentBuilder {
 
 		if (this.sessionConfig) {
 			// Use existing session if provided, otherwise create a new one
-			const existingSession = (this as any).existingSession as Session | undefined;
+			const existingSession = (this as any).existingSession as
+				| Session
+				| undefined;
 			if (existingSession) {
 				session = existingSession;
 			} else {
@@ -414,6 +417,7 @@ export class AgentBuilder {
 					instruction: this.config.instruction,
 					tools: this.config.tools,
 					planner: this.config.planner,
+					memoryService: this.memoryService,
 				});
 			}
 			case "sequential":
