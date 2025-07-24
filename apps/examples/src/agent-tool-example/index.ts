@@ -2,76 +2,87 @@ import { env } from "node:process";
 import { AgentBuilder, AgentTool, LlmAgent, createTool } from "@iqai/adk";
 import * as z from "zod/v4";
 
+/**
+ * Agent Tool Example
+ */
 async function main() {
 	console.log("═══════════════════════════════════════════");
 
-	const calculatorTool = createTool({
-		name: "calculate",
-		description: "Performs basic math calculations",
+	const weatherTool = createTool({
+		name: "get_weather",
+		description: "Gets current weather for a city",
 		schema: z.object({
-			expression: z.string().describe("Math expression like '2+2' or '10*5'"),
+			city: z.string().describe("City name"),
 		}),
-		fn: ({ expression }) => {
-			try {
-				const sanitized = expression
-					.replace(/\s/g, "")
-					.replace(/[^0-9+\-*/().]/g, "");
+		fn: ({ city }) => {
+			// Mock weather data with random selection
+			const weatherOptions = [
+				{ temp: 72, condition: "sunny", humidity: 45 },
+				{ temp: 68, condition: "cloudy", humidity: 60 },
+				{ temp: 55, condition: "rainy", humidity: 85 },
+				{ temp: 45, condition: "snowy", humidity: 70 },
+				{ temp: 78, condition: "partly cloudy", humidity: 50 },
+				{ temp: 82, condition: "hot and sunny", humidity: 35 },
+			];
 
-				if (!/^[\d+\-*/().]+$/.test(sanitized)) {
-					return "Invalid expression";
-				}
+			const randomWeather =
+				weatherOptions[Math.floor(Math.random() * weatherOptions.length)];
 
-				const result = new Function(`return ${sanitized}`)();
-				return result.toString();
-			} catch {
-				return "Invalid expression";
-			}
+			return {
+				city: city,
+				temperature: `${randomWeather.temp}°F`,
+				condition: randomWeather.condition,
+				humidity: `${randomWeather.humidity}%`,
+			};
 		},
 	});
 
-	const mathExpertAgent = new LlmAgent({
-		name: "math_expert",
+	const weatherAgent = new LlmAgent({
+		name: "weather_agent",
 		model: env.LLM_MODEL || "gemini-1.5-flash",
-		description: "Math expert that solves complex word problems step by step",
-		instruction: `You are a math expert. When given a word problem:
-		1. Read and understand the problem
-		2. Break it down into mathematical steps
-		3. Use the calculate tool for each step
-		4. Explain your reasoning
-		5. Provide the final answer with explanation
-		
-		Always show your work and use the calculate tool for computations.`,
-		tools: [calculatorTool],
+		description:
+			"Weather specialist that provides detailed weather information and advice",
+		instruction: `You are a weather specialist. When someone asks about weather for a city, ALWAYS use the get_weather tool first to get the current conditions, then provide helpful advice based on those conditions.
+
+		Example: If asked "What's the weather in Paris?", call get_weather with city="Paris", then tell them about the temperature and conditions and give relevant advice.`,
+		tools: [weatherTool],
 	});
 
-	const mathSolverTool = new AgentTool({
-		name: "solve_word_problem",
-		description: "Solves complex word problems with step-by-step reasoning",
-		agent: mathExpertAgent,
+	const weatherHelperTool = new AgentTool({
+		name: "get_weather_info",
+		description:
+			"Gets detailed weather information with helpful advice and context",
+		agent: weatherAgent,
 	});
 
-	const { runner } = await AgentBuilder.create("teacher")
+	const { runner } = await AgentBuilder.create("assistant")
 		.withModel(env.LLM_MODEL || "gemini-1.5-flash")
-		.withDescription("Teacher with access to intelligent math expert")
-		.withInstruction(`You are a teacher. You have access to:
-		- solve_word_problem: A math expert that can solve any math problem (simple or complex)
+		.withDescription("Assistant with access to weather specialist")
+		.withInstruction(`You are an assistant. You have access to:
+		- get_weather_info: A weather specialist that provides detailed weather information and advice
 		
-		For ANY math question, use the solve_word_problem tool. The math expert inside can handle both simple calculations and complex word problems.`)
-		.withTools(mathSolverTool)
+		For ANY weather-related question, use the get_weather_info tool. The weather agent inside will get current conditions and provide helpful advice.`)
+		.withTools(weatherHelperTool)
 		.build();
 
-	console.log("\n=== Example 1: Agent Tool with Simple Math ===");
-	const simpleQuery = "What is 25 * 4?";
-	console.log(`🔢 Query: ${simpleQuery}`);
-	const simpleResponse = await runner.ask(simpleQuery);
-	console.log(`🤖 Response: ${simpleResponse}`);
+	console.log("\n=== Example 1: Simple Weather Query ===");
+	const weatherQuery1 = "What's the weather like in New York?";
+	console.log(`🌤️ Query: ${weatherQuery1}`);
+	const weatherResponse1 = await runner.ask(weatherQuery1);
+	console.log(`🤖 Response: ${weatherResponse1}`);
 
-	console.log("\n=== Example 2: Agent Tool with Complex Word Problem ===");
-	const complexQuery =
-		"If I have 5 boxes and each box contains 8 apples, and I give away 12 apples, how many apples do I have left?";
-	console.log(`🧮 Query: ${complexQuery}`);
-	const complexResponse = await runner.ask(complexQuery);
-	console.log(`🤖 Response: ${complexResponse}`);
+	console.log("\n=== Example 2: Different City ===");
+	const weatherQuery2 = "How's the weather in Tokyo?";
+	console.log(`🌦️ Query: ${weatherQuery2}`);
+	const weatherResponse2 = await runner.ask(weatherQuery2);
+	console.log(`🤖 Response: ${weatherResponse2}`);
+
+	console.log("\n=== Example 3: Contextual Weather Question ===");
+	const weatherQuery3 =
+		"Should I bring a jacket if I'm going out in London today?";
+	console.log(`🧥 Query: ${weatherQuery3}`);
+	const weatherResponse3 = await runner.ask(weatherQuery3);
+	console.log(`🤖 Response: ${weatherResponse3}`);
 }
 
 main().catch(console.error);
