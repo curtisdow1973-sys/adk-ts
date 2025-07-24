@@ -4,7 +4,7 @@ import {
 	LlmAgent,
 	createTool,
 } from "@iqai/adk";
-import * as z from "zod/v4";
+import * as z from "zod";
 
 const main = async () => {
 	const firstPasswordAgent = new LlmAgent({

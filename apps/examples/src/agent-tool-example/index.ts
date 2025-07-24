@@ -1,6 +1,6 @@
 import { env } from "node:process";
 import { AgentBuilder, AgentTool, LlmAgent, createTool } from "@iqai/adk";
-import * as z from "zod/v4";
+import * as z from "zod";
 
 /**
  * Agent Tool Example

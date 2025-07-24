@@ -1,6 +1,6 @@
 import { google } from "@ai-sdk/google";
 import { AgentBuilder, createTool } from "@iqai/adk";
-import * as z from "zod/v4";
+import * as z from "zod";
 
 const weatherTool = createTool({
 	name: "getWeather",

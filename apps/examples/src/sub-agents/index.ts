@@ -2,7 +2,7 @@ import { env } from "node:process";
 import { cancel, intro, isCancel, outro, text } from "@clack/prompts";
 import { AgentBuilder, LlmAgent, createTool } from "@iqai/adk";
 import dedent from "dedent";
-import * as z from "zod/v4";
+import * as z from "zod";
 
 /**
  * Sub-Agents Example

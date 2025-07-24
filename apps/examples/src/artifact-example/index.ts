@@ -8,7 +8,7 @@ import {
 } from "@iqai/adk";
 import dedent from "dedent";
 import { v4 as uuidv4 } from "uuid";
-import * as z from "zod/v4";
+import * as z from "zod";
 
 /**
  * Application configuration constants
