@@ -114,7 +114,9 @@ class CreatedTool<T extends Record<string, any>> extends BaseTool {
 				};
 			}
 			return {
-				error: `Error executing ${this.name}: ${error instanceof Error ? error.message : String(error)}`,
+				error: `Error executing ${this.name}: ${
+					error instanceof Error ? error.message : String(error)
+				}`,
 			};
 		}
 	}
@@ -201,9 +203,13 @@ export function createTool<T extends Record<string, any>>(
 // Function overload for tools without schema
 export function createTool(config: CreateToolConfigWithoutSchema): BaseTool;
 
-// Implementation
-export function createTool<
-	T extends Record<string, any> = Record<string, never>,
->(config: CreateToolConfig<T>): BaseTool {
-	return new CreatedTool(config);
+// CORRECTED IMPLEMENTATION:
+// This non-generic implementation uses a union type to match the overloads,
+// preventing the recursive type inference that was causing the crash.
+export function createTool(
+	config: CreateToolConfigWithSchema<any> | CreateToolConfigWithoutSchema,
+): BaseTool {
+	// The overloads guarantee the config is valid, so we can safely cast it
+	// to the general shape that the CreatedTool constructor expects.
+	return new CreatedTool(config as CreateToolConfig<any>);
 }
