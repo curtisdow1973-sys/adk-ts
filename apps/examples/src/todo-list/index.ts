@@ -104,25 +104,13 @@ const deleteReminder = createTool({
 
 const main = async () => {
 	const sessionService = new InMemorySessionService();
-	const sessionConfig = {
-		appName: "reminder_agent",
-		userId: "default_user",
-	};
-	const initialState = {
-		reminders: ["Learn more about ADK"],
-	};
+	const initialState = { reminders: ["Learn more about ADK"] };
+	const sessionConfig = { state: initialState };
 
-	const session = await sessionService.createSession(
-		sessionConfig.appName,
-		sessionConfig.userId,
-		initialState,
-	);
-
-	const { runner } = await AgentBuilder.create("reminder_manager")
+	const { runner, session } = await AgentBuilder.create("reminder_manager")
 		.withTools(addReminder, viewReminders, updateReminder, deleteReminder)
 		.withModel("gemini-2.5-flash")
 		.withSessionService(sessionService, sessionConfig)
-		.withSession(session)
 		.withDescription("A smart reminder assistant with persistent memory")
 		.withInstruction(
 			`You are a friendly reminder assistant that helps users manage their reminders.
@@ -174,8 +162,8 @@ const main = async () => {
 
 			// Get the updated session after the agent has run
 			const updatedSession = await sessionService.getSession(
-				sessionConfig.appName,
-				sessionConfig.userId,
+				session.appName,
+				session.userId,
 				session.id,
 			);
 
