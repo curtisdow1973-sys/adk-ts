@@ -1,5 +1,12 @@
 # @iqai/examples
 
+## 0.0.11
+
+### Patch Changes
+
+- Updated dependencies [12b0f37]
+  - @iqai/adk@0.1.17
+
 ## 0.0.10
 
 ### Patch Changes
