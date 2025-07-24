@@ -4,8 +4,6 @@ import {
 	InMemorySessionService,
 } from "@iqai/adk";
 
-// Note: If specific warnings need to be suppressed, handle them locally rather than globally
-
 async function createAgentRunner(
 	name: string,
 	description: string,
@@ -13,7 +11,7 @@ async function createAgentRunner(
 	memory: InMemoryMemoryService,
 	session: any,
 	sessionService: InMemorySessionService,
-	sessionOptions: { userId: string; appName: string }
+	sessionOptions: { userId: string; appName: string },
 ) {
 	const { runner } = await AgentBuilder.create(name)
 		.withModel(process.env.LLM_MODEL || "gemini-2.5-flash")
@@ -45,7 +43,7 @@ async function main() {
 		sharedMemory,
 		sharedSession,
 		sessionService,
-		{ userId, appName }
+		{ userId, appName },
 	);
 
 	// Agent Bob: answers about movies, can recall Alice's book
@@ -60,7 +58,7 @@ async function main() {
 		sharedMemory,
 		sharedSession,
 		sessionService,
-		{ userId, appName }
+		{ userId, appName },
 	);
 
 	// Simulate a conversation between Alice and Bob
