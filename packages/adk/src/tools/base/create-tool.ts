@@ -1,4 +1,5 @@
-import * as z from "zod/v4";
+import * as z from "zod";
+import { zodToJsonSchema } from "zod-to-json-schema";
 import type {
 	FunctionDeclaration,
 	JSONSchema,
@@ -109,7 +110,7 @@ class CreatedTool<T extends Record<string, any>> extends BaseTool {
 		} catch (error) {
 			if (error instanceof z.ZodError) {
 				return {
-					error: `Invalid arguments for ${this.name}: ${z.prettifyError(error)}`,
+					error: `Invalid arguments for ${this.name}: ${error.message}`,
 				};
 			}
 			return {
@@ -129,12 +130,18 @@ class CreatedTool<T extends Record<string, any>> extends BaseTool {
 	 * Builds the function declaration from the Zod schema
 	 */
 	private buildDeclaration(): FunctionDeclaration {
-		const parameters = z.toJSONSchema(this.schema) as unknown as JSONSchema; // TODO: Investigate further on type compatibility
+		const rawParameters = zodToJsonSchema(this.schema, {
+			target: "jsonSchema7",
+			$refStrategy: "none",
+		});
+
+		// Remove $schema field which is not needed for LLM function declarations
+		const { $schema, ...parameters } = rawParameters as any;
 
 		return {
 			name: this.name,
 			description: this.description,
-			parameters,
+			parameters: parameters as JSONSchema,
 		};
 	}
 }

@@ -1,7 +1,7 @@
 import { env } from "node:process";
 import { AgentBuilder } from "@iqai/adk";
 import { createTool } from "@iqai/adk";
-import * as z from "zod/v4";
+import * as z from "zod";
 
 async function main() {
 	console.log("🛠️ Simple createTool example");

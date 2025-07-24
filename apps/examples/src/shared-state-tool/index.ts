@@ -1,6 +1,6 @@
 import { cancel, intro, isCancel, outro, text } from "@clack/prompts";
 import { AgentBuilder, InMemorySessionService, createTool } from "@iqai/adk";
-import * as z from "zod/v4";
+import * as z from "zod";
 
 const addFavorite = createTool({
 	name: "add_favorites",
