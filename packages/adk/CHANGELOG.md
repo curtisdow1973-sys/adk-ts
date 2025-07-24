@@ -1,5 +1,11 @@
 # @iqai/adk
 
+## 0.1.17
+
+### Patch Changes
+
+- 12b0f37: Resolved a critical performance issue in `createTool` that could cause the TypeScript Language Server to crash. This change is non-breaking.
+
 ## 0.1.16
 
 ### Patch Changes
