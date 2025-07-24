@@ -20,7 +20,7 @@ export interface CreateToolConfig<
 	/** Zod schema for validating tool arguments (optional) */
 	schema?: z.ZodSchema<T>;
 	/** The function to execute (can be sync or async) */
-	fn: (args: T, context?: ToolContext) => any;
+	fn: (args: T, context: ToolContext) => any;
 	/** Whether the tool is a long running operation */
 	isLongRunning?: boolean;
 	/** Whether the tool execution should be retried on failure */
@@ -40,7 +40,7 @@ export interface CreateToolConfigWithSchema<T extends Record<string, any>> {
 	/** Zod schema for validating tool arguments */
 	schema: z.ZodSchema<T>;
 	/** The function to execute (can be sync or async) */
-	fn: (args: T, context?: ToolContext) => any;
+	fn: (args: T, context: ToolContext) => any;
 	/** Whether the tool is a long running operation */
 	isLongRunning?: boolean;
 	/** Whether the tool execution should be retried on failure */
