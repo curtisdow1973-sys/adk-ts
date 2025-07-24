@@ -1,5 +1,11 @@
 # @iqai/adk
 
+## 0.1.16
+
+### Patch Changes
+
+- 335fa8e: Updates createTool to use zod v3 instead of v4
+
 ## 0.1.15
 
 ### Patch Changes
