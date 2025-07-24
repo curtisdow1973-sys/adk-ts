@@ -12,7 +12,11 @@ import type { BaseSessionService } from "../sessions/base-session-service.js";
 import { InMemorySessionService } from "../sessions/in-memory-session-service.js";
 import type { Session } from "../sessions/session.js";
 import type { BaseTool } from "../tools/base/base-tool.js";
-import type { BaseAgent } from "./base-agent.js";
+import type {
+	AfterAgentCallback,
+	BaseAgent,
+	BeforeAgentCallback,
+} from "./base-agent.js";
 import { LangGraphAgent, type LangGraphNode } from "./lang-graph-agent.js";
 import { LlmAgent } from "./llm-agent.js";
 import { LoopAgent } from "./loop-agent.js";
@@ -31,6 +35,8 @@ export interface AgentBuilderConfig {
 	planner?: BasePlanner;
 	codeExecutor?: BaseCodeExecutor;
 	subAgents?: BaseAgent[];
+	beforeAgentCallback?: BeforeAgentCallback;
+	afterAgentCallback?: AfterAgentCallback;
 	maxIterations?: number;
 	nodes?: LangGraphNode[];
 	rootNode?: string;
@@ -252,6 +258,36 @@ export class AgentBuilder {
 	}
 
 	/**
+	 * Add sub-agents to the agent
+	 * @param subAgents Sub-agents to add to the agent
+	 * @returns This builder instance for chaining
+	 */
+	withSubAgents(subAgents: BaseAgent[]): this {
+		this.config.subAgents = subAgents;
+		return this;
+	}
+
+	/**
+	 * Set the before agent callback
+	 * @param callback Callback to invoke before agent execution
+	 * @returns This builder instance for chaining
+	 */
+	withBeforeAgentCallback(callback: BeforeAgentCallback): this {
+		this.config.beforeAgentCallback = callback;
+		return this;
+	}
+
+	/**
+	 * Set the after agent callback
+	 * @param callback Callback to invoke after agent execution
+	 * @returns This builder instance for chaining
+	 */
+	withAfterAgentCallback(callback: AfterAgentCallback): this {
+		this.config.afterAgentCallback = callback;
+		return this;
+	}
+
+	/**
 	 * Configure as a sequential agent
 	 * @param subAgents Sub-agents to execute in sequence
 	 * @returns This builder instance for chaining
@@ -453,6 +489,9 @@ export class AgentBuilder {
 					tools: this.config.tools,
 					planner: this.config.planner,
 					codeExecutor: this.config.codeExecutor,
+					subAgents: this.config.subAgents,
+					beforeAgentCallback: this.config.beforeAgentCallback,
+					afterAgentCallback: this.config.afterAgentCallback,
 					memoryService: this.memoryService,
 					artifactService: this.artifactService,
 					outputKey: this.config.outputKey,
