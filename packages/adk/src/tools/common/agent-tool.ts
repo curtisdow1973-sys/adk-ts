@@ -3,7 +3,7 @@ import { type Part, Type } from "@google/genai";
 import { v4 as uuidv4 } from "uuid";
 import { InvocationContext } from "../../agents/invocation-context";
 import type { LlmAgent } from "../../agents/llm-agent";
-import { Event } from "../../events/event";
+import type { Event } from "../../events/event";
 import type { FunctionDeclaration } from "../../models/function-declaration";
 import { BaseTool } from "../base/base-tool";
 import type { ToolContext } from "../tool-context";
@@ -157,8 +157,6 @@ export class AgentTool extends BaseTool {
 		params: Record<string, any>,
 		context: ToolContext,
 	): Promise<any> {
-		this.logger.debug(`Executing agent tool ${this.name} with params:`, params);
-
 		try {
 			// Use the first parameter value if input is not provided
 			// This allows support for custom schema parameters
@@ -171,27 +169,7 @@ export class AgentTool extends BaseTool {
 			}
 
 			// Access the parent invocation context through the protected property
-			// This is safe since we're extending BaseTool and working within the tool context
 			const parentInvocation = (context as any)._invocationContext;
-
-			// Create a user event and add it to the session so the agent sees the input
-			const userEvent = new Event({
-				author: "user",
-				invocationId: uuidv4(),
-				content: {
-					role: "user" as const,
-					parts: [{ text: String(input) }],
-				},
-				branch: parentInvocation.branch
-					? `${parentInvocation.branch}.${this.agent.name}`
-					: this.agent.name,
-			});
-
-			// Add the user event to the session
-			await parentInvocation.sessionService.appendEvent(
-				parentInvocation.session,
-				userEvent,
-			);
 
 			// Create a child invocation context that shares the same session
 			// but has a different invocation ID for tracking
@@ -214,7 +192,17 @@ export class AgentTool extends BaseTool {
 
 			// Run the agent and collect the last event
 			let lastEvent: Event | null = null;
+
 			for await (const event of this.agent.runAsync(childInvocationContext)) {
+				// Append non-partial events to session like Runner does
+				// This ensures function responses are included in conversation history
+				if (!event.partial) {
+					await childInvocationContext.sessionService.appendEvent(
+						childInvocationContext.session,
+						event,
+					);
+				}
+
 				if (event.content && event.author === this.agent.name) {
 					lastEvent = event;
 				}
@@ -243,7 +231,6 @@ export class AgentTool extends BaseTool {
 				context.state[this.outputKey] = toolResult;
 			}
 
-			this.logger.debug(`Agent tool ${this.name} completed successfully`);
 			return toolResult;
 		} catch (error) {
 			this.logger.error(`Error executing agent tool ${this.name}:`, error);
