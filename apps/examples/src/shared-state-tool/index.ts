@@ -40,24 +40,13 @@ const showFavorites = createTool({
 
 const main = async () => {
 	const sessionService = new InMemorySessionService();
-	const sessionConfig = {
-		appName: "shared_state_tool",
-		userId: "default_user",
-	};
-	const initialState = {
-		userName: "Srujan",
-		favorites: ["reading books"],
-	};
-	const session = await sessionService.createSession(
-		sessionConfig.appName,
-		sessionConfig.userId,
-		initialState,
-	);
-	const { runner } = await AgentBuilder.create("favorite_manager")
+	const initialState = { favorites: ["reading books"] };
+	const sessionConfig = { state: initialState };
+
+	const { runner, session } = await AgentBuilder.create("favorite_manager")
 		.withTools(addFavorite, showFavorites)
 		.withModel("gemini-2.5-flash")
 		.withSessionService(sessionService, sessionConfig)
-		.withSession(session)
 		.build();
 
 	// Start interactive loop
@@ -91,8 +80,8 @@ const main = async () => {
 
 			// Get the updated session after the agent has run
 			const updatedSession = await sessionService.getSession(
-				sessionConfig.appName,
-				sessionConfig.userId,
+				session.appName,
+				session.userId,
 				session.id,
 			);
 
