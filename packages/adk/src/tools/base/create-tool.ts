@@ -58,7 +58,7 @@ export interface CreateToolConfigWithoutSchema {
 	/** A description of what the tool does */
 	description: string;
 	/** The function to execute (can be sync or async) */
-	fn: (args: Record<string, never>, context?: ToolContext) => any;
+	fn: (args: Record<string, never>, context: ToolContext) => any;
 	/** Whether the tool is a long running operation */
 	isLongRunning?: boolean;
 	/** Whether the tool execution should be retried on failure */
@@ -71,7 +71,7 @@ export interface CreateToolConfigWithoutSchema {
  * A tool implementation created by createTool
  */
 class CreatedTool<T extends Record<string, any>> extends BaseTool {
-	private func: (args: T, context?: ToolContext) => any;
+	private func: (args: T, context: ToolContext) => any;
 	private schema: z.ZodSchema<T>;
 	private functionDeclaration: FunctionDeclaration;
 
@@ -99,11 +99,7 @@ class CreatedTool<T extends Record<string, any>> extends BaseTool {
 
 			// Call the function with validated arguments.
 			// `Promise.resolve` handles both sync and async functions gracefully.
-			const result = await Promise.resolve(
-				this.func.length > 1
-					? this.func(validatedArgs, context)
-					: this.func(validatedArgs),
-			);
+			const result = await Promise.resolve(this.func(validatedArgs, context));
 
 			// Ensure we return an object, but preserve falsy values like 0, false, ""
 			return result ?? {};
