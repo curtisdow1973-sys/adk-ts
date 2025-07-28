@@ -1,5 +1,11 @@
 # @iqai/adk
 
+## 0.1.20
+
+### Patch Changes
+
+- 85473c7: Fix OpenAI and AI SDK LLMs not taking in the schema from MCP tools
+
 ## 0.1.19
 
 ### Patch Changes
