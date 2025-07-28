@@ -459,6 +459,10 @@ export class OpenAiLlm extends BaseLlm {
 	 * Transform JSON schema to use lowercase types for OpenAI compatibility
 	 */
 	private transformSchemaForOpenAi(schema: any): any {
+		if (Array.isArray(schema)) {
+			return schema.map((item) => this.transformSchemaForOpenAi(item));
+		}
+
 		if (!schema || typeof schema !== "object") {
 			return schema;
 		}
@@ -472,17 +476,15 @@ export class OpenAiLlm extends BaseLlm {
 
 		// Recursively transform properties
 		if (transformedSchema.properties) {
-			transformedSchema.properties = Object.keys(
-				transformedSchema.properties,
-			).reduce((acc, key) => {
-				acc[key] = this.transformSchemaForOpenAi(
-					transformedSchema.properties[key],
-				);
-				return acc;
-			}, {} as any);
+			transformedSchema.properties = Object.fromEntries(
+				Object.entries(transformedSchema.properties).map(([key, value]) => [
+					key,
+					this.transformSchemaForOpenAi(value),
+				]),
+			);
 		}
 
-		// Transform array items
+		// Transform array items (handles both single schema and array of schemas)
 		if (transformedSchema.items) {
 			transformedSchema.items = this.transformSchemaForOpenAi(
 				transformedSchema.items,
@@ -490,20 +492,13 @@ export class OpenAiLlm extends BaseLlm {
 		}
 
 		// Transform anyOf, oneOf, allOf
-		if (transformedSchema.anyOf) {
-			transformedSchema.anyOf = transformedSchema.anyOf.map((schema: any) =>
-				this.transformSchemaForOpenAi(schema),
-			);
-		}
-		if (transformedSchema.oneOf) {
-			transformedSchema.oneOf = transformedSchema.oneOf.map((schema: any) =>
-				this.transformSchemaForOpenAi(schema),
-			);
-		}
-		if (transformedSchema.allOf) {
-			transformedSchema.allOf = transformedSchema.allOf.map((schema: any) =>
-				this.transformSchemaForOpenAi(schema),
-			);
+		const arrayKeywords = ["anyOf", "oneOf", "allOf"];
+		for (const keyword of arrayKeywords) {
+			if (transformedSchema[keyword]) {
+				transformedSchema[keyword] = this.transformSchemaForOpenAi(
+					transformedSchema[keyword],
+				);
+			}
 		}
 
 		return transformedSchema;

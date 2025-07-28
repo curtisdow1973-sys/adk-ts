@@ -172,6 +172,10 @@ export class AiSdkLlm extends BaseLlm {
 	 * Transform JSON schema to use lowercase types for AI SDK compatibility
 	 */
 	private transformSchemaForAiSdk(schema: any): any {
+		if (Array.isArray(schema)) {
+			return schema.map((item) => this.transformSchemaForAiSdk(item));
+		}
+
 		if (!schema || typeof schema !== "object") {
 			return schema;
 		}
@@ -185,17 +189,15 @@ export class AiSdkLlm extends BaseLlm {
 
 		// Recursively transform properties
 		if (transformedSchema.properties) {
-			transformedSchema.properties = Object.keys(
-				transformedSchema.properties,
-			).reduce((acc, key) => {
-				acc[key] = this.transformSchemaForAiSdk(
-					transformedSchema.properties[key],
-				);
-				return acc;
-			}, {} as any);
+			transformedSchema.properties = Object.fromEntries(
+				Object.entries(transformedSchema.properties).map(([key, value]) => [
+					key,
+					this.transformSchemaForAiSdk(value),
+				]),
+			);
 		}
 
-		// Transform array items
+		// Transform array items (handles both single schema and array of schemas)
 		if (transformedSchema.items) {
 			transformedSchema.items = this.transformSchemaForAiSdk(
 				transformedSchema.items,
@@ -203,20 +205,13 @@ export class AiSdkLlm extends BaseLlm {
 		}
 
 		// Transform anyOf, oneOf, allOf
-		if (transformedSchema.anyOf) {
-			transformedSchema.anyOf = transformedSchema.anyOf.map((schema: any) =>
-				this.transformSchemaForAiSdk(schema),
-			);
-		}
-		if (transformedSchema.oneOf) {
-			transformedSchema.oneOf = transformedSchema.oneOf.map((schema: any) =>
-				this.transformSchemaForAiSdk(schema),
-			);
-		}
-		if (transformedSchema.allOf) {
-			transformedSchema.allOf = transformedSchema.allOf.map((schema: any) =>
-				this.transformSchemaForAiSdk(schema),
-			);
+		const arrayKeywords = ["anyOf", "oneOf", "allOf"];
+		for (const keyword of arrayKeywords) {
+			if (transformedSchema[keyword]) {
+				transformedSchema[keyword] = this.transformSchemaForAiSdk(
+					transformedSchema[keyword],
+				);
+			}
 		}
 
 		return transformedSchema;
