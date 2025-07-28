@@ -1,5 +1,6 @@
+import path from "node:path";
 import { env } from "node:process";
-import { AgentBuilder, type EnhancedRunner, McpFilesystem } from "@iqai/adk";
+import { AgentBuilder, type EnhancedRunner, McpToolset } from "@iqai/adk";
 
 async function main() {
 	console.log("📁 Starting MCP Filesystem Agent example...");
@@ -9,7 +10,17 @@ async function main() {
 		 * Create Filesystem MCP toolset and get individual tools
 		 * Provides access to file system functionality
 		 */
-		const filesystemTools = await McpFilesystem().getTools();
+		const ALLOWED_PATH = path.join(process.cwd());
+		const toolset = new McpToolset({
+			name: "Filesystem Client",
+			description: "Client for MCP Filesystem Server",
+			transport: {
+				mode: "stdio",
+				command: "npx",
+				args: ["-y", "@modelcontextprotocol/server-filesystem", ALLOWED_PATH],
+			},
+		});
+		const filesystemTools = await toolset.getTools();
 
 		/**
 		 * Create agent with filesystem capabilities using AgentBuilder
