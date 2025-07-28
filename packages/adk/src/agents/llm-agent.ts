@@ -308,14 +308,16 @@ export class LlmAgent<T extends BaseLlm = BaseLlm> extends BaseAgent {
 
 		// find model from ancestors
 		let ancestorAgent = this.parentAgent;
-		while (ancestorAgent !== null) {
+		while (ancestorAgent !== null && ancestorAgent !== undefined) {
 			if (ancestorAgent instanceof LlmAgent) {
 				return ancestorAgent.canonicalModel;
 			}
 			ancestorAgent = ancestorAgent.parentAgent;
 		}
 
-		throw new Error(`No model found for ${this.name}.`);
+		throw new Error(
+			`No model found for agent "${this.name}". Please specify a model directly on this agent using the 'model' property`,
+		);
 	}
 
 	/**
