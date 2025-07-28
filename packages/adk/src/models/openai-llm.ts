@@ -1,12 +1,8 @@
-import { Logger } from "@adk/logger";
-import dedent from "dedent";
 import OpenAI from "openai";
 import { BaseLlm } from "./base-llm";
 import type { BaseLLMConnection } from "./base-llm-connection";
 import type { LlmRequest } from "./llm-request";
 import { LlmResponse } from "./llm-response";
-
-const NEW_LINE = "\n";
 
 type OpenAIRole = "user" | "assistant" | "system";
 
