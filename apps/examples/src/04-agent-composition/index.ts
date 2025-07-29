@@ -150,11 +150,7 @@ async function demonstrateOutputKeys() {
 }
 
 async function demonstrateSharedMemory() {
-	const appName = "SharedMemoryDemo";
-	const userId = "alice-bob-user";
 	const sharedMemory = new InMemoryMemoryService();
-	const sessionService = new InMemorySessionService();
-	const sharedSession = await sessionService.createSession(appName, userId);
 
 	// Helper function to create agents with shared memory
 	async function createAgentWithSharedMemory(
@@ -167,8 +163,6 @@ async function demonstrateSharedMemory() {
 			.withDescription(description)
 			.withInstruction(instruction)
 			.withMemory(sharedMemory)
-			.withSession(sharedSession)
-			.withSessionService(sessionService, { userId, appName })
 			.build();
 		return runner;
 	}
