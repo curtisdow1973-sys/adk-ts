@@ -2,9 +2,8 @@ import { env } from "node:process";
 import { cancel, intro, isCancel, outro, text } from "@clack/prompts";
 import {
 	AgentBuilder,
-	LlmAgent,
-	InMemoryMemoryService,
 	InMemorySessionService,
+	LlmAgent,
 	createTool,
 } from "@iqai/adk";
 import dedent from "dedent";
@@ -150,12 +149,6 @@ async function demonstrateOutputKeys() {
 }
 
 async function demonstrateSharedMemory() {
-	const appName = "SharedMemoryDemo";
-	const userId = "alice-bob-user";
-	const sharedMemory = new InMemoryMemoryService();
-	const sessionService = new InMemorySessionService();
-	const sharedSession = await sessionService.createSession(appName, userId);
-
 	// Helper function to create agents with shared memory
 	async function createAgentWithSharedMemory(
 		name: string,
@@ -166,9 +159,6 @@ async function demonstrateSharedMemory() {
 			.withModel(env.LLM_MODEL || "gemini-2.5-flash")
 			.withDescription(description)
 			.withInstruction(instruction)
-			.withMemory(sharedMemory)
-			.withSession(sharedSession)
-			.withSessionService(sessionService, { userId, appName })
 			.build();
 		return runner;
 	}
@@ -263,7 +253,7 @@ async function demonstrateSubAgents() {
 		instruction: dedent`
 			You are a helpful coordinator that delegates tasks to specialized agents:
 			- For jokes: delegate to joke_agent
-			- For math problems: delegate to math_agent  
+			- For math problems: delegate to math_agent
 			- For weather queries: delegate to weather_agent
 			- For general questions: handle yourself
 
