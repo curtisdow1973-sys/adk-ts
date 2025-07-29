@@ -2,6 +2,7 @@ import { env } from "node:process";
 import { cancel, intro, isCancel, outro, text } from "@clack/prompts";
 import {
 	AgentBuilder,
+	InMemoryMemoryService,
 	InMemorySessionService,
 	LlmAgent,
 	createTool,
@@ -149,6 +150,12 @@ async function demonstrateOutputKeys() {
 }
 
 async function demonstrateSharedMemory() {
+	const appName = "SharedMemoryDemo";
+	const userId = "alice-bob-user";
+	const sharedMemory = new InMemoryMemoryService();
+	const sessionService = new InMemorySessionService();
+	const sharedSession = await sessionService.createSession(appName, userId);
+
 	// Helper function to create agents with shared memory
 	async function createAgentWithSharedMemory(
 		name: string,
@@ -159,6 +166,9 @@ async function demonstrateSharedMemory() {
 			.withModel(env.LLM_MODEL || "gemini-2.5-flash")
 			.withDescription(description)
 			.withInstruction(instruction)
+			.withMemory(sharedMemory)
+			.withSession(sharedSession)
+			.withSessionService(sessionService, { userId, appName })
 			.build();
 		return runner;
 	}
