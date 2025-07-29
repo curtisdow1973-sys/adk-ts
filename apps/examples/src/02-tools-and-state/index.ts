@@ -8,88 +8,73 @@ import * as z from "zod";
  *
  * Learn how to create custom tools and manage state in your agents.
  * This example demonstrates stateful tools that remember information
- * across interactions.
+ * across interactions, and shows state injection in instructions.
  *
  * Concepts covered:
  * - Creating custom tools with createTool
  * - Tool schemas and validation
  * - State management with context.state
  * - Session services for persistence
+ * - State injection in instructions using {statePath} syntax
  * - Tool composition and reuse
  */
 
-// Stateful tools that remember information
-const addNotesTool = createTool({
-	name: "add_note",
-	description: "Add a note to the user's notebook",
+// Simple shopping cart tools
+const addItemTool = createTool({
+	name: "add_item",
+	description: "Add an item to the shopping cart",
 	schema: z.object({
-		note: z.string().describe("The note to add"),
-		category: z.string().optional().describe("Optional category for the note"),
+		item: z.string().describe("Item name"),
+		quantity: z.number().default(1).describe("Quantity to add"),
+		price: z.number().describe("Price per item"),
 	}),
-	fn: ({ note, category }, context) => {
-		const notes = context.state.get("notes", []);
-		const newNote = {
-			id: notes.length + 1,
-			content: note,
-			category: category || "general",
-			timestamp: new Date().toISOString(),
-		};
-		notes.push(newNote);
-		context.state.set("notes", notes);
+	fn: ({ item, quantity, price }, context) => {
+		const cart = context.state.get("cart", []);
+		const existingItem = cart.find((cartItem) => cartItem.item === item);
+
+		if (existingItem) {
+			existingItem.quantity += quantity;
+		} else {
+			cart.push({ item, quantity, price });
+		}
+
+		context.state.set("cart", cart);
+		context.state.set("cartCount", cart.length); // Store count separately for state injection
+
+		const total = cart.reduce(
+			(sum, cartItem) => sum + cartItem.quantity * cartItem.price,
+			0,
+		);
 
 		return {
 			success: true,
-			note: newNote,
-			totalNotes: notes.length,
-			message: `Added note #${newNote.id}: "${note}"`,
+			item,
+			quantity,
+			cartTotal: total,
+			message: `Added ${quantity}x ${item} to cart`,
 		};
 	},
 });
 
-const viewNotesTool = createTool({
-	name: "view_notes",
-	description: "View all notes or notes in a specific category",
-	schema: z.object({
-		category: z.string().optional().describe("Filter by category"),
-	}),
-	fn: ({ category }, context) => {
-		const allNotes = context.state.get("notes", []);
-		const filteredNotes = category
-			? allNotes.filter((note) => note.category === category)
-			: allNotes;
+const viewCartTool = createTool({
+	name: "view_cart",
+	description: "View current shopping cart contents",
+	schema: z.object({}),
+	fn: (_, context) => {
+		const cart = context.state.get("cart", []);
+		const total = cart.reduce(
+			(sum, item) => sum + item.quantity * item.price,
+			0,
+		);
 
 		return {
-			notes: filteredNotes,
-			totalNotes: allNotes.length,
-			filteredCount: filteredNotes.length,
-			category: category || "all",
-			message: category
-				? `Found ${filteredNotes.length} notes in '${category}' category`
-				: `Total notes: ${allNotes.length}`,
-		};
-	},
-});
-
-const counterTool = createTool({
-	name: "increment_counter",
-	description: "Increment a named counter",
-	schema: z.object({
-		counterName: z.string().describe("Name of the counter"),
-		amount: z.number().default(1).describe("Amount to increment by"),
-	}),
-	fn: ({ counterName, amount }, context) => {
-		const counters = context.state.get("counters", {});
-		const currentValue = counters[counterName] || 0;
-		const newValue = currentValue + amount;
-		counters[counterName] = newValue;
-		context.state.set("counters", counters);
-
-		return {
-			counterName,
-			previousValue: currentValue,
-			newValue,
-			increment: amount,
-			allCounters: counters,
+			cart,
+			total,
+			itemCount: cart.reduce((sum, item) => sum + item.quantity, 0),
+			message:
+				cart.length > 0
+					? `Cart has ${cart.length} different items`
+					: "Cart is empty",
 		};
 	},
 });
@@ -98,50 +83,45 @@ async function demonstrateToolsAndState() {
 	console.log("🛠️ Tools and state:");
 	const sessionService = new InMemorySessionService();
 	const initialState = {
-		notes: [],
-		counters: { visits: 0 },
+		cart: [],
+		cartCount: 0,
 	};
 
-	const { runner } = await AgentBuilder.create("tools_and_state_agent")
+	const { runner } = await AgentBuilder.create("shopping_cart_agent")
 		.withModel(env.LLM_MODEL || "gemini-2.5-flash")
-		.withDescription("An agent with stateful tools for notes and counters")
+		.withDescription(
+			"A shopping cart assistant that manages items and calculates totals",
+		)
 		.withInstruction(dedent`
-			You are a productivity assistant with stateful tools:
-			- Notes for remembering things (add, view, categorize)
-			- Counters for tracking activities
+			You are a shopping cart assistant. Help users manage their cart.
 
-			Help users organize their thoughts and track their progress.
-			Maintain state across interactions and suggest useful workflows.
+			Current cart state:
+			- Items in cart: {cartCount}
+			- Cart contents: {cart}
+
+			You can add items and view the cart. Always be helpful with pricing and quantities.
+			When asked about current cart without tools, reference the cart state above.
 		`)
-		.withTools(addNotesTool, viewNotesTool, counterTool)
+		.withTools(addItemTool, viewCartTool)
 		.withSessionService(sessionService, { state: initialState })
 		.build();
 
-	// Test stateful tools
-	const note1 = await runner.ask("Add a note: 'Learn about ADK tools'");
-	console.log(note1);
+	// Test adding items
+	const item1 = await runner.ask("Add 2 apples to my cart at $1.50 each");
+	console.log(item1);
 
-	const note2 = await runner.ask(
-		"Add a note about buying groceries, category: personal",
+	const item2 = await runner.ask("Add 1 banana for $0.75");
+	console.log(item2);
+
+	// Test state injection - ask about cart without using tools
+	const stateCheck = await runner.ask(
+		"How many items are in my cart and what are they? Use the state information from your instructions, don't call any tools.",
 	);
-	console.log(note2);
+	console.log(stateCheck);
 
-	const counter1 = await runner.ask(
-		"Increment the 'examples_completed' counter by 1",
-	);
-	console.log(counter1);
-
-	const viewNotes = await runner.ask("Show me all my notes");
-	console.log(viewNotes);
-
-	// Test tool composition
-	const composed = await runner.ask(dedent`
-		I want to track my learning progress:
-		1. Add a note about completing the tools example
-		2. Increment a 'lessons_completed' counter
-		3. Show me all my notes to see my progress
-	`);
-	console.log(composed);
+	// Test viewing cart with tools
+	const cartView = await runner.ask("Show me my complete cart with total");
+	console.log(cartView);
 }
 
 async function main() {
