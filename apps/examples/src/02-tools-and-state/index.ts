@@ -1,14 +1,14 @@
 import { env } from "node:process";
 import { AgentBuilder, InMemorySessionService, createTool } from "@iqai/adk";
-import * as z from "zod";
 import dedent from "dedent";
+import * as z from "zod";
 
 /**
  * 02 - Tools and State Management
  *
  * Learn how to create custom tools and manage state in your agents.
- * This example progresses from basic tools to stateful tools that remember
- * information across interactions.
+ * This example demonstrates stateful tools that remember information
+ * across interactions.
  *
  * Concepts covered:
  * - Creating custom tools with createTool
@@ -17,51 +17,6 @@ import dedent from "dedent";
  * - Session services for persistence
  * - Tool composition and reuse
  */
-
-// Basic tools without state
-const calculatorTool = createTool({
-	name: "calculator",
-	description: "Performs basic math operations",
-	schema: z.object({
-		operation: z.enum(["add", "subtract", "multiply", "divide"]),
-		a: z.number().describe("First number"),
-		b: z.number().describe("Second number"),
-	}),
-	fn: ({ operation, a, b }) => {
-		let result: number;
-		switch (operation) {
-			case "add":
-				result = a + b;
-				break;
-			case "subtract":
-				result = a - b;
-				break;
-			case "multiply":
-				result = a * b;
-				break;
-			case "divide":
-				result = b !== 0 ? a / b : Number.NaN;
-				break;
-		}
-		return { operation, a, b, result };
-	},
-});
-
-const weatherTool = createTool({
-	name: "get_weather",
-	description: "Gets mock weather information for a city",
-	schema: z.object({
-		city: z.string().describe("City name"),
-	}),
-	fn: ({ city }) => ({
-		city,
-		temperature: Math.floor(Math.random() * 35) + 5, // Random temp 5-40°C
-		conditions: ["sunny", "cloudy", "rainy", "snowy"][
-			Math.floor(Math.random() * 4)
-		],
-		humidity: Math.floor(Math.random() * 100),
-	}),
-});
 
 // Stateful tools that remember information
 const addNotesTool = createTool({
@@ -139,52 +94,30 @@ const counterTool = createTool({
 	},
 });
 
-async function demonstrateBasicTools() {
-	console.log("🛠️ Basic tools:");
-	const { runner } = await AgentBuilder.create("basic_tools_agent")
-		.withModel(env.LLM_MODEL || "gemini-2.5-flash")
-		.withDescription("An agent with basic calculation and weather tools")
-		.withInstruction(dedent`
-			You have access to calculator and weather tools.
-			When users ask math questions, use the calculator tool.
-			When users ask about weather, use the weather tool.
-			Be helpful and show your work clearly.
-		`)
-		.withTools(calculatorTool, weatherTool)
-		.build();
-
-	const mathResult = await runner.ask("What is 15 multiplied by 8?");
-	console.log(mathResult);
-
-	const weatherResult = await runner.ask("What's the weather in Tokyo?");
-	console.log(weatherResult);
-}
-
-async function demonstrateStatefulTools() {
-	console.log("\n� Stateful tools:");
+async function demonstrateToolsAndState() {
+	console.log("🛠️ Tools and state:");
 	const sessionService = new InMemorySessionService();
 	const initialState = {
 		notes: [],
 		counters: { visits: 0 },
 	};
 
-	const { runner, session } = await AgentBuilder.create("stateful_agent")
+	const { runner } = await AgentBuilder.create("tools_and_state_agent")
 		.withModel(env.LLM_MODEL || "gemini-2.5-flash")
-		.withDescription("An agent that can remember notes and track counters")
+		.withDescription("An agent with stateful tools for notes and counters")
 		.withInstruction(dedent`
-			You are a helpful assistant with memory capabilities.
-			You can:
-			1. Add and view notes for the user
-			2. Track counters for various activities
+			You are a productivity assistant with stateful tools:
+			- Notes for remembering things (add, view, categorize)
+			- Counters for tracking activities
 
-			When users add notes, acknowledge them and suggest categories if helpful.
-			When viewing notes, organize them nicely and provide summaries.
-			Use counters to track interesting statistics about user interactions.
+			Help users organize their thoughts and track their progress.
+			Maintain state across interactions and suggest useful workflows.
 		`)
 		.withTools(addNotesTool, viewNotesTool, counterTool)
 		.withSessionService(sessionService, { state: initialState })
 		.build();
 
+	// Test stateful tools
 	const note1 = await runner.ask("Add a note: 'Learn about ADK tools'");
 	console.log(note1);
 
@@ -200,56 +133,19 @@ async function demonstrateStatefulTools() {
 
 	const viewNotes = await runner.ask("Show me all my notes");
 	console.log(viewNotes);
-}
 
-async function demonstrateToolComposition() {
-	console.log("\n� Tool composition:");
-	const sessionService = new InMemorySessionService();
-
-	const { runner } = await AgentBuilder.create("multi_tool_agent")
-		.withModel(env.LLM_MODEL || "gemini-2.5-flash")
-		.withDescription("An agent with multiple tool types working together")
-		.withInstruction(dedent`
-			You are a productivity assistant with various tools:
-			- Calculator for math
-			- Weather for location info
-			- Notes for remembering things
-			- Counters for tracking activities
-
-			Use tools together creatively. For example:
-			- Calculate costs and save as notes
-			- Track weather checks with counters
-			- Create productivity workflows
-		`)
-		.withTools(
-			calculatorTool,
-			weatherTool,
-			addNotesTool,
-			viewNotesTool,
-			counterTool,
-		)
-		.withSessionService(sessionService, { state: { notes: [], counters: {} } })
-		.build();
-
+	// Test tool composition
 	const composed = await runner.ask(dedent`
-		Help me plan a trip to Paris:
-		1. Get the weather in Paris
-		2. Calculate the budget if I spend $200 per day for 5 days
-		3. Save this information as a note
-		4. Track this as a 'trip_planned' counter
+		I want to track my learning progress:
+		1. Add a note about completing the tools example
+		2. Increment a 'lessons_completed' counter
+		3. Show me all my notes to see my progress
 	`);
 	console.log(composed);
 }
 
 async function main() {
-	try {
-		await demonstrateBasicTools();
-		await demonstrateStatefulTools();
-		await demonstrateToolComposition();
-	} catch (error) {
-		console.error("❌ Error:", error);
-		process.exit(1);
-	}
+	await demonstrateToolsAndState();
 }
 
 main().catch(console.error);
