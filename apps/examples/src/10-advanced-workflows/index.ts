@@ -544,43 +544,12 @@ async function demonstrateAdvancedOrchestrationPatterns() {
 }
 
 async function main() {
-	console.log("🏗️ 10 - Advanced Workflows and Complex Orchestration");
-	console.log("═══════════════════════════════════════════════════\n");
+	console.log("🏗️ Advanced workflows:");
 
-	try {
-		await demonstrateBasicWorkflow();
-		await demonstrateLangGraphStyleWorkflow();
-		await demonstrateErrorRecoveryWorkflow();
-		await demonstrateAdvancedOrchestrationPatterns();
-
-		console.log("✅ Advanced Workflows examples completed!");
-		console.log("\n🎓 Key Takeaways:");
-		console.log(
-			"- Complex workflows require careful orchestration and state management",
-		);
-		console.log(
-			"- State machines provide predictable workflow execution patterns",
-		);
-		console.log(
-			"- Error recovery and retry patterns are essential for production systems",
-		);
-		console.log(
-			"- Advanced orchestration enables sophisticated business process automation",
-		);
-
-		console.log("\n🎓 Next Steps:");
-		console.log(
-			"- Run example 11-mcp-integrations for protocol-based integrations",
-		);
-		console.log("- Design workflows for your specific business processes");
-		console.log(
-			"- Implement error handling and recovery for production systems",
-		);
-		console.log("- Explore LangGraph for more advanced workflow patterns");
-	} catch (error) {
-		console.error("❌ Error in advanced workflows example:", error);
-		process.exit(1);
-	}
+	await demonstrateBasicWorkflow();
+	await demonstrateLangGraphStyleWorkflow();
+	await demonstrateErrorRecoveryWorkflow();
+	await demonstrateAdvancedOrchestrationPatterns();
 }
 
 main().catch(console.error);

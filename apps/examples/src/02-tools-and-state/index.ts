@@ -140,9 +140,7 @@ const counterTool = createTool({
 });
 
 async function demonstrateBasicTools() {
-	console.log("📝 Part 1: Basic Tools (No State)");
-	console.log("════════════════════════════════\n");
-
+	console.log("🛠️ Basic tools:");
 	const { runner } = await AgentBuilder.create("basic_tools_agent")
 		.withModel(env.LLM_MODEL || "gemini-2.5-flash")
 		.withDescription("An agent with basic calculation and weather tools")
@@ -155,20 +153,15 @@ async function demonstrateBasicTools() {
 		.withTools(calculatorTool, weatherTool)
 		.build();
 
-	// Test basic tools
-	console.log("🧮 Testing Calculator Tool:");
 	const mathResult = await runner.ask("What is 15 multiplied by 8?");
-	console.log(`Response: ${mathResult}\n`);
+	console.log(mathResult);
 
-	console.log("🌤️ Testing Weather Tool:");
 	const weatherResult = await runner.ask("What's the weather in Tokyo?");
-	console.log(`Response: ${weatherResult}\n`);
+	console.log(weatherResult);
 }
 
 async function demonstrateStatefulTools() {
-	console.log("📝 Part 2: Stateful Tools (With Memory)");
-	console.log("═══════════════════════════════════════\n");
-
+	console.log("\n� Stateful tools:");
 	const sessionService = new InMemorySessionService();
 	const initialState = {
 		notes: [],
@@ -183,7 +176,7 @@ async function demonstrateStatefulTools() {
 			You can:
 			1. Add and view notes for the user
 			2. Track counters for various activities
-			
+
 			When users add notes, acknowledge them and suggest categories if helpful.
 			When viewing notes, organize them nicely and provide summaries.
 			Use counters to track interesting statistics about user interactions.
@@ -192,35 +185,25 @@ async function demonstrateStatefulTools() {
 		.withSessionService(sessionService, { state: initialState })
 		.build();
 
-	// Test stateful tools
-	console.log("📋 Testing Note Management:");
 	const note1 = await runner.ask("Add a note: 'Learn about ADK tools'");
-	console.log(`Response: ${note1}\n`);
+	console.log(note1);
 
 	const note2 = await runner.ask(
 		"Add a note about buying groceries, category: personal",
 	);
-	console.log(`Response: ${note2}\n`);
+	console.log(note2);
 
-	console.log("📊 Testing Counter Tool:");
 	const counter1 = await runner.ask(
 		"Increment the 'examples_completed' counter by 1",
 	);
-	console.log(`Response: ${counter1}\n`);
+	console.log(counter1);
 
-	console.log("👀 Testing State Persistence:");
 	const viewNotes = await runner.ask("Show me all my notes");
-	console.log(`Response: ${viewNotes}\n`);
-
-	// Show current state
-	console.log("💾 Current Session State:");
-	console.log(JSON.stringify(session.state, null, 2));
+	console.log(viewNotes);
 }
 
 async function demonstrateToolComposition() {
-	console.log("\n📝 Part 3: Tool Composition");
-	console.log("═══════════════════════════\n");
-
+	console.log("\n� Tool composition:");
 	const sessionService = new InMemorySessionService();
 
 	const { runner } = await AgentBuilder.create("multi_tool_agent")
@@ -232,7 +215,7 @@ async function demonstrateToolComposition() {
 			- Weather for location info
 			- Notes for remembering things
 			- Counters for tracking activities
-			
+
 			Use tools together creatively. For example:
 			- Calculate costs and save as notes
 			- Track weather checks with counters
@@ -248,7 +231,6 @@ async function demonstrateToolComposition() {
 		.withSessionService(sessionService, { state: { notes: [], counters: {} } })
 		.build();
 
-	console.log("🔧 Testing Tool Composition:");
 	const composed = await runner.ask(dedent`
 		Help me plan a trip to Paris:
 		1. Get the weather in Paris
@@ -256,33 +238,16 @@ async function demonstrateToolComposition() {
 		3. Save this information as a note
 		4. Track this as a 'trip_planned' counter
 	`);
-	console.log(`Response: ${composed}\n`);
+	console.log(composed);
 }
 
 async function main() {
-	console.log("🛠️ 02 - Tools and State Management");
-	console.log("═══════════════════════════════════\n");
-
 	try {
 		await demonstrateBasicTools();
 		await demonstrateStatefulTools();
 		await demonstrateToolComposition();
-
-		console.log("✅ Tools and State examples completed!");
-		console.log("\n🎓 Key Takeaways:");
-		console.log("- Tools extend agent capabilities");
-		console.log("- State management enables memory across interactions");
-		console.log("- Tools can be composed for complex workflows");
-		console.log("- Session services provide persistence");
-
-		console.log("\n🎓 Next Steps:");
-		console.log(
-			"- Run example 03-interactive-app to see a complete application",
-		);
-		console.log("- Try creating your own custom tools");
-		console.log("- Experiment with different state management patterns");
 	} catch (error) {
-		console.error("❌ Error in tools and state example:", error);
+		console.error("❌ Error:", error);
 		process.exit(1);
 	}
 }

@@ -283,9 +283,6 @@ const getStatsTool = createTool({
 });
 
 async function main() {
-	console.log("📝 03 - Interactive Todo Application");
-	console.log("════════════════════════════════════\n");
-
 	// Initialize session service with sample data
 	const sessionService = new InMemorySessionService();
 	const initialState = {
@@ -304,7 +301,7 @@ async function main() {
 				priority: "medium",
 				category: "learning",
 				completed: true,
-				createdAt: new Date(Date.now() - 86400000).toISOString(), // Yesterday
+				createdAt: new Date(Date.now() - 86400000).toISOString(),
 				completedAt: new Date().toISOString(),
 			},
 		],
@@ -349,17 +346,7 @@ async function main() {
 
 	// Start interactive session
 	intro("📝 Todo Assistant");
-	console.log(
-		"Welcome to your personal todo manager! Here's what I can help you with:",
-	);
-	console.log("• Add new todos with priorities and categories");
-	console.log("• View and filter your tasks");
-	console.log("• Mark tasks as completed");
-	console.log("• Update or delete existing todos");
-	console.log("• Get productivity statistics\n");
 
-	// Show initial state
-	console.log("📊 Current todo status:");
 	const initialStats = await runner.ask("Show me my current todos and stats");
 	console.log(`${initialStats}\n`);
 
@@ -386,7 +373,6 @@ async function main() {
 			const response = await runner.ask(userInput);
 			console.log(response);
 
-			// Show updated session state summary
 			const updatedSession = await sessionService.getSession(
 				session.appName,
 				session.userId,

@@ -374,33 +374,13 @@ async function demonstrateCodeSafetyPatterns() {
 }
 
 async function main() {
-	console.log("💻 07 - Code Execution");
-	console.log("═════════════════════\n");
+	console.log("💻 Code execution:");
 
-	try {
-		await demonstrateBasicCodeExecution();
-		await demonstrateDataAnalysis();
-		await demonstrateAlgorithmImplementation();
-		await demonstrateInteractiveCodeSession();
-		await demonstrateCodeSafetyPatterns();
-
-		console.log("✅ Code Execution examples completed!");
-		console.log("\n🎓 Key Takeaways:");
-		console.log("- Code execution enables dynamic problem solving");
-		console.log("- Agents can implement algorithms and analyze data");
-		console.log("- Interactive sessions support complex workflows");
-		console.log("- Safety and security are paramount considerations");
-
-		console.log("\n🎓 Next Steps:");
-		console.log(
-			"- Run example 08-external-integrations for system connectivity",
-		);
-		console.log("- Try building computational agents for your domain");
-		console.log("- Experiment with different code execution patterns");
-	} catch (error) {
-		console.error("❌ Error in code execution example:", error);
-		process.exit(1);
-	}
+	await demonstrateBasicCodeExecution();
+	await demonstrateDataAnalysis();
+	await demonstrateAlgorithmImplementation();
+	await demonstrateInteractiveCodeSession();
+	await demonstrateCodeSafetyPatterns();
 }
 
 main().catch(console.error);

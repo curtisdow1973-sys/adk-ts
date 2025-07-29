@@ -392,35 +392,12 @@ async function demonstrateTelemetryBestPractices() {
 }
 
 async function main() {
-	console.log("📊 09 - Observability and Telemetry");
-	console.log("═══════════════════════════════════\n");
+	console.log("📊 Observability and telemetry:");
 
-	try {
-		await demonstrateBasicTelemetry();
-		await demonstrateAdvancedTelemetry();
-		await demonstrateProductionMonitoring();
-		await demonstrateTelemetryBestPractices();
-
-		console.log("✅ Observability and Telemetry examples completed!");
-		console.log("\n🎓 Key Takeaways:");
-		console.log("- Telemetry provides crucial insights into agent performance");
-		console.log("- Langfuse offers specialized LLM observability features");
-		console.log(
-			"- Production monitoring requires comprehensive metric collection",
-		);
-		console.log("- Observability enables data-driven optimization");
-
-		console.log("\n🎓 Next Steps:");
-		console.log(
-			"- Run example 10-advanced-workflows for complex orchestration",
-		);
-		console.log("- Set up Langfuse account for real telemetry collection");
-		console.log("- Implement monitoring for your production agents");
-		console.log("- Create custom dashboards for your specific metrics");
-	} catch (error) {
-		console.error("❌ Error in observability example:", error);
-		process.exit(1);
-	}
+	await demonstrateBasicTelemetry();
+	await demonstrateAdvancedTelemetry();
+	await demonstrateProductionMonitoring();
+	await demonstrateTelemetryBestPractices();
 }
 
 main().catch(console.error);

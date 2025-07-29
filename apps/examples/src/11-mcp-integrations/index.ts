@@ -261,32 +261,11 @@ async function demonstrateMcpToolsetComposition() {
 }
 
 async function main() {
-	console.log("🔌 11 - MCP (Model Context Protocol) Integrations");
-	console.log("════════════════════════════════════════════════\n");
+	console.log("🔌 MCP integrations:");
 
-	try {
-		await demonstrateCustomMcpServer();
-		await demonstrateMcpConcepts();
-		await demonstrateMcpToolsetComposition();
-
-		console.log("✅ MCP Integrations examples completed!");
-		console.log("\n🎓 Key Takeaways:");
-		console.log("- MCP provides standardized protocol for tool integration");
-		console.log("- Sampling enables dynamic, context-aware responses");
-		console.log("- Custom MCP servers can be built for specific needs");
-		console.log("- Multiple toolsets can be composed for rich functionality");
-
-		console.log("\n🎓 Next Steps:");
-		console.log(
-			"- Run example 12-chat-bots for platform-specific applications",
-		);
-		console.log("- Build your own custom MCP servers");
-		console.log("- Experiment with sampling for personalized experiences");
-		console.log("- Explore the growing MCP ecosystem");
-	} catch (error) {
-		console.error("❌ Error in MCP integrations example:", error);
-		process.exit(1);
-	}
+	await demonstrateCustomMcpServer();
+	await demonstrateMcpConcepts();
+	await demonstrateMcpToolsetComposition();
 }
 
 main().catch(console.error);

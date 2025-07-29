@@ -383,33 +383,13 @@ async function demonstrateIntegrationPatterns() {
 }
 
 async function main() {
-	console.log("🔗 08 - External Integrations");
-	console.log("════════════════════════════════\n");
+	console.log("🔗 External integrations:");
 
-	try {
-		await demonstrateAiSdkIntegration();
-		await demonstrateHttpIntegration();
-		await demonstrateFileSystemIntegration();
-		await demonstrateCompositeIntegration();
-		await demonstrateIntegrationPatterns();
-
-		console.log("✅ External Integrations examples completed!");
-		console.log("\n🎓 Key Takeaways:");
-		console.log("- AI SDK enables easy model provider switching");
-		console.log("- HTTP tools connect agents to web APIs and services");
-		console.log("- File operations enable persistent data management");
-		console.log("- Composite integrations create powerful workflows");
-		console.log("- Error handling and security are critical considerations");
-
-		console.log("\n🎓 Next Steps:");
-		console.log("- Run example 09-observability for monitoring and telemetry");
-		console.log("- Try integrating with your favorite APIs");
-		console.log("- Experiment with different model providers");
-		console.log("- Build end-to-end integration workflows");
-	} catch (error) {
-		console.error("❌ Error in external integrations example:", error);
-		process.exit(1);
-	}
+	await demonstrateAiSdkIntegration();
+	await demonstrateHttpIntegration();
+	await demonstrateFileSystemIntegration();
+	await demonstrateCompositeIntegration();
+	await demonstrateIntegrationPatterns();
 }
 
 main().catch(console.error);

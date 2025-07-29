@@ -403,32 +403,12 @@ async function demonstratePersistencePatterns() {
 }
 
 async function main() {
-	console.log("💾 05 - Persistence and Sessions");
-	console.log("═══════════════════════════════════\n");
+	console.log("💾 Persistence and sessions:");
 
-	try {
-		await demonstrateSessionPersistence();
-		await demonstrateArtifactPersistence();
-		await demonstrateHybridPersistence();
-		await demonstratePersistencePatterns();
-
-		console.log("✅ Persistence and Sessions examples completed!");
-		console.log("\n🎓 Key Takeaways:");
-		console.log("- Session services persist conversational state");
-		console.log("- Artifact services manage files and documents");
-		console.log("- Hybrid approaches combine both for complex apps");
-		console.log(
-			"- Choose persistence strategy based on data type and lifecycle",
-		);
-
-		console.log("\n🎓 Next Steps:");
-		console.log("- Run example 06-flows-and-planning for enhanced reasoning");
-		console.log("- Try building apps that require long-term data storage");
-		console.log("- Experiment with different persistence strategies");
-	} catch (error) {
-		console.error("❌ Error in persistence example:", error);
-		process.exit(1);
-	}
+	await demonstrateSessionPersistence();
+	await demonstrateArtifactPersistence();
+	await demonstrateHybridPersistence();
+	await demonstratePersistencePatterns();
 }
 
 main().catch(console.error);

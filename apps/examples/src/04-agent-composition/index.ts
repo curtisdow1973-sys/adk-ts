@@ -141,23 +141,15 @@ async function demonstrateOutputKeys() {
 		.withSubAgents([customerAnalyzer, menuValidator, orderFinalizer])
 		.build();
 
-	console.log("🍽️ Testing Restaurant Order Processing:");
+	console.log("🍽️ Restaurant order processing:");
 	const orderRequest =
 		"I'd like to order something vegetarian, not too spicy, around $20. Maybe a salad or pasta?";
 
-	console.log(`Customer Request: "${orderRequest}"`);
-	console.log("\n📋 Processing through agent chain...\n");
-
 	const finalOrder = await runner.ask(orderRequest);
-	console.log("Final Order Summary:");
 	console.log(finalOrder);
-	console.log();
 }
 
 async function demonstrateSharedMemory() {
-	console.log("📝 Part 2: Shared Memory Between Agents");
-	console.log("═══════════════════════════════════════\n");
-
 	const appName = "SharedMemoryDemo";
 	const userId = "alice-bob-user";
 	const sharedMemory = new InMemoryMemoryService();
@@ -205,21 +197,21 @@ async function demonstrateSharedMemory() {
 		`,
 	);
 
-	console.log("📚 Alice shares her favorite book:");
+	console.log("📚 Alice's favorite book:");
 	const aliceResponse1 = await alice.ask("What's your favorite book and why?");
 	console.log(`Alice: ${aliceResponse1}\n`);
 
-	console.log("🎬 Bob shares his favorite movie:");
+	console.log("🎬 Bob's favorite movie:");
 	const bobResponse1 = await bob.ask("What's your favorite movie and why?");
 	console.log(`Bob: ${bobResponse1}\n`);
 
-	console.log("🤝 Alice recalls Bob's movie preference:");
+	console.log("🤝 Alice recalls Bob's movie:");
 	const aliceResponse2 = await alice.ask(
 		"What did Bob say was his favorite movie?",
 	);
 	console.log(`Alice: ${aliceResponse2}\n`);
 
-	console.log("🤝 Bob recalls Alice's book preference:");
+	console.log("🤝 Bob recalls Alice's book:");
 	const bobResponse2 = await bob.ask(
 		"What did Alice say was her favorite book?",
 	);
@@ -363,39 +355,12 @@ async function demonstrateInteractiveMultiAgent() {
 }
 
 async function main() {
-	console.log("🤝 04 - Agent Composition and Multi-Agent Systems");
-	console.log("═════════════════════════════════════════════════\n");
+	console.log("🤝 Agent composition:");
 
-	try {
-		await demonstrateOutputKeys();
-		await demonstrateSharedMemory();
-		await demonstrateSubAgents();
-
-		// Ask if user wants to try interactive mode
-		console.log("🎮 Would you like to try the interactive multi-agent system?");
-		console.log("(Press Ctrl+C to skip, or any key to continue)");
-
-		await demonstrateInteractiveMultiAgent();
-
-		console.log("\n✅ Agent Composition examples completed!");
-		console.log("\n🎓 Key Takeaways:");
-		console.log("- Output keys enable sequential agent processing");
-		console.log(
-			"- Shared memory allows agents to remember each other's interactions",
-		);
-		console.log("- Sub-agents enable specialization and delegation");
-		console.log("- Multi-agent systems can handle complex, diverse tasks");
-
-		console.log("\n🎓 Next Steps:");
-		console.log(
-			"- Run example 05-persistence-and-sessions for data management",
-		);
-		console.log("- Try creating your own specialized agent teams");
-		console.log("- Experiment with different coordination patterns");
-	} catch (error) {
-		console.error("❌ Error in agent composition example:", error);
-		process.exit(1);
-	}
+	await demonstrateOutputKeys();
+	await demonstrateSharedMemory();
+	await demonstrateSubAgents();
+	await demonstrateInteractiveMultiAgent();
 }
 
 main().catch(console.error);

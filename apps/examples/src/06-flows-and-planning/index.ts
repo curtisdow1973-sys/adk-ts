@@ -324,34 +324,14 @@ async function demonstrateFlowBestPractices() {
 }
 
 async function main() {
-	console.log("🌊 06 - Flows and Planning");
-	console.log("═══════════════════════════\n");
+	console.log("🌊 Flows and planning:");
 
-	try {
-		await demonstrateBasicFlow();
-		await demonstrateBuiltInPlanner();
-		await demonstratePlanReActPlanner();
-		await comparePlanningApproaches();
-		await demonstrateAdvancedFlowPatterns();
-		await demonstrateFlowBestPractices();
-
-		console.log("✅ Flows and Planning examples completed!");
-		console.log("\n🎓 Key Takeaways:");
-		console.log("- Flows enable structured agent processing");
-		console.log("- Planning enhances reasoning for complex tasks");
-		console.log("- Different planners suit different problem types");
-		console.log("- Tool integration amplifies planning capabilities");
-
-		console.log("\n🎓 Next Steps:");
-		console.log(
-			"- Run example 07-code-execution for dynamic code capabilities",
-		);
-		console.log("- Try different planning strategies for your use cases");
-		console.log("- Experiment with combining planners and tools");
-	} catch (error) {
-		console.error("❌ Error in flows and planning example:", error);
-		process.exit(1);
-	}
+	await demonstrateBasicFlow();
+	await demonstrateBuiltInPlanner();
+	await demonstratePlanReActPlanner();
+	await comparePlanningApproaches();
+	await demonstrateAdvancedFlowPatterns();
+	await demonstrateFlowBestPractices();
 }
 
 main().catch(console.error);

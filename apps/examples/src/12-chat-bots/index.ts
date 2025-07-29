@@ -240,23 +240,9 @@ async function main() {
 			}
 
 			default: {
-				console.log("🎯 Chat Bot Examples Demo");
-				console.log("=========================");
-				console.log("");
-				console.log(
-					"This example shows how to create chat bots for different platforms.",
-				);
-				console.log("");
-				console.log("Available bot types:");
-				console.log("- Discord: Set BOT_TYPE=discord and DISCORD_TOKEN");
-				console.log("- Telegram: Set BOT_TYPE=telegram and TELEGRAM_BOT_TOKEN");
-				console.log(
-					"- Multi-platform: Set BOT_TYPE=multi with required tokens",
-				);
-				console.log("");
-				console.log("Example usage:");
-				console.log("BOT_TYPE=discord DISCORD_TOKEN=your_token npm run dev");
-				console.log("");
+				console.log("🤖 Chat bots:");
+				console.log("Available: discord, telegram, multi-platform");
+				console.log("Usage: BOT_TYPE=discord DISCORD_TOKEN=token npm run dev");
 
 				// Demo custom bot creation
 				const demoBot = await createCustomChatBot({
