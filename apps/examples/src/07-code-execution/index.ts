@@ -1,5 +1,10 @@
 import { env } from "node:process";
-import { InMemorySessionService, LlmAgent, Runner, AgentBuilder } from "@iqai/adk";
+import {
+	InMemorySessionService,
+	LlmAgent,
+	Runner,
+	AgentBuilder,
+} from "@iqai/adk";
 import { BuiltInCodeExecutor } from "@iqai/adk";
 import { v4 as uuidv4 } from "uuid";
 import dedent from "dedent";
@@ -61,16 +66,18 @@ async function demonstrateBasicCodeExecution() {
 		.build();
 
 	console.log("🧮 Testing basic mathematical computation:");
-	const mathProblem = "Calculate the sum of squares of all prime numbers less than 100";
+	const mathProblem =
+		"Calculate the sum of squares of all prime numbers less than 100";
 	console.log(`Problem: ${mathProblem}`);
-	
+
 	const mathResult = await runner.ask(mathProblem);
 	console.log(`\nResult: ${mathResult}\n`);
 
 	console.log("📊 Testing data manipulation:");
-	const dataTask = "Generate a list of the first 10 Fibonacci numbers and calculate their average";
+	const dataTask =
+		"Generate a list of the first 10 Fibonacci numbers and calculate their average";
 	console.log(`Task: ${dataTask}`);
-	
+
 	const dataResult = await runner.ask(dataTask);
 	console.log(`\nResult: ${dataResult}\n`);
 }
@@ -126,7 +133,7 @@ async function demonstrateDataAnalysis() {
 		4. Identify any outliers
 	`;
 	console.log(`Task: ${statsTask}`);
-	
+
 	const statsResult = await runner.ask(statsTask);
 	console.log(`\nResult: ${statsResult}\n`);
 
@@ -140,7 +147,7 @@ async function demonstrateDataAnalysis() {
 		4. Create a simple forecast for next week
 	`;
 	console.log(`Task: ${patternTask}`);
-	
+
 	const patternResult = await runner.ask(patternTask);
 	console.log(`\nResult: ${patternResult}\n`);
 }
@@ -151,7 +158,7 @@ async function demonstrateAlgorithmImplementation() {
 
 	const algorithmExpert = new LlmAgent({
 		name: "algorithm_expert",
-		model: env.LLM_MODEL || "gemini-2.0-flash", 
+		model: env.LLM_MODEL || "gemini-2.0-flash",
 		description: "An algorithm specialist that implements and tests algorithms",
 		instruction: dedent`
 			You are an algorithm expert who can implement various algorithms and data structures.
@@ -197,7 +204,7 @@ async function demonstrateAlgorithmImplementation() {
 		Compare the performance and explain the results.
 	`;
 	console.log(`Task: ${sortTask}`);
-	
+
 	const sortResult = await runner.ask(sortTask);
 	console.log(`\nResult: ${sortResult}\n`);
 
@@ -213,7 +220,7 @@ async function demonstrateAlgorithmImplementation() {
 		Find the shortest path from A to E and explain the algorithm's steps.
 	`;
 	console.log(`Task: ${graphTask}`);
-	
+
 	const graphResult = await runner.ask(graphTask);
 	console.log(`\nResult: ${graphResult}\n`);
 }
@@ -225,7 +232,9 @@ async function demonstrateInteractiveCodeSession() {
 	// Create an interactive coding agent using AgentBuilder
 	const { runner } = await AgentBuilder.create("interactive_coder")
 		.withModel(env.LLM_MODEL || "gemini-2.0-flash")
-		.withDescription("An interactive coding assistant for collaborative problem solving")
+		.withDescription(
+			"An interactive coding assistant for collaborative problem solving",
+		)
 		.withInstruction(dedent`
 			You are an interactive coding assistant that helps solve problems step by step.
 			You can write and execute Python code to:
@@ -247,7 +256,9 @@ async function demonstrateInteractiveCodeSession() {
 
 	// Multi-step problem solving
 	console.log("🎯 Multi-step problem solving session:");
-	console.log("Problem: Analyze the efficiency of different search algorithms\n");
+	console.log(
+		"Problem: Analyze the efficiency of different search algorithms\n",
+	);
 
 	const step1 = await runner.ask(dedent`
 		Let's start by implementing linear search and binary search algorithms.
@@ -381,10 +392,11 @@ async function main() {
 		console.log("- Safety and security are paramount considerations");
 
 		console.log("\n🎓 Next Steps:");
-		console.log("- Run example 08-external-integrations for system connectivity");
+		console.log(
+			"- Run example 08-external-integrations for system connectivity",
+		);
 		console.log("- Try building computational agents for your domain");
 		console.log("- Experiment with different code execution patterns");
-
 	} catch (error) {
 		console.error("❌ Error in code execution example:", error);
 		process.exit(1);

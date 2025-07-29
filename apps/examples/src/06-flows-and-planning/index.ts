@@ -1,5 +1,10 @@
 import { env } from "node:process";
-import { AgentBuilder, FileOperationsTool, BuiltInPlanner, PlanReActPlanner } from "@iqai/adk";
+import {
+	AgentBuilder,
+	FileOperationsTool,
+	BuiltInPlanner,
+	PlanReActPlanner,
+} from "@iqai/adk";
 import { v4 as uuidv4 } from "uuid";
 import dedent from "dedent";
 
@@ -12,7 +17,7 @@ import dedent from "dedent";
  *
  * Concepts covered:
  * - Flow processing with SingleFlow
- * - Built-in planning capabilities  
+ * - Built-in planning capabilities
  * - PlanReAct planning pattern
  * - Comparing planning approaches
  * - Tool integration with planning
@@ -56,17 +61,21 @@ async function demonstrateBuiltInPlanner() {
 	// Create agent with built-in planner
 	const { runner } = await AgentBuilder.create("thinking_agent")
 		.withModel(env.LLM_MODEL || "gemini-2.5-flash")
-		.withDescription("An agent that uses built-in planning to think through problems")
+		.withDescription(
+			"An agent that uses built-in planning to think through problems",
+		)
 		.withInstruction(dedent`
 			You are a thoughtful problem solver. When given complex tasks, 
 			think through them step by step. Break down problems into manageable parts
 			and explain your reasoning process clearly.
 		`)
-		.withPlanner(new BuiltInPlanner({
-			thinkingConfig: {
-				includeThinking: true,
-			},
-		}))
+		.withPlanner(
+			new BuiltInPlanner({
+				thinkingConfig: {
+					includeThinking: true,
+				},
+			}),
+		)
 		.build();
 
 	console.log("🧠 Testing built-in planner with complex problem:");
@@ -90,7 +99,9 @@ async function demonstratePlanReActPlanner() {
 	// Create agent with PlanReAct planner and tools
 	const { runner } = await AgentBuilder.create("strategic_planner")
 		.withModel(env.LLM_MODEL || "gemini-2.5-flash")
-		.withDescription("An agent that uses structured PlanReAct planning methodology")
+		.withDescription(
+			"An agent that uses structured PlanReAct planning methodology",
+		)
 		.withInstruction(dedent`
 			You are a strategic planner that approaches problems systematically.
 			Use the PlanReAct methodology: Plan the approach, Reason through each step,
@@ -123,16 +134,19 @@ async function comparePlanningApproaches() {
 	console.log("📝 Part 4: Planning Approach Comparison");
 	console.log("═══════════════════════════════════════\n");
 
-	const testProblem = "Plan a healthy meal prep routine for a busy professional who works 10-hour days";
+	const testProblem =
+		"Plan a healthy meal prep routine for a busy professional who works 10-hour days";
 
 	// No planner (baseline)
 	console.log("🔸 Baseline (No Planner):");
 	const { runner: baselineRunner } = await AgentBuilder.create("baseline_agent")
 		.withModel(env.LLM_MODEL || "gemini-2.5-flash")
 		.withDescription("Baseline agent without planning capabilities")
-		.withInstruction("You are a helpful assistant. Provide clear, practical advice.")
+		.withInstruction(
+			"You are a helpful assistant. Provide clear, practical advice.",
+		)
 		.build();
-	
+
 	const baselineResponse = await baselineRunner.ask(testProblem);
 	console.log(`Response: ${baselineResponse}\n`);
 
@@ -141,26 +155,34 @@ async function comparePlanningApproaches() {
 	const { runner: builtInRunner } = await AgentBuilder.create("builtin_planner")
 		.withModel(env.LLM_MODEL || "gemini-2.5-flash")
 		.withDescription("Agent with built-in planning")
-		.withInstruction("Think through problems systematically and show your reasoning.")
-		.withPlanner(new BuiltInPlanner({
-			thinkingConfig: {
-				includeThinking: true,
-			},
-		}))
+		.withInstruction(
+			"Think through problems systematically and show your reasoning.",
+		)
+		.withPlanner(
+			new BuiltInPlanner({
+				thinkingConfig: {
+					includeThinking: true,
+				},
+			}),
+		)
 		.build();
-	
+
 	const builtInResponse = await builtInRunner.ask(testProblem);
 	console.log(`Response: ${builtInResponse}\n`);
 
 	// PlanReAct planner
 	console.log("🔸 PlanReAct Planner:");
-	const { runner: planReActRunner } = await AgentBuilder.create("planreact_planner")
+	const { runner: planReActRunner } = await AgentBuilder.create(
+		"planreact_planner",
+	)
 		.withModel(env.LLM_MODEL || "gemini-2.5-flash")
 		.withDescription("Agent with structured PlanReAct planning")
-		.withInstruction("Use systematic planning methodology for comprehensive solutions.")
+		.withInstruction(
+			"Use systematic planning methodology for comprehensive solutions.",
+		)
 		.withPlanner(new PlanReActPlanner())
 		.build();
-	
+
 	const planReActResponse = await planReActRunner.ask(testProblem);
 	console.log(`Response: ${planReActResponse}\n`);
 
@@ -200,7 +222,9 @@ async function demonstrateAdvancedFlowPatterns() {
 	// Create agent with both planning and file operations for complex workflows
 	const { runner } = await AgentBuilder.create("workflow_specialist")
 		.withModel(env.LLM_MODEL || "gemini-2.5-flash")
-		.withDescription("Specialist in complex workflows combining planning and file operations")
+		.withDescription(
+			"Specialist in complex workflows combining planning and file operations",
+		)
 		.withInstruction(dedent`
 			You are a workflow automation specialist. You excel at:
 			1. Breaking down complex tasks into manageable steps
@@ -319,10 +343,11 @@ async function main() {
 		console.log("- Tool integration amplifies planning capabilities");
 
 		console.log("\n🎓 Next Steps:");
-		console.log("- Run example 07-code-execution for dynamic code capabilities");
+		console.log(
+			"- Run example 07-code-execution for dynamic code capabilities",
+		);
 		console.log("- Try different planning strategies for your use cases");
 		console.log("- Experiment with combining planners and tools");
-
 	} catch (error) {
 		console.error("❌ Error in flows and planning example:", error);
 		process.exit(1);

@@ -48,7 +48,10 @@ const saveArtifactTool = createTool({
 	schema: z.object({
 		filename: z.string().describe("Name of the file to save"),
 		content: z.string().describe("Content to save in the file"),
-		description: z.string().optional().describe("Optional description of the artifact"),
+		description: z
+			.string()
+			.optional()
+			.describe("Optional description of the artifact"),
 	}),
 	fn: async ({ filename, content, description }, context) => {
 		const artifactService = context.saveArtifact;
@@ -106,7 +109,7 @@ async function demonstrateSessionPersistence() {
 
 	// Create database session service
 	const sessionService = createDatabaseSessionService(
-		getSqliteConnectionString("sessions")
+		getSqliteConnectionString("sessions"),
 	);
 
 	// Counter tool that uses session state
@@ -156,10 +159,14 @@ async function demonstrateSessionPersistence() {
 
 	// Test session persistence
 	console.log("🧮 Testing counter persistence:");
-	const counter1 = await runner.ask("Increment the 'examples_run' counter by 1");
+	const counter1 = await runner.ask(
+		"Increment the 'examples_run' counter by 1",
+	);
 	console.log(`Response: ${counter1}\n`);
 
-	const counter2 = await runner.ask("Increment the 'coffee_breaks' counter by 2");
+	const counter2 = await runner.ask(
+		"Increment the 'coffee_breaks' counter by 2",
+	);
 	console.log(`Response: ${counter2}\n`);
 
 	const counter3 = await runner.ask("Show me all my counters and their values");
@@ -167,10 +174,16 @@ async function demonstrateSessionPersistence() {
 
 	// Demonstrate session retrieval
 	console.log("💾 Current session state:");
-	const currentSession = await sessionService.getSession(APP_NAME, USER_ID, session.id);
+	const currentSession = await sessionService.getSession(
+		APP_NAME,
+		USER_ID,
+		session.id,
+	);
 	console.log(JSON.stringify(currentSession?.state, null, 2));
 
-	console.log("\n📚 Session persists between runs - try running this example again!");
+	console.log(
+		"\n📚 Session persists between runs - try running this example again!",
+	);
 	console.log("Your counters will remember their values.\n");
 }
 
@@ -223,7 +236,9 @@ async function demonstrateArtifactPersistence() {
 
 	// Test artifact loading
 	console.log("📖 Loading artifacts:");
-	const loadResponse = await runner.ask("Show me all my saved files and their contents");
+	const loadResponse = await runner.ask(
+		"Show me all my saved files and their contents",
+	);
 	console.log(`Response: ${loadResponse}\n`);
 
 	// Test artifact updating
@@ -239,7 +254,9 @@ async function demonstrateArtifactPersistence() {
 
 	// Show final artifact state
 	console.log("📋 Final artifact verification:");
-	const finalCheck = await runner.ask("Show me the updated shopping list content");
+	const finalCheck = await runner.ask(
+		"Show me the updated shopping list content",
+	);
 	console.log(`Response: ${finalCheck}\n`);
 }
 
@@ -249,7 +266,7 @@ async function demonstrateHybridPersistence() {
 
 	// Create both services
 	const sessionService = createDatabaseSessionService(
-		getSqliteConnectionString("hybrid")
+		getSqliteConnectionString("hybrid"),
 	);
 	const artifactService = new InMemoryArtifactService();
 
@@ -260,10 +277,15 @@ async function demonstrateHybridPersistence() {
 		schema: z.object({
 			projectName: z.string().describe("Name of the project"),
 			description: z.string().describe("Project description"),
-			initialFiles: z.array(z.object({
-				filename: z.string(),
-				content: z.string(),
-			})).optional().describe("Initial project files"),
+			initialFiles: z
+				.array(
+					z.object({
+						filename: z.string(),
+						content: z.string(),
+					}),
+				)
+				.optional()
+				.describe("Initial project files"),
 		}),
 		fn: async ({ projectName, description, initialFiles }, context) => {
 			// Store project metadata in session state
@@ -285,7 +307,10 @@ async function demonstrateHybridPersistence() {
 				for (const file of initialFiles) {
 					try {
 						const part = { text: file.content };
-						const version = await context.saveArtifact(`${projectName}/${file.filename}`, part);
+						const version = await context.saveArtifact(
+							`${projectName}/${file.filename}`,
+							part,
+						);
 						savedFiles.push({ filename: file.filename, version });
 					} catch (error) {
 						console.error(`Failed to save ${file.filename}:`, error);
@@ -333,7 +358,9 @@ async function demonstrateHybridPersistence() {
 	console.log(`Response: ${projectResponse}\n`);
 
 	console.log("📊 Checking project status:");
-	const statusResponse = await runner.ask("Show me all my projects and their files");
+	const statusResponse = await runner.ask(
+		"Show me all my projects and their files",
+	);
 	console.log(`Response: ${statusResponse}\n`);
 }
 
@@ -390,13 +417,14 @@ async function main() {
 		console.log("- Session services persist conversational state");
 		console.log("- Artifact services manage files and documents");
 		console.log("- Hybrid approaches combine both for complex apps");
-		console.log("- Choose persistence strategy based on data type and lifecycle");
+		console.log(
+			"- Choose persistence strategy based on data type and lifecycle",
+		);
 
 		console.log("\n🎓 Next Steps:");
 		console.log("- Run example 06-flows-and-planning for enhanced reasoning");
 		console.log("- Try building apps that require long-term data storage");
 		console.log("- Experiment with different persistence strategies");
-
 	} catch (error) {
 		console.error("❌ Error in persistence example:", error);
 		process.exit(1);

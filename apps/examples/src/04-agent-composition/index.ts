@@ -1,11 +1,11 @@
 import { env } from "node:process";
 import { cancel, intro, isCancel, outro, text } from "@clack/prompts";
-import { 
-	AgentBuilder, 
-	LlmAgent, 
+import {
+	AgentBuilder,
+	LlmAgent,
 	InMemoryMemoryService,
 	InMemorySessionService,
-	createTool 
+	createTool,
 } from "@iqai/adk";
 import dedent from "dedent";
 import * as z from "zod";
@@ -37,10 +37,18 @@ const calculatorTool = createTool({
 	fn: ({ operation, a, b }) => {
 		let result: number;
 		switch (operation) {
-			case "add": result = a + b; break;
-			case "subtract": result = a - b; break;
-			case "multiply": result = a * b; break;
-			case "divide": result = b !== 0 ? a / b : Number.NaN; break;
+			case "add":
+				result = a + b;
+				break;
+			case "subtract":
+				result = a - b;
+				break;
+			case "multiply":
+				result = a * b;
+				break;
+			case "divide":
+				result = b !== 0 ? a / b : Number.NaN;
+				break;
 		}
 		return { operation, a, b, result };
 	},
@@ -55,7 +63,9 @@ const weatherTool = createTool({
 	fn: ({ city }) => ({
 		city,
 		temperature: Math.floor(Math.random() * 35) + 5,
-		conditions: ["sunny", "cloudy", "rainy", "snowy"][Math.floor(Math.random() * 4)],
+		conditions: ["sunny", "cloudy", "rainy", "snowy"][
+			Math.floor(Math.random() * 4)
+		],
 		humidity: Math.floor(Math.random() * 100),
 	}),
 });
@@ -67,7 +77,8 @@ async function demonstrateOutputKeys() {
 	// Customer analyzer agent
 	const customerAnalyzer = new LlmAgent({
 		name: "customer_analyzer",
-		description: "Analyzes customer restaurant orders for preferences and restrictions",
+		description:
+			"Analyzes customer restaurant orders for preferences and restrictions",
 		instruction: dedent`
 			You are a customer service agent that analyzes food orders.
 			Extract the following information from the customer's request:
@@ -131,11 +142,12 @@ async function demonstrateOutputKeys() {
 		.build();
 
 	console.log("🍽️ Testing Restaurant Order Processing:");
-	const orderRequest = "I'd like to order something vegetarian, not too spicy, around $20. Maybe a salad or pasta?";
-	
+	const orderRequest =
+		"I'd like to order something vegetarian, not too spicy, around $20. Maybe a salad or pasta?";
+
 	console.log(`Customer Request: "${orderRequest}"`);
 	console.log("\n📋 Processing through agent chain...\n");
-	
+
 	const finalOrder = await runner.ask(orderRequest);
 	console.log("Final Order Summary:");
 	console.log(finalOrder);
@@ -156,7 +168,7 @@ async function demonstrateSharedMemory() {
 	async function createAgentWithSharedMemory(
 		name: string,
 		description: string,
-		instruction: string
+		instruction: string,
 	) {
 		const { runner } = await AgentBuilder.create(name)
 			.withModel(env.LLM_MODEL || "gemini-2.5-flash")
@@ -178,10 +190,10 @@ async function demonstrateSharedMemory() {
 			You love books and answer questions about literature.
 			You can recall what Bob has said about movies from your shared memory.
 			Keep responses concise and attribute information to Bob when relevant.
-		`
+		`,
 	);
 
-	// Agent Bob: Movie expert  
+	// Agent Bob: Movie expert
 	const bob = await createAgentWithSharedMemory(
 		"bob",
 		"Bob is a movie lover who can remember what Alice says about books",
@@ -190,7 +202,7 @@ async function demonstrateSharedMemory() {
 			You love movies and answer questions about cinema.
 			You can recall what Alice has said about books from your shared memory.
 			Keep responses concise and attribute information to Alice when relevant.
-		`
+		`,
 	);
 
 	console.log("📚 Alice shares her favorite book:");
@@ -202,11 +214,15 @@ async function demonstrateSharedMemory() {
 	console.log(`Bob: ${bobResponse1}\n`);
 
 	console.log("🤝 Alice recalls Bob's movie preference:");
-	const aliceResponse2 = await alice.ask("What did Bob say was his favorite movie?");
+	const aliceResponse2 = await alice.ask(
+		"What did Bob say was his favorite movie?",
+	);
 	console.log(`Alice: ${aliceResponse2}\n`);
 
 	console.log("🤝 Bob recalls Alice's book preference:");
-	const bobResponse2 = await bob.ask("What did Alice say was her favorite book?");
+	const bobResponse2 = await bob.ask(
+		"What did Alice say was her favorite book?",
+	);
 	console.log(`Bob: ${bobResponse2}\n`);
 }
 
@@ -227,7 +243,7 @@ async function demonstrateSubAgents() {
 	});
 
 	const mathAgent = new LlmAgent({
-		name: "math_agent", 
+		name: "math_agent",
 		description: "Specialized agent for mathematical calculations",
 		instruction: dedent`
 			You are a math specialist. Use the calculator tool for any calculations.
@@ -280,7 +296,9 @@ async function demonstrateSubAgents() {
 	console.log(`Response: ${mathResponse}\n`);
 
 	console.log("🌤️ Testing weather delegation:");
-	const weatherResponse = await runner.ask("What's the weather like in San Francisco?");
+	const weatherResponse = await runner.ask(
+		"What's the weather like in San Francisco?",
+	);
 	console.log(`Response: ${weatherResponse}\n`);
 
 	console.log("💬 Testing general query (no delegation):");
@@ -294,7 +312,7 @@ async function demonstrateInteractiveMultiAgent() {
 
 	// Create a conversational multi-agent system
 	const sessionService = new InMemorySessionService();
-	
+
 	const { runner } = await AgentBuilder.create("multi_agent_assistant")
 		.withModel(env.LLM_MODEL || "gemini-2.5-flash")
 		.withDescription("A multi-agent assistant with specialized capabilities")
@@ -352,25 +370,28 @@ async function main() {
 		await demonstrateOutputKeys();
 		await demonstrateSharedMemory();
 		await demonstrateSubAgents();
-		
+
 		// Ask if user wants to try interactive mode
 		console.log("🎮 Would you like to try the interactive multi-agent system?");
 		console.log("(Press Ctrl+C to skip, or any key to continue)");
-		
+
 		await demonstrateInteractiveMultiAgent();
 
 		console.log("\n✅ Agent Composition examples completed!");
 		console.log("\n🎓 Key Takeaways:");
 		console.log("- Output keys enable sequential agent processing");
-		console.log("- Shared memory allows agents to remember each other's interactions");
+		console.log(
+			"- Shared memory allows agents to remember each other's interactions",
+		);
 		console.log("- Sub-agents enable specialization and delegation");
 		console.log("- Multi-agent systems can handle complex, diverse tasks");
-		
+
 		console.log("\n🎓 Next Steps:");
-		console.log("- Run example 05-persistence-and-sessions for data management");
+		console.log(
+			"- Run example 05-persistence-and-sessions for data management",
+		);
 		console.log("- Try creating your own specialized agent teams");
 		console.log("- Experiment with different coordination patterns");
-
 	} catch (error) {
 		console.error("❌ Error in agent composition example:", error);
 		process.exit(1);

@@ -32,7 +32,9 @@ const workflowStateTool = createTool({
 	description: "Update the current workflow state and progress",
 	schema: z.object({
 		stage: z.string().describe("Current workflow stage"),
-		status: z.enum(["pending", "in_progress", "completed", "failed"]).describe("Stage status"),
+		status: z
+			.enum(["pending", "in_progress", "completed", "failed"])
+			.describe("Stage status"),
 		data: z.record(z.any()).optional().describe("Stage-specific data"),
 		nextStage: z.string().optional().describe("Next stage to execute"),
 	}),
@@ -40,7 +42,7 @@ const workflowStateTool = createTool({
 		const workflow = context.state.get("workflow", {
 			stages: {},
 			currentStage: null,
-			progress: []
+			progress: [],
 		});
 
 		// Update stage status
@@ -48,7 +50,7 @@ const workflowStateTool = createTool({
 			status,
 			data: data || {},
 			timestamp: new Date().toISOString(),
-			nextStage
+			nextStage,
 		};
 
 		// Update progress log
@@ -56,7 +58,7 @@ const workflowStateTool = createTool({
 			stage,
 			status,
 			timestamp: new Date().toISOString(),
-			message: `Stage '${stage}' marked as ${status}`
+			message: `Stage '${stage}' marked as ${status}`,
 		});
 
 		// Update current stage
@@ -79,7 +81,8 @@ const workflowStateTool = createTool({
 // Decision making tool
 const makeDecisionTool = createTool({
 	name: "make_decision",
-	description: "Make a decision based on criteria and update workflow accordingly",
+	description:
+		"Make a decision based on criteria and update workflow accordingly",
 	schema: z.object({
 		decision: z.string().describe("The decision made"),
 		criteria: z.array(z.string()).describe("Criteria used for decision"),
@@ -88,7 +91,7 @@ const makeDecisionTool = createTool({
 	}),
 	fn: ({ decision, criteria, confidence, nextActions }, context) => {
 		const decisions = context.state.get("decisions", []);
-		
+
 		const newDecision = {
 			id: Date.now(),
 			decision,
@@ -142,7 +145,7 @@ async function demonstrateBasicWorkflow() {
 	});
 
 	const analysisAgent = new LlmAgent({
-		name: "analysis_specialist", 
+		name: "analysis_specialist",
 		description: "Analyzes data and provides insights",
 		instruction: dedent`
 			You are an analysis specialist. When given data or information:
@@ -198,7 +201,7 @@ async function demonstrateBasicWorkflow() {
 
 	console.log(`Workflow Request: ${workflowRequest}`);
 	console.log("\n🏗️ Workflow Execution:");
-	
+
 	const workflowResult = await runner.ask(workflowRequest);
 	console.log(workflowResult);
 	console.log();
@@ -234,14 +237,16 @@ async function demonstrateLangGraphStyleWorkflow() {
 	const requirementsAgent = new LlmAgent({
 		name: "requirements_gatherer",
 		description: "Gathers and analyzes requirements",
-		instruction: "You gather detailed requirements and assess their completeness and clarity.",
+		instruction:
+			"You gather detailed requirements and assess their completeness and clarity.",
 		model: env.LLM_MODEL || "gemini-2.5-flash",
 	});
 
 	const complexityAnalyzer = new LlmAgent({
 		name: "complexity_analyzer",
 		description: "Analyzes task complexity and determines appropriate approach",
-		instruction: "You analyze complexity and recommend simple vs complex processing paths.",
+		instruction:
+			"You analyze complexity and recommend simple vs complex processing paths.",
 		tools: [makeDecisionTool],
 		model: env.LLM_MODEL || "gemini-2.5-flash",
 	});
@@ -254,16 +259,18 @@ async function demonstrateLangGraphStyleWorkflow() {
 	});
 
 	const complexProcessor = new LlmAgent({
-		name: "complex_processor", 
+		name: "complex_processor",
 		description: "Handles complex, multi-faceted tasks",
-		instruction: "You handle complex tasks with detailed analysis and comprehensive solutions.",
+		instruction:
+			"You handle complex tasks with detailed analysis and comprehensive solutions.",
 		model: env.LLM_MODEL || "gemini-2.5-flash",
 	});
 
 	const reviewer = new LlmAgent({
 		name: "quality_reviewer",
 		description: "Reviews work quality and completeness",
-		instruction: "You review work for quality, completeness, and accuracy. Provide constructive feedback.",
+		instruction:
+			"You review work for quality, completeness, and accuracy. Provide constructive feedback.",
 		tools: [makeDecisionTool],
 		model: env.LLM_MODEL || "gemini-2.5-flash",
 	});
@@ -278,8 +285,12 @@ async function demonstrateLangGraphStyleWorkflow() {
 			Manage state transitions and coordinate the flow between different processing stages.
 		`)
 		.withSubAgents([
-			stateMachineAgent, requirementsAgent, complexityAnalyzer, 
-			simpleProcessor, complexProcessor, reviewer
+			stateMachineAgent,
+			requirementsAgent,
+			complexityAnalyzer,
+			simpleProcessor,
+			complexProcessor,
+			reviewer,
 		])
 		.withSessionService(sessionService, {
 			userId: "demo-user",
@@ -304,7 +315,7 @@ async function demonstrateLangGraphStyleWorkflow() {
 
 	console.log(`State Machine Request: ${stateMachineRequest}`);
 	console.log("\n🔄 State Machine Execution:");
-	
+
 	const stateMachineResult = await runner.ask(stateMachineRequest);
 	console.log(stateMachineResult);
 	console.log();
@@ -382,7 +393,7 @@ async function demonstrateErrorRecoveryWorkflow() {
 
 	console.log(`Error Recovery Request: ${errorRecoveryRequest}`);
 	console.log("\n🔧 Error Recovery Execution:");
-	
+
 	const errorRecoveryResult = await runner.ask(errorRecoveryRequest);
 	console.log(errorRecoveryResult);
 	console.log();
@@ -544,17 +555,28 @@ async function main() {
 
 		console.log("✅ Advanced Workflows examples completed!");
 		console.log("\n🎓 Key Takeaways:");
-		console.log("- Complex workflows require careful orchestration and state management");
-		console.log("- State machines provide predictable workflow execution patterns");
-		console.log("- Error recovery and retry patterns are essential for production systems");
-		console.log("- Advanced orchestration enables sophisticated business process automation");
+		console.log(
+			"- Complex workflows require careful orchestration and state management",
+		);
+		console.log(
+			"- State machines provide predictable workflow execution patterns",
+		);
+		console.log(
+			"- Error recovery and retry patterns are essential for production systems",
+		);
+		console.log(
+			"- Advanced orchestration enables sophisticated business process automation",
+		);
 
 		console.log("\n🎓 Next Steps:");
-		console.log("- Run example 11-mcp-integrations for protocol-based integrations");
+		console.log(
+			"- Run example 11-mcp-integrations for protocol-based integrations",
+		);
 		console.log("- Design workflows for your specific business processes");
-		console.log("- Implement error handling and recovery for production systems");
+		console.log(
+			"- Implement error handling and recovery for production systems",
+		);
 		console.log("- Explore LangGraph for more advanced workflow patterns");
-
 	} catch (error) {
 		console.error("❌ Error in advanced workflows example:", error);
 		process.exit(1);

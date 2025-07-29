@@ -1,7 +1,12 @@
 import { google } from "@ai-sdk/google";
 import { env } from "node:process";
 import * as path from "node:path";
-import { AgentBuilder, HttpRequestTool, FileOperationsTool, createTool } from "@iqai/adk";
+import {
+	AgentBuilder,
+	HttpRequestTool,
+	FileOperationsTool,
+	createTool,
+} from "@iqai/adk";
 import * as z from "zod";
 import dedent from "dedent";
 
@@ -27,18 +32,26 @@ const weatherApiTool = createTool({
 	description: "Gets weather data from a mock weather API",
 	schema: z.object({
 		city: z.string().describe("City name"),
-		units: z.enum(["metric", "imperial"]).default("metric").describe("Temperature units"),
+		units: z
+			.enum(["metric", "imperial"])
+			.default("metric")
+			.describe("Temperature units"),
 	}),
 	fn: async ({ city, units }) => {
 		// Simulate API call with realistic data
-		const temperature = units === "metric" 
-			? Math.floor(Math.random() * 35) + 5  // 5-40°C
-			: Math.floor(Math.random() * 63) + 41; // 41-104°F
-		
-		const conditions = ["sunny", "cloudy", "rainy", "partly cloudy", "overcast"][
-			Math.floor(Math.random() * 5)
-		];
-		
+		const temperature =
+			units === "metric"
+				? Math.floor(Math.random() * 35) + 5 // 5-40°C
+				: Math.floor(Math.random() * 63) + 41; // 41-104°F
+
+		const conditions = [
+			"sunny",
+			"cloudy",
+			"rainy",
+			"partly cloudy",
+			"overcast",
+		][Math.floor(Math.random() * 5)];
+
 		return {
 			city,
 			temperature,
@@ -62,7 +75,7 @@ async function demonstrateAiSdkIntegration() {
 	}
 
 	// Create agent with AI SDK model (if available) or fallback
-	const modelConfig = env.GOOGLE_GENERATIVE_AI_API_KEY 
+	const modelConfig = env.GOOGLE_GENERATIVE_AI_API_KEY
 		? google("gemini-2.5-flash")
 		: env.LLM_MODEL || "gemini-2.5-flash";
 
@@ -86,8 +99,12 @@ async function demonstrateAiSdkIntegration() {
 
 	// Demonstrate model switching capability
 	console.log("🔄 Model Configuration:");
-	console.log(`Current model: ${typeof modelConfig === 'string' ? modelConfig : 'Google Gemini via AI SDK'}`);
-	console.log("AI SDK enables easy switching between providers (OpenAI, Anthropic, Google, etc.)\n");
+	console.log(
+		`Current model: ${typeof modelConfig === "string" ? modelConfig : "Google Gemini via AI SDK"}`,
+	);
+	console.log(
+		"AI SDK enables easy switching between providers (OpenAI, Anthropic, Google, etc.)\n",
+	);
 }
 
 async function demonstrateHttpIntegration() {
@@ -122,7 +139,7 @@ async function demonstrateHttpIntegration() {
 		- name: "ADK Framework"
 		- version: "1.0"
 		- type: "example"
-		
+
 		Show how the API echoes back the parameters.
 	`);
 	console.log(`Response: ${httpQueryTest}\n`);
@@ -135,7 +152,7 @@ async function demonstrateHttpIntegration() {
 			"timestamp": current timestamp,
 			"framework": "ADK"
 		}
-		
+
 		Show the response and explain what happened.
 	`);
 	console.log(`Response: ${httpPostTest}\n`);
@@ -182,7 +199,7 @@ async function demonstrateFileSystemIntegration() {
 		- Installation instructions
 		- Usage examples
 		- A changelog section
-		
+
 		Show the before and after content.
 	`);
 	console.log(`Response: ${fileModifyTest}\n`);
@@ -207,14 +224,16 @@ async function demonstrateCompositeIntegration() {
 	// Create a comprehensive integration agent
 	const { runner } = await AgentBuilder.create("integration_specialist")
 		.withModel(env.LLM_MODEL || "gemini-2.5-flash")
-		.withDescription("A specialist that combines multiple external integrations")
+		.withDescription(
+			"A specialist that combines multiple external integrations",
+		)
 		.withInstruction(dedent`
 			You are an integration specialist who can:
 			1. Fetch data from web APIs
 			2. Process and analyze the data
 			3. Save results to files
 			4. Create comprehensive reports
-			
+
 			Always follow this workflow:
 			- Fetch data from external sources
 			- Process and validate the data
@@ -225,14 +244,14 @@ async function demonstrateCompositeIntegration() {
 		.withTools(
 			new HttpRequestTool(),
 			new FileOperationsTool({ basePath: tempDir }),
-			weatherApiTool
+			weatherApiTool,
 		)
 		.build();
 
 	console.log("🔄 Testing composite integration workflow:");
 	const compositeTest = await runner.ask(dedent`
 		Create a comprehensive weather report system:
-		
+
 		1. Get weather data for 3 different cities: New York, London, Tokyo
 		2. Fetch additional data from httpbin.org/uuid for a unique report ID
 		3. Create a detailed weather report file that includes:
@@ -242,7 +261,7 @@ async function demonstrateCompositeIntegration() {
 		   - Recommendations based on conditions
 		4. Save the report as a JSON file and a markdown file
 		5. Create a summary file with just the key findings
-		
+
 		Show your progress at each step.
 	`);
 	console.log(`Response: ${compositeTest}\n`);
@@ -387,7 +406,6 @@ async function main() {
 		console.log("- Try integrating with your favorite APIs");
 		console.log("- Experiment with different model providers");
 		console.log("- Build end-to-end integration workflows");
-
 	} catch (error) {
 		console.error("❌ Error in external integrations example:", error);
 		process.exit(1);

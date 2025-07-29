@@ -56,7 +56,9 @@ const weatherTool = createTool({
 	fn: ({ city }) => ({
 		city,
 		temperature: Math.floor(Math.random() * 35) + 5, // Random temp 5-40°C
-		conditions: ["sunny", "cloudy", "rainy", "snowy"][Math.floor(Math.random() * 4)],
+		conditions: ["sunny", "cloudy", "rainy", "snowy"][
+			Math.floor(Math.random() * 4)
+		],
 		humidity: Math.floor(Math.random() * 100),
 	}),
 });
@@ -79,7 +81,7 @@ const addNotesTool = createTool({
 		};
 		notes.push(newNote);
 		context.state.set("notes", notes);
-		
+
 		return {
 			success: true,
 			note: newNote,
@@ -97,16 +99,16 @@ const viewNotesTool = createTool({
 	}),
 	fn: ({ category }, context) => {
 		const allNotes = context.state.get("notes", []);
-		const filteredNotes = category 
-			? allNotes.filter(note => note.category === category)
+		const filteredNotes = category
+			? allNotes.filter((note) => note.category === category)
 			: allNotes;
-		
+
 		return {
 			notes: filteredNotes,
 			totalNotes: allNotes.length,
 			filteredCount: filteredNotes.length,
 			category: category || "all",
-			message: category 
+			message: category
 				? `Found ${filteredNotes.length} notes in '${category}' category`
 				: `Total notes: ${allNotes.length}`,
 		};
@@ -126,7 +128,7 @@ const counterTool = createTool({
 		const newValue = currentValue + amount;
 		counters[counterName] = newValue;
 		context.state.set("counters", counters);
-		
+
 		return {
 			counterName,
 			previousValue: currentValue,
@@ -168,9 +170,9 @@ async function demonstrateStatefulTools() {
 	console.log("═══════════════════════════════════════\n");
 
 	const sessionService = new InMemorySessionService();
-	const initialState = { 
+	const initialState = {
 		notes: [],
-		counters: { visits: 0 }
+		counters: { visits: 0 },
 	};
 
 	const { runner, session } = await AgentBuilder.create("stateful_agent")
@@ -195,11 +197,15 @@ async function demonstrateStatefulTools() {
 	const note1 = await runner.ask("Add a note: 'Learn about ADK tools'");
 	console.log(`Response: ${note1}\n`);
 
-	const note2 = await runner.ask("Add a note about buying groceries, category: personal");
+	const note2 = await runner.ask(
+		"Add a note about buying groceries, category: personal",
+	);
 	console.log(`Response: ${note2}\n`);
 
 	console.log("📊 Testing Counter Tool:");
-	const counter1 = await runner.ask("Increment the 'examples_completed' counter by 1");
+	const counter1 = await runner.ask(
+		"Increment the 'examples_completed' counter by 1",
+	);
 	console.log(`Response: ${counter1}\n`);
 
 	console.log("👀 Testing State Persistence:");
@@ -216,7 +222,7 @@ async function demonstrateToolComposition() {
 	console.log("═══════════════════════════\n");
 
 	const sessionService = new InMemorySessionService();
-	
+
 	const { runner } = await AgentBuilder.create("multi_tool_agent")
 		.withModel(env.LLM_MODEL || "gemini-2.5-flash")
 		.withDescription("An agent with multiple tool types working together")
@@ -232,7 +238,13 @@ async function demonstrateToolComposition() {
 			- Track weather checks with counters
 			- Create productivity workflows
 		`)
-		.withTools(calculatorTool, weatherTool, addNotesTool, viewNotesTool, counterTool)
+		.withTools(
+			calculatorTool,
+			weatherTool,
+			addNotesTool,
+			viewNotesTool,
+			counterTool,
+		)
 		.withSessionService(sessionService, { state: { notes: [], counters: {} } })
 		.build();
 
@@ -262,12 +274,13 @@ async function main() {
 		console.log("- State management enables memory across interactions");
 		console.log("- Tools can be composed for complex workflows");
 		console.log("- Session services provide persistence");
-		
+
 		console.log("\n🎓 Next Steps:");
-		console.log("- Run example 03-interactive-app to see a complete application");
+		console.log(
+			"- Run example 03-interactive-app to see a complete application",
+		);
 		console.log("- Try creating your own custom tools");
 		console.log("- Experiment with different state management patterns");
-
 	} catch (error) {
 		console.error("❌ Error in tools and state example:", error);
 		process.exit(1);

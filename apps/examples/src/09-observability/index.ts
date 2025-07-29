@@ -80,16 +80,22 @@ async function demonstrateBasicTelemetry() {
 		.build();
 
 	console.log("📊 Testing basic telemetry collection:");
-	const response1 = await runner.ask("Explain what observability means in AI systems");
+	const response1 = await runner.ask(
+		"Explain what observability means in AI systems",
+	);
 	console.log(`Response: ${response1}\n`);
 
 	console.log("📈 Testing conversation tracking:");
-	const response2 = await runner.ask("What are the key metrics to monitor for AI agents?");
+	const response2 = await runner.ask(
+		"What are the key metrics to monitor for AI agents?",
+	);
 	console.log(`Response: ${response2}\n`);
 
 	console.log("🔍 Testing error scenarios:");
 	try {
-		const response3 = await runner.ask(`This is a very complex question that might cause issues: ${"x".repeat(1000)}`);
+		const response3 = await runner.ask(
+			`This is a very complex question that might cause issues: ${"x".repeat(1000)}`,
+		);
 		console.log(`Response: ${response3}\n`);
 	} catch (error) {
 		console.log(`Error captured by telemetry: ${error}\n`);
@@ -99,7 +105,9 @@ async function demonstrateBasicTelemetry() {
 		console.log("✅ Telemetry data has been sent to Langfuse dashboard");
 		console.log("🔗 Check your Langfuse dashboard to see the traces");
 	} else {
-		console.log("ℹ️  Telemetry simulation completed (no external service configured)");
+		console.log(
+			"ℹ️  Telemetry simulation completed (no external service configured)",
+		);
 	}
 }
 
@@ -116,17 +124,19 @@ async function demonstrateAdvancedTelemetry() {
 		.withInstruction("You are a primary agent that coordinates complex tasks")
 		.build();
 
-	const { runner: specialistAgent } = await AgentBuilder.create("specialist_agent")
+	const { runner: specialistAgent } = await AgentBuilder.create(
+		"specialist_agent",
+	)
 		.withModel(env.LLM_MODEL || "gemini-2.5-flash")
 		.withDescription("Specialist agent for specific tasks")
 		.withInstruction("You are a specialist that handles technical questions")
 		.build();
 
 	console.log("🔄 Testing multi-agent telemetry:");
-	
+
 	console.log("Primary agent processing:");
 	const primaryResponse = await primaryAgent.ask(dedent`
-		I need help with a technical architecture decision. 
+		I need help with a technical architecture decision.
 		Should I use microservices or a monolith for a new application?
 	`);
 	console.log(`Primary: ${primaryResponse}\n`);
@@ -141,7 +151,9 @@ async function demonstrateAdvancedTelemetry() {
 	// Simulate performance monitoring
 	console.log("⏱️ Performance monitoring simulation:");
 	const startTime = Date.now();
-	const performanceTest = await primaryAgent.ask("Generate a detailed project plan for implementing observability");
+	const performanceTest = await primaryAgent.ask(
+		"Generate a detailed project plan for implementing observability",
+	);
 	const endTime = Date.now();
 	const responseTime = endTime - startTime;
 
@@ -178,13 +190,13 @@ async function demonstrateProductionMonitoring() {
 
 	// Simulate production workload
 	console.log("🏭 Simulating production workload:");
-	
+
 	const requests = [
 		"Help me write a business proposal",
 		"Analyze market trends for tech companies",
 		"Create a project timeline for Q2",
 		"Explain cloud architecture best practices",
-		"Generate a risk assessment template"
+		"Generate a risk assessment template",
 	];
 
 	const metrics = {
@@ -192,12 +204,12 @@ async function demonstrateProductionMonitoring() {
 		successfulRequests: 0,
 		errors: 0,
 		totalResponseTime: 0,
-		avgResponseTime: 0
+		avgResponseTime: 0,
 	};
 
 	for (const [index, request] of requests.entries()) {
 		console.log(`\n🔄 Request ${index + 1}: ${request.substring(0, 50)}...`);
-		
+
 		try {
 			const startTime = Date.now();
 			const response = await runner.ask(request);
@@ -208,7 +220,9 @@ async function demonstrateProductionMonitoring() {
 			metrics.successfulRequests++;
 			metrics.totalResponseTime += responseTime;
 
-			console.log(`✅ Success (${responseTime}ms): ${response.substring(0, 100)}...`);
+			console.log(
+				`✅ Success (${responseTime}ms): ${response.substring(0, 100)}...`,
+			);
 		} catch (error) {
 			metrics.totalRequests++;
 			metrics.errors++;
@@ -217,13 +231,16 @@ async function demonstrateProductionMonitoring() {
 	}
 
 	// Calculate metrics
-	metrics.avgResponseTime = metrics.totalResponseTime / metrics.successfulRequests;
+	metrics.avgResponseTime =
+		metrics.totalResponseTime / metrics.successfulRequests;
 
 	console.log("\n📊 Production Metrics Summary:");
 	console.log(`Total Requests: ${metrics.totalRequests}`);
 	console.log(`Successful: ${metrics.successfulRequests}`);
 	console.log(`Errors: ${metrics.errors}`);
-	console.log(`Success Rate: ${((metrics.successfulRequests / metrics.totalRequests) * 100).toFixed(2)}%`);
+	console.log(
+		`Success Rate: ${((metrics.successfulRequests / metrics.totalRequests) * 100).toFixed(2)}%`,
+	);
 	console.log(`Average Response Time: ${metrics.avgResponseTime.toFixed(2)}ms`);
 
 	if (telemetryService) {
@@ -388,15 +405,18 @@ async function main() {
 		console.log("\n🎓 Key Takeaways:");
 		console.log("- Telemetry provides crucial insights into agent performance");
 		console.log("- Langfuse offers specialized LLM observability features");
-		console.log("- Production monitoring requires comprehensive metric collection");
+		console.log(
+			"- Production monitoring requires comprehensive metric collection",
+		);
 		console.log("- Observability enables data-driven optimization");
 
 		console.log("\n🎓 Next Steps:");
-		console.log("- Run example 10-advanced-workflows for complex orchestration");
+		console.log(
+			"- Run example 10-advanced-workflows for complex orchestration",
+		);
 		console.log("- Set up Langfuse account for real telemetry collection");
 		console.log("- Implement monitoring for your production agents");
 		console.log("- Create custom dashboards for your specific metrics");
-
 	} catch (error) {
 		console.error("❌ Error in observability example:", error);
 		process.exit(1);

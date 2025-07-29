@@ -1,5 +1,10 @@
 import { env } from "node:process";
-import { AgentBuilder, type EnhancedRunner, McpToolset, createSamplingHandler } from "@iqai/adk";
+import {
+	AgentBuilder,
+	type EnhancedRunner,
+	McpToolset,
+	createSamplingHandler,
+} from "@iqai/adk";
 import dedent from "dedent";
 
 /**
@@ -21,9 +26,13 @@ async function demonstrateCustomMcpServer() {
 	console.log("═══════════════════════════════════════════\n");
 
 	// Create a simple agent for sampling responses
-	const { runner: samplingRunner } = await AgentBuilder.create("sampling_assistant")
+	const { runner: samplingRunner } = await AgentBuilder.create(
+		"sampling_assistant",
+	)
 		.withModel(env.LLM_MODEL || "gemini-2.5-flash")
-		.withDescription("Assistant that provides user context for sampling requests")
+		.withDescription(
+			"Assistant that provides user context for sampling requests",
+		)
 		.withInstruction(dedent`
 			You are a helpful assistant that provides user context when requested.
 			When asked for a user's name or identity, respond with "Alice Johnson".
@@ -35,9 +44,11 @@ async function demonstrateCustomMcpServer() {
 	const samplingHandler = createSamplingHandler(async (request) => {
 		console.log("📡 Sampling request received from MCP server");
 		console.log(`   Request: ${JSON.stringify(request)}`);
-		
+
 		// Use the agent runner to handle the sampling request
-		const response = await samplingRunner.ask("What is the user's name for personalization?");
+		const response = await samplingRunner.ask(
+			"What is the user's name for personalization?",
+		);
 		return response;
 	});
 
@@ -56,7 +67,9 @@ async function demonstrateCustomMcpServer() {
 	try {
 		console.log("🔌 Connecting to custom MCP server...");
 		const tools = await greetingToolset.getTools();
-		console.log(`✅ Connected! Available tools: ${tools.map(t => t.name).join(", ")}`);
+		console.log(
+			`✅ Connected! Available tools: ${tools.map((t) => t.name).join(", ")}`,
+		);
 
 		// Create agent with MCP tools
 		const { runner } = await AgentBuilder.create("mcp_assistant")
@@ -72,7 +85,9 @@ async function demonstrateCustomMcpServer() {
 
 		// Test the sampling-enabled greeting
 		console.log("� Testing personalized greeting with sampling:");
-		const greetingResponse = await runner.ask("Please greet me using the greeting tool.");
+		const greetingResponse = await runner.ask(
+			"Please greet me using the greeting tool.",
+		);
 		console.log(`Response: ${greetingResponse}\n`);
 
 		// Test calculator tool
@@ -81,7 +96,6 @@ async function demonstrateCustomMcpServer() {
 		console.log(`Response: ${calcResponse}\n`);
 
 		await greetingToolset.close();
-
 	} catch (error) {
 		console.error("❌ Error with custom MCP server:", error);
 		console.log("ℹ️  Note: Make sure the server file exists and is accessible");
@@ -263,11 +277,12 @@ async function main() {
 		console.log("- Multiple toolsets can be composed for rich functionality");
 
 		console.log("\n🎓 Next Steps:");
-		console.log("- Run example 12-chat-bots for platform-specific applications");
+		console.log(
+			"- Run example 12-chat-bots for platform-specific applications",
+		);
 		console.log("- Build your own custom MCP servers");
 		console.log("- Experiment with sampling for personalized experiences");
 		console.log("- Explore the growing MCP ecosystem");
-
 	} catch (error) {
 		console.error("❌ Error in MCP integrations example:", error);
 		process.exit(1);

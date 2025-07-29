@@ -22,9 +22,9 @@ async function main() {
 	// Example 1: The absolute simplest usage
 	console.log("📝 Example 1: Minimal Agent");
 	const question1 = "What is the capital of France?";
-	
+
 	const response1 = await AgentBuilder.withModel(
-		env.LLM_MODEL || "gemini-2.5-flash"
+		env.LLM_MODEL || "gemini-2.5-flash",
 	).ask(question1);
 
 	console.log(`Question: ${question1}`);
@@ -33,10 +33,12 @@ async function main() {
 	// Example 2: Agent with custom description
 	console.log("📝 Example 2: Agent with Description");
 	const question2 = "Explain quantum computing in simple terms";
-	
+
 	const response2 = await AgentBuilder.create("science_tutor")
 		.withModel(env.LLM_MODEL || "gemini-2.5-flash")
-		.withDescription("A helpful science tutor that explains complex topics simply")
+		.withDescription(
+			"A helpful science tutor that explains complex topics simply",
+		)
 		.ask(question2);
 
 	console.log(`Question: ${question2}`);
@@ -45,7 +47,7 @@ async function main() {
 	// Example 3: Agent with instructions
 	console.log("📝 Example 3: Agent with Custom Instructions");
 	const question3 = "What's the weather like?";
-	
+
 	const response3 = await AgentBuilder.create("creative_assistant")
 		.withModel(env.LLM_MODEL || "gemini-2.5-flash")
 		.withDescription("A creative assistant with a unique personality")
