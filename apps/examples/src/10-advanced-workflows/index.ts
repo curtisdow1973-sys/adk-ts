@@ -1,3 +1,4 @@
+import { env } from "node:process";
 import {
 	AgentBuilder,
 	InMemorySessionService,
@@ -5,9 +6,8 @@ import {
 	Runner,
 	createTool,
 } from "@iqai/adk";
-import * as z from "zod";
 import dedent from "dedent";
-import { env } from "node:process";
+import * as z from "zod";
 
 /**
  * 10 - Advanced Workflows and Complex Orchestration
@@ -171,7 +171,6 @@ async function demonstrateBasicWorkflow() {
 	});
 
 	// Create workflow system
-	const sessionService = new InMemorySessionService();
 	const { runner } = await AgentBuilder.create("workflow_orchestrator")
 		.withModel(env.LLM_MODEL || "gemini-2.5-flash")
 		.withDescription("Workflow orchestration system")
@@ -180,22 +179,18 @@ async function demonstrateBasicWorkflow() {
 			Break down complex tasks and manage the flow between research, analysis, and reporting.
 		`)
 		.withSubAgents([coordinator, researchAgent, analysisAgent, reportingAgent])
-		.withSessionService(sessionService, {
-			userId: "demo-user",
-			appName: "advanced-workflow",
-		})
 		.build();
 
 	console.log("🔄 Testing basic workflow orchestration:");
 	const workflowRequest = dedent`
 		I need a comprehensive market analysis for electric vehicle charging stations.
-		
+
 		Please coordinate this as a multi-stage workflow:
 		1. Research current market size and growth trends
-		2. Analyze key players and competitive landscape  
+		2. Analyze key players and competitive landscape
 		3. Identify market opportunities and challenges
 		4. Create a final report with recommendations
-		
+
 		Track progress through each stage and make decisions as needed.
 	`;
 
@@ -211,110 +206,150 @@ async function demonstrateLangGraphStyleWorkflow() {
 	console.log("📝 Part 2: LangGraph-Style State Machine Workflow");
 	console.log("═══════════════════════════════════════════════════\n");
 
-	// State machine workflow with conditional branching
-	const stateMachineAgent = new LlmAgent({
-		name: "state_machine_controller",
-		description: "Controls state machine workflows with conditional branching",
-		instruction: dedent`
-			You are a state machine controller that manages workflows with conditional logic.
-			
-			Available states: INIT, GATHER_REQUIREMENTS, ANALYZE_COMPLEXITY, SIMPLE_PATH, COMPLEX_PATH, REVIEW, COMPLETE
-			
-			State transitions:
-			- INIT -> GATHER_REQUIREMENTS
-			- GATHER_REQUIREMENTS -> ANALYZE_COMPLEXITY
-			- ANALYZE_COMPLEXITY -> SIMPLE_PATH (if simple) or COMPLEX_PATH (if complex)
-			- SIMPLE_PATH -> REVIEW
-			- COMPLEX_PATH -> REVIEW  
-			- REVIEW -> COMPLETE (if approved) or back to previous state (if needs work)
-			
-			Use the workflow state tool to track current state and the decision tool for branching logic.
-		`,
-		tools: [workflowStateTool, makeDecisionTool],
-		model: env.LLM_MODEL || "gemini-2.5-flash",
-	});
-
+	// Create individual agents for each node in the graph
 	const requirementsAgent = new LlmAgent({
 		name: "requirements_gatherer",
 		description: "Gathers and analyzes requirements",
-		instruction:
-			"You gather detailed requirements and assess their completeness and clarity.",
+		instruction: dedent`
+			You gather detailed requirements and assess their completeness and clarity.
+			Focus on understanding what the user needs and document all requirements clearly.
+			Use the workflow state tool to mark this stage as completed when done.
+		`,
+		tools: [workflowStateTool],
 		model: env.LLM_MODEL || "gemini-2.5-flash",
 	});
 
 	const complexityAnalyzer = new LlmAgent({
 		name: "complexity_analyzer",
 		description: "Analyzes task complexity and determines appropriate approach",
-		instruction:
-			"You analyze complexity and recommend simple vs complex processing paths.",
-		tools: [makeDecisionTool],
+		instruction: dedent`
+			You analyze the complexity of requirements and determine the appropriate processing approach.
+			Consider factors like: scope, technical difficulty, time requirements, resource needs.
+			Use the decision tool to choose between simple or complex processing paths.
+		`,
+		tools: [makeDecisionTool, workflowStateTool],
 		model: env.LLM_MODEL || "gemini-2.5-flash",
 	});
 
 	const simpleProcessor = new LlmAgent({
 		name: "simple_processor",
 		description: "Handles simple, straightforward tasks",
-		instruction: "You handle simple tasks efficiently with minimal overhead.",
+		instruction: dedent`
+			You handle simple tasks efficiently with minimal overhead.
+			Provide direct, actionable solutions for straightforward requirements.
+			Focus on speed and efficiency while maintaining quality.
+		`,
+		tools: [workflowStateTool],
 		model: env.LLM_MODEL || "gemini-2.5-flash",
 	});
 
 	const complexProcessor = new LlmAgent({
 		name: "complex_processor",
 		description: "Handles complex, multi-faceted tasks",
-		instruction:
-			"You handle complex tasks with detailed analysis and comprehensive solutions.",
+		instruction: dedent`
+			You handle complex tasks with detailed analysis and comprehensive solutions.
+			Break down complex problems into manageable components.
+			Provide thorough, well-researched solutions with multiple considerations.
+		`,
+		tools: [workflowStateTool],
 		model: env.LLM_MODEL || "gemini-2.5-flash",
 	});
 
 	const reviewer = new LlmAgent({
 		name: "quality_reviewer",
 		description: "Reviews work quality and completeness",
-		instruction:
-			"You review work for quality, completeness, and accuracy. Provide constructive feedback.",
-		tools: [makeDecisionTool],
+		instruction: dedent`
+			You review work for quality, completeness, and accuracy.
+			Provide constructive feedback and determine if work meets standards.
+			Use the decision tool to approve work or send it back for improvements.
+		`,
+		tools: [makeDecisionTool, workflowStateTool],
 		model: env.LLM_MODEL || "gemini-2.5-flash",
 	});
 
-	// Create state machine workflow
+	// Create LangGraph agent using AgentBuilder
 	const sessionService = new InMemorySessionService();
-	const { runner } = await AgentBuilder.create("state_machine_orchestrator")
-		.withModel(env.LLM_MODEL || "gemini-2.5-flash")
-		.withDescription("State machine workflow orchestrator")
-		.withInstruction(dedent`
-			You orchestrate state machine-based workflows with multiple specialized agents.
-			Manage state transitions and coordinate the flow between different processing stages.
-		`)
-		.withSubAgents([
-			stateMachineAgent,
-			requirementsAgent,
-			complexityAnalyzer,
-			simpleProcessor,
-			complexProcessor,
-			reviewer,
-		])
+	const { runner } = await AgentBuilder.create("langgraph_workflow")
+		.withDescription("LangGraph-based state machine workflow")
+		.asLangGraph(
+			[
+				{
+					name: "gather_requirements",
+					agent: requirementsAgent,
+					targets: ["analyze_complexity"],
+				},
+				{
+					name: "analyze_complexity",
+					agent: complexityAnalyzer,
+					targets: ["simple_processing", "complex_processing"],
+				},
+				{
+					name: "simple_processing",
+					agent: simpleProcessor,
+					targets: ["review"],
+					condition: async (lastEvent, context) => {
+						// Check if the complexity analyzer decided this should be simple
+						const decisions = context.session.state.get("decisions", []);
+						const lastDecision = decisions[decisions.length - 1];
+						return (
+							lastDecision?.decision?.toLowerCase().includes("simple") ||
+							lastDecision?.decision?.toLowerCase().includes("straightforward")
+						);
+					},
+				},
+				{
+					name: "complex_processing",
+					agent: complexProcessor,
+					targets: ["review"],
+					condition: async (lastEvent, context) => {
+						// Check if the complexity analyzer decided this should be complex
+						const decisions = context.session.state.get("decisions", []);
+						const lastDecision = decisions[decisions.length - 1];
+						return (
+							lastDecision?.decision?.toLowerCase().includes("complex") ||
+							lastDecision?.decision?.toLowerCase().includes("detailed")
+						);
+					},
+				},
+				{
+					name: "review",
+					agent: reviewer,
+					targets: ["gather_requirements"], // Can loop back if needs work
+					condition: async (lastEvent, context) => {
+						// Only loop back if reviewer decides work needs improvement
+						const decisions = context.session.state.get("decisions", []);
+						const lastDecision = decisions[decisions.length - 1];
+						return (
+							lastDecision?.decision?.toLowerCase().includes("needs work") ||
+							lastDecision?.decision?.toLowerCase().includes("requires changes")
+						);
+					},
+				},
+			],
+			"gather_requirements",
+		)
 		.withSessionService(sessionService, {
 			userId: "demo-user",
-			appName: "state-machine-workflow",
+			appName: "langgraph-workflow",
 		})
 		.build();
 
-	console.log("🔀 Testing state machine workflow:");
+	console.log("🔀 Testing LangGraph workflow with conditional nodes:");
 	const stateMachineRequest = dedent`
 		I need help creating a customer onboarding system.
-		
-		Process this through the state machine workflow:
-		1. Start in INIT state
-		2. Gather requirements for the onboarding system
-		3. Analyze if this is a simple or complex implementation
-		4. Route to appropriate processing path
-		5. Review the final solution
-		6. Complete the workflow
-		
-		Track all state transitions and decisions made.
+
+		This will be processed through a LangGraph workflow that automatically:
+		1. Gathers requirements for the onboarding system
+		2. Analyzes complexity to determine the appropriate approach
+		3. Routes to either simple or complex processing based on the analysis
+		4. Reviews the solution for quality and completeness
+		5. May loop back for improvements if needed
+
+		The workflow graph handles all state transitions and conditional logic automatically.
 	`;
 
-	console.log(`State Machine Request: ${stateMachineRequest}`);
-	console.log("\n🔄 State Machine Execution:");
+	console.log(`LangGraph Request: ${stateMachineRequest}`);
+	console.log("\n🔄 LangGraph Workflow Execution:");
 
 	const stateMachineResult = await runner.ask(stateMachineRequest);
 	console.log(stateMachineResult);
@@ -331,14 +366,14 @@ async function demonstrateErrorRecoveryWorkflow() {
 		description: "Manages error recovery and retry logic",
 		instruction: dedent`
 			You are an error recovery coordinator that handles failures gracefully.
-			
+
 			When errors occur:
 			1. Assess the type and severity of the error
 			2. Determine if retry is appropriate
 			3. Try alternative approaches if retries fail
 			4. Escalate to human intervention if needed
 			5. Track all recovery attempts
-			
+
 			Use workflow state and decision tools to manage recovery processes.
 		`,
 		tools: [workflowStateTool, makeDecisionTool],
@@ -351,7 +386,7 @@ async function demonstrateErrorRecoveryWorkflow() {
 		description: "A worker that demonstrates error scenarios and recovery",
 		instruction: dedent`
 			You are a resilient worker that can simulate various failure scenarios.
-			
+
 			When processing tasks:
 			- Sometimes simulate "network errors" for external API calls
 			- Sometimes simulate "timeout errors" for long operations
@@ -380,14 +415,14 @@ async function demonstrateErrorRecoveryWorkflow() {
 	console.log("🛠️ Testing error recovery workflow:");
 	const errorRecoveryRequest = dedent`
 		Simulate a workflow that processes customer data with potential failures:
-		
+
 		1. Attempt to fetch customer data (simulate network error)
 		2. Implement retry logic with exponential backoff
 		3. Try alternative data source if retries fail
 		4. Validate the data (simulate validation error)
 		5. Implement data cleaning/correction process
 		6. Complete processing or escalate if unrecoverable
-		
+
 		Demonstrate how error recovery and retry patterns work in practice.
 	`;
 
