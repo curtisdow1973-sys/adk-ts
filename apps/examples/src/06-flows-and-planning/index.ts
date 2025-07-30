@@ -10,14 +10,11 @@ import {
  * 06 - Flows and Planning
  *
  * Learn how to enhance agent reasoning with flow processing and planning.
- * This example demonstrates different approaches to help agents think through
- * complex problems systematically.
  *
  * Concepts covered:
  * - Flow processing with SingleFlow
  * - Built-in planning capabilities
  * - PlanReAct planning pattern
- * - Comparing planning approaches
  * - Tool integration with planning
  * - Complex problem decomposition
  */

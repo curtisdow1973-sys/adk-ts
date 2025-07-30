@@ -7,16 +7,13 @@ import * as z from "zod";
  * 02 - Tools and State Management
  *
  * Learn how to create custom tools and manage state in your agents.
- * This example demonstrates stateful tools that remember information
- * across interactions, and shows state injection in instructions.
  *
  * Concepts covered:
  * - Creating custom tools with createTool
  * - Tool schemas and validation
  * - State management with context.state
  * - Session services for persistence
- * - State injection in instructions using {statePath} syntax
- * - Tool composition and reuse
+ * - State injection in instructions
  */
 
 // Simple shopping cart tools

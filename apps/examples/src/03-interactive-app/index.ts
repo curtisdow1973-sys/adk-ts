@@ -6,15 +6,12 @@ import dedent from "dedent";
 /**
  * 03 - Interactive Todo Application
  *
- * A complete interactive application showcasing real-world usage patterns.
- * This example demonstrates how to build a fully functional CLI application
- * with persistent state and user interaction.
+ * A complete interactive CLI application with persistent state.
  *
  * Concepts covered:
  * - Interactive CLI applications
  * - Comprehensive state management
  * - Real-world tool design
- * - User experience considerations
  * - Error handling and validation
  * - Session persistence
  */

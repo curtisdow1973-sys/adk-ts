@@ -7,8 +7,6 @@ import * as z from "zod";
  * 09 - Observability and Telemetry
  *
  * Learn how to monitor your AI agents with Langfuse.
- * This example shows how to set up telemetry tracking and see
- * agent interactions in your Langfuse dashboard.
  *
  * Concepts covered:
  * - TelemetryService setup with Langfuse

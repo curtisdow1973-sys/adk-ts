@@ -13,15 +13,14 @@ import * as z from "zod";
 /**
  * 04 - Agent Composition and Multi-Agent Systems
  *
- * Learn how to create sophisticated multi-agent systems where agents
- * work together, share information, and coordinate their activities.
+ * Learn how to create multi-agent systems where agents work together
+ * and share information.
  *
  * Concepts covered:
  * - Multi-agent coordination patterns
  * - Agent output keys for data passing
  * - Shared memory between agents
  * - Sub-agent delegation
- * - Agent communication protocols
  * - State sharing strategies
  */
 

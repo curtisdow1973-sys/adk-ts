@@ -15,18 +15,15 @@ import * as z from "zod";
 /**
  * 05 - Persistence and Sessions
  *
- * Learn how to persist data across agent interactions using both
- * session storage (for conversational state) and artifacts (for files).
- * This example demonstrates the difference between temporary memory,
- * session persistence, and long-term file storage.
+ * Learn how to persist data across agent interactions using sessions
+ * and artifacts for file storage.
  *
  * Concepts covered:
- * - Database session services for conversation persistence
+ * - Database session services
  * - Artifact services for file management
- * - Different types of persistence strategies
+ * - Different persistence strategies
  * - Cross-session data retrieval
  * - File versioning and updates
- * - Data lifecycle management
  */
 
 const APP_NAME = "persistence-example";
@@ -201,7 +198,7 @@ async function demonstrateArtifactPersistence() {
 		.withInstruction(dedent`
 			You are a file management assistant with artifact capabilities.
 			You can save, load, and update files that persist across sessions.
-			
+
 			When users ask you to save information, create appropriate filenames
 			and organize content logically. Always confirm what you've saved.
 		`)
@@ -214,11 +211,11 @@ async function demonstrateArtifactPersistence() {
 	const saveResponse1 = await runner.ask(dedent`
 		Save a shopping list with these items:
 		- Apples
-		- Bread  
+		- Bread
 		- Milk
 		- Cheese
 		- Coffee
-		
+
 		Save it as "shopping-list.txt"
 	`);
 	console.log(`Response: ${saveResponse1}\n`);
@@ -229,7 +226,7 @@ async function demonstrateArtifactPersistence() {
 		2. Budget review
 		3. Next quarter planning
 		4. Action items
-		
+
 		Save it as "meeting-agenda.md"
 	`);
 	console.log(`Response: ${saveResponse2}\n`);
@@ -247,7 +244,7 @@ async function demonstrateArtifactPersistence() {
 		Update the shopping list to add:
 		- Bananas
 		- Greek yogurt
-		
+
 		And remove milk from the list.
 	`);
 	console.log(`Response: ${updateResponse}\n`);
@@ -335,7 +332,7 @@ async function demonstrateHybridPersistence() {
 		.withInstruction(dedent`
 			You are a project management assistant that helps organize projects.
 			You track project metadata in session state and store project files as artifacts.
-			
+
 			When creating projects, suggest appropriate initial files and organize
 			everything clearly. Provide helpful summaries of project status.
 		`)
@@ -349,7 +346,7 @@ async function demonstrateHybridPersistence() {
 	const projectResponse = await runner.ask(dedent`
 		Create a new project called "Website Redesign" with description
 		"Modernize company website with new design and improved UX".
-		
+
 		Include these initial files:
 		1. README.md with project overview
 		2. requirements.txt with initial requirements

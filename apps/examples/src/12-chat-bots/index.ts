@@ -1,20 +1,13 @@
 /**
- * Chat Bot Integration Example
+ * 12 - Chat Bot Integration
  *
- * This example demonstrates how to create a unified chat bot that can work with
- * both Discord and Telegram based on which token is available in the environment.
+ * Create a unified chat bot that works with Discord and Telegram.
  *
- * Key concepts covered:
+ * Concepts covered:
  * - Single agent runner for multiple platforms
- * - Automatic platform detection based on environment variables
+ * - Automatic platform detection
  * - Unified bot personality and configuration
  * - Simple setup and initialization
- *
- * Usage:
- * - Set DISCORD_TOKEN to enable Discord bot
- * - Set TELEGRAM_BOT_TOKEN to enable Telegram bot
- * - Set both to run on multiple platforms
- * - Optionally set LLM_MODEL to specify the model
  */
 
 import * as fs from "node:fs";

@@ -13,9 +13,6 @@ import dedent from "dedent";
  * 07 - Code Execution
  *
  * Learn how to enable agents to write and execute code dynamically.
- * This powerful capability allows agents to solve problems by generating
- * and running code in real-time, making them incredibly versatile for
- * computational tasks.
  *
  * Concepts covered:
  * - BuiltInCodeExecutor for Python code execution
@@ -23,7 +20,6 @@ import dedent from "dedent";
  * - Data analysis and visualization
  * - Dynamic algorithm implementation
  * - Error handling in code execution
- * - Code safety and security considerations
  */
 
 const APP_NAME = "code-executor-example";
@@ -200,7 +196,7 @@ async function demonstrateAlgorithmImplementation() {
 		2. An already sorted list
 		3. A reverse sorted list
 		4. A list with duplicate elements
-		
+
 		Compare the performance and explain the results.
 	`;
 	console.log(`Task: ${sortTask}`);
@@ -212,11 +208,11 @@ async function demonstrateAlgorithmImplementation() {
 	const graphTask = dedent`
 		Implement Dijkstra's shortest path algorithm and use it to find
 		the shortest path in a graph representing a simple road network:
-		
+
 		Cities: A, B, C, D, E
 		Roads with distances:
 		A-B: 4, A-C: 2, B-C: 1, B-D: 5, C-D: 8, C-E: 10, D-E: 2
-		
+
 		Find the shortest path from A to E and explain the algorithm's steps.
 	`;
 	console.log(`Task: ${graphTask}`);

@@ -10,9 +10,8 @@ import dedent from "dedent";
 /**
  * 11 - MCP (Model Context Protocol) Integrations
  *
- * Learn how to integrate with MCP servers and use sampling for dynamic,
- * context-aware responses. This example demonstrates core MCP concepts
- * with a simple, self-contained custom MCP server using FastMCP.
+ * Learn how to integrate with MCP servers and use sampling for
+ * dynamic, context-aware responses.
  *
  * Concepts covered:
  * - Custom MCP server creation with FastMCP
