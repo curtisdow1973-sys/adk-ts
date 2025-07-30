@@ -57,12 +57,12 @@ async function demonstratePlanReActPlanner() {
 
 	const { runner } = await AgentBuilder.create("strategic_planner")
 		.withModel(env.LLM_MODEL || "gemini-2.5-flash")
-		.withTools(new FileOperationsTool())
+		.withTools(new FileOperationsTool({ basePath: "temp-project" }))
 		.withPlanner(new PlanReActPlanner())
 		.build();
 
 	const response = await runner.ask(
-		"Create a new folder called 'demo-project' and inside it create a Node.js project with README.md, package.json, main.js, and .gitignore",
+		"Create a Node.js project with README.md, package.json, main.js, and .gitignore",
 	);
 	console.log(response);
 }
