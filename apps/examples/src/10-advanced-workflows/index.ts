@@ -1,8 +1,4 @@
-import {
-	AgentBuilder,
-	LlmAgent,
-	createTool,
-} from "@iqai/adk";
+import { AgentBuilder, LlmAgent, createTool } from "@iqai/adk";
 import { env } from "node:process";
 import * as z from "zod";
 
@@ -114,7 +110,8 @@ async function demonstrateBasicWorkflow() {
 	const coordinator = new LlmAgent({
 		name: "workflow_coordinator",
 		description: "Coordinates multi-step workflows",
-		instruction: "Break down complex tasks into stages, track progress, and coordinate execution.",
+		instruction:
+			"Break down complex tasks into stages, track progress, and coordinate execution.",
 		tools: [workflowStateTool, makeDecisionTool],
 		model: env.LLM_MODEL || "gemini-2.5-flash",
 	});
@@ -123,14 +120,16 @@ async function demonstrateBasicWorkflow() {
 	const researchAgent = new LlmAgent({
 		name: "research_specialist",
 		description: "Conducts research and gathers information",
-		instruction: "Conduct thorough research, provide comprehensive information, and highlight key findings.",
+		instruction:
+			"Conduct thorough research, provide comprehensive information, and highlight key findings.",
 		model: env.LLM_MODEL || "gemini-2.5-flash",
 	});
 
 	const analysisAgent = new LlmAgent({
 		name: "analysis_specialist",
 		description: "Analyzes data and provides insights",
-		instruction: "Identify patterns, provide insights, draw conclusions, and recommend next steps.",
+		instruction:
+			"Identify patterns, provide insights, draw conclusions, and recommend next steps.",
 		model: env.LLM_MODEL || "gemini-2.5-flash",
 	});
 
@@ -138,11 +137,15 @@ async function demonstrateBasicWorkflow() {
 	const { runner } = await AgentBuilder.create("workflow_orchestrator")
 		.withModel(env.LLM_MODEL || "gemini-2.5-flash")
 		.withDescription("Workflow orchestration system")
-		.withInstruction("Coordinate multi-stage workflows using specialized agents.")
+		.withInstruction(
+			"Coordinate multi-stage workflows using specialized agents.",
+		)
 		.withSubAgents([coordinator, researchAgent, analysisAgent])
 		.build();
 
-	const response = await runner.ask("Create a market analysis for electric vehicle charging stations. Break this into research and analysis stages, tracking progress through each step.");
+	const response = await runner.ask(
+		"Create a market analysis for electric vehicle charging stations. Break this into research and analysis stages, tracking progress through each step.",
+	);
 	console.log(`Response: ${response}\n`);
 }
 
@@ -161,7 +164,8 @@ async function demonstrateLangGraphStyleWorkflow() {
 	const complexityAnalyzer = new LlmAgent({
 		name: "complexity_analyzer",
 		description: "Analyzes task complexity",
-		instruction: "Analyze complexity and choose between simple or complex processing paths.",
+		instruction:
+			"Analyze complexity and choose between simple or complex processing paths.",
 		tools: [makeDecisionTool, workflowStateTool],
 		model: env.LLM_MODEL || "gemini-2.5-flash",
 	});
@@ -177,7 +181,8 @@ async function demonstrateLangGraphStyleWorkflow() {
 	const complexProcessor = new LlmAgent({
 		name: "complex_processor",
 		description: "Handles complex tasks",
-		instruction: "Handle complex tasks with detailed analysis and comprehensive solutions.",
+		instruction:
+			"Handle complex tasks with detailed analysis and comprehensive solutions.",
 		tools: [workflowStateTool],
 		model: env.LLM_MODEL || "gemini-2.5-flash",
 	});
@@ -222,7 +227,9 @@ async function demonstrateLangGraphStyleWorkflow() {
 		)
 		.build();
 
-	const response = await runner.ask("Create a customer onboarding system. Analyze complexity and route to appropriate processing.");
+	const response = await runner.ask(
+		"Create a customer onboarding system. Analyze complexity and route to appropriate processing.",
+	);
 	console.log(`Response: ${response}\n`);
 }
 
@@ -233,7 +240,8 @@ async function demonstrateErrorRecoveryWorkflow() {
 	const errorRecoveryAgent = new LlmAgent({
 		name: "error_recovery_coordinator",
 		description: "Manages error recovery and retry logic",
-		instruction: "Handle failures gracefully, assess errors, determine retry strategies, and escalate when needed.",
+		instruction:
+			"Handle failures gracefully, assess errors, determine retry strategies, and escalate when needed.",
 		tools: [workflowStateTool, makeDecisionTool],
 		model: env.LLM_MODEL || "gemini-2.5-flash",
 	});
@@ -242,18 +250,23 @@ async function demonstrateErrorRecoveryWorkflow() {
 	const resilientWorker = new LlmAgent({
 		name: "resilient_worker",
 		description: "A worker that demonstrates error scenarios and recovery",
-		instruction: "Simulate various failure scenarios and suggest recovery strategies when failures occur.",
+		instruction:
+			"Simulate various failure scenarios and suggest recovery strategies when failures occur.",
 		model: env.LLM_MODEL || "gemini-2.5-flash",
 	});
 
 	const { runner } = await AgentBuilder.create("error_recovery_orchestrator")
 		.withModel(env.LLM_MODEL || "gemini-2.5-flash")
 		.withDescription("Error recovery workflow orchestrator")
-		.withInstruction("Orchestrate error recovery workflows and coordinate retry strategies.")
+		.withInstruction(
+			"Orchestrate error recovery workflows and coordinate retry strategies.",
+		)
 		.withSubAgents([errorRecoveryAgent, resilientWorker])
 		.build();
 
-	const response = await runner.ask("Simulate processing customer data with potential failures. Show retry logic, alternative approaches, and escalation patterns.");
+	const response = await runner.ask(
+		"Simulate processing customer data with potential failures. Show retry logic, alternative approaches, and escalation patterns.",
+	);
 	console.log(`Response: ${response}\n`);
 }
 
