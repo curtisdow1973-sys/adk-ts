@@ -17,7 +17,11 @@ import type { BaseSessionService } from "../sessions/base-session-service";
 import type { BaseTool } from "../tools/base/base-tool";
 import { FunctionTool } from "../tools/function/function-tool";
 import type { ToolContext } from "../tools/tool-context";
-import { BaseAgent } from "./base-agent";
+import {
+	type AfterAgentCallback,
+	BaseAgent,
+	type BeforeAgentCallback,
+} from "./base-agent";
 import type { CallbackContext } from "./callback-context";
 import type { InvocationContext } from "./invocation-context";
 import type { ReadonlyContext } from "./readonly-context";
@@ -110,6 +114,21 @@ export interface LlmAgentConfig<T extends BaseLlm = BaseLlm> {
 	 * Description of the agent
 	 */
 	description: string;
+
+	/**
+	 * Sub-agents that this agent can delegate to
+	 */
+	subAgents?: BaseAgent[];
+
+	/**
+	 * Callback or list of callbacks to be invoked before the agent run
+	 */
+	beforeAgentCallback?: BeforeAgentCallback;
+
+	/**
+	 * Callback or list of callbacks to be invoked after the agent run
+	 */
+	afterAgentCallback?: AfterAgentCallback;
 
 	/**
 	 * The LLM model to use
@@ -352,6 +371,9 @@ export class LlmAgent<T extends BaseLlm = BaseLlm> extends BaseAgent {
 		super({
 			name: config.name,
 			description: config.description,
+			subAgents: config.subAgents,
+			beforeAgentCallback: config.beforeAgentCallback,
+			afterAgentCallback: config.afterAgentCallback,
 		});
 
 		this.model = config.model || "";
@@ -401,14 +423,16 @@ export class LlmAgent<T extends BaseLlm = BaseLlm> extends BaseAgent {
 
 		// find model from ancestors
 		let ancestorAgent = this.parentAgent;
-		while (ancestorAgent !== null) {
+		while (ancestorAgent !== null && ancestorAgent !== undefined) {
 			if (ancestorAgent instanceof LlmAgent) {
 				return ancestorAgent.canonicalModel;
 			}
 			ancestorAgent = ancestorAgent.parentAgent;
 		}
 
-		throw new Error(`No model found for ${this.name}.`);
+		throw new Error(
+			`No model found for agent "${this.name}". Please specify a model directly on this agent using the 'model' property`,
+		);
 	}
 
 	/**
