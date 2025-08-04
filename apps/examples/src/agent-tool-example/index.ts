@@ -39,7 +39,7 @@ async function main() {
 
 	const weatherAgent = new LlmAgent({
 		name: "weather_agent",
-		model: env.LLM_MODEL || "gemini-1.5-flash",
+		model: env.LLM_MODEL || "gemini-2.5-flash",
 		description:
 			"Weather specialist that provides detailed weather information and advice",
 		instruction: `You are a weather specialist. When someone asks about weather for a city, ALWAYS use the get_weather tool first to get the current conditions, then provide helpful advice based on those conditions.
@@ -56,11 +56,11 @@ async function main() {
 	});
 
 	const { runner } = await AgentBuilder.create("assistant")
-		.withModel(env.LLM_MODEL || "gemini-1.5-flash")
+		.withModel(env.LLM_MODEL || "gemini-2.5-flash")
 		.withDescription("Assistant with access to weather specialist")
 		.withInstruction(`You are an assistant. You have access to:
 		- get_weather_info: A weather specialist that provides detailed weather information and advice
-		
+
 		For ANY weather-related question, use the get_weather_info tool. The weather agent inside will get current conditions and provide helpful advice.`)
 		.withTools(weatherHelperTool)
 		.build();
