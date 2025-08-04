@@ -14,6 +14,7 @@ import * as envs from "./utils/envs";
 
 // Import ts-node programmatically to register TypeScript support
 import { register } from "ts-node";
+import { createRequire } from "node:module";
 
 interface InputFile {
 	state: Record<string, any>;
@@ -132,8 +133,8 @@ export async function runInteractively(
 				session.userId,
 				{},
 			);
-			session.id = newSession.id;
-			session.state = newSession.state;
+			// Replace session properties entirely
+			Object.assign(session, newSession);
 			console.log(chalk.yellow.bold("🧹 Session cleared!"));
 			console.log("");
 			continue;
@@ -179,11 +180,15 @@ export async function runInteractively(
 export async function loadAgentFromFile(
 	agentFilePath: string,
 ): Promise<LlmAgent> {
+	// Create require function for ESM compatibility
+	const require = createRequire(import.meta.url);
+
 	// Register TypeScript support
 	register({
 		compilerOptions: {
-			module: "commonjs",
+			module: "es2020",
 			target: "es2020",
+			moduleResolution: "node",
 			esModuleInterop: true,
 			allowSyntheticDefaultImports: true,
 			skipLibCheck: true,
@@ -192,24 +197,63 @@ export async function loadAgentFromFile(
 	});
 
 	// Clear require cache
-	delete require.cache[require.resolve(agentFilePath)];
+	const resolvedPath = require.resolve(agentFilePath);
+	delete require.cache[resolvedPath];
 
 	try {
 		const agentModule = require(agentFilePath);
 
-		// Try to find the agent in various export patterns
 		let agent: LlmAgent | undefined;
 
-		if (agentModule.rootAgent) {
+		// Pattern 1: Direct LlmAgent exports
+		if (agentModule.rootAgent && agentModule.rootAgent instanceof LlmAgent) {
 			agent = agentModule.rootAgent;
-		} else if (agentModule.agent) {
+		} else if (agentModule.agent && agentModule.agent instanceof LlmAgent) {
 			agent = agentModule.agent;
-		} else if (agentModule.default) {
+		} else if (agentModule.default && agentModule.default instanceof LlmAgent) {
 			agent = agentModule.default;
-		} else {
-			// Try to find any LlmAgent export
+		}
+
+		// Pattern 2: AgentBuilder exports
+		else if (
+			agentModule.rootAgent &&
+			typeof agentModule.rootAgent?.build === "function"
+		) {
+			const { agent: builtAgent } = await agentModule.rootAgent.build();
+			agent = builtAgent;
+		} else if (
+			agentModule.agent &&
+			typeof agentModule.agent?.build === "function"
+		) {
+			const { agent: builtAgent } = await agentModule.agent.build();
+			agent = builtAgent;
+		} else if (
+			agentModule.default &&
+			typeof agentModule.default?.build === "function"
+		) {
+			const { agent: builtAgent } = await agentModule.default.build();
+			agent = builtAgent;
+		}
+
+		// Pattern 3: Function that returns AgentBuilder
+		else if (typeof agentModule.createAgent === "function") {
+			const builder = agentModule.createAgent();
+			if (typeof builder?.build === "function") {
+				const { agent: builtAgent } = await builder.build();
+				agent = builtAgent;
+			}
+		}
+
+		// Pattern 4: Search for any AgentBuilder in exports
+		else {
 			for (const key in agentModule) {
 				const exported = agentModule[key];
+				if (exported && typeof exported?.build === "function") {
+					const { agent: builtAgent } = await exported.build();
+					agent = builtAgent;
+					break;
+				}
+				// Fallback to LlmAgent check
 				if (
 					exported &&
 					typeof exported === "object" &&
@@ -223,11 +267,11 @@ export async function loadAgentFromFile(
 
 		if (!agent) {
 			throw new Error(
-				"No agent found in the file. Please export an agent as 'rootAgent', 'agent', or default export.",
+				"No agent found in the file. Please export an agent as 'rootAgent', 'agent', AgentBuilder instance, or default export.",
 			);
 		}
 
-		// Check if agent is an LlmAgent instance or has LlmAgent constructor
+		// Verify it's an LlmAgent
 		const isLlmAgent =
 			agent instanceof LlmAgent ||
 			(agent &&
@@ -235,7 +279,9 @@ export async function loadAgentFromFile(
 				(agent as any).constructor?.name === "LlmAgent");
 
 		if (!isLlmAgent) {
-			throw new Error("Exported agent must be an instance of LlmAgent");
+			throw new Error(
+				"Agent must be an instance of LlmAgent (either direct or built from AgentBuilder)",
+			);
 		}
 
 		return agent;
@@ -297,7 +343,7 @@ export async function runCli(options: {
 	if (inputPath) {
 		// Run with input file
 		await runInputFile(
-			agentFolderName,
+			rootAgent.name,
 			"user",
 			rootAgent,
 			sessionService,
@@ -306,7 +352,7 @@ export async function runCli(options: {
 	} else {
 		// Run interactively
 		const session = await sessionService.createSession(
-			agentFolderName,
+			rootAgent.name,
 			"user",
 			{},
 		);
