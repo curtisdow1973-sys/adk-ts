@@ -68,7 +68,19 @@ export class TelemetryService {
 		this.sdk = new NodeSDK({
 			resource,
 			traceExporter,
-			instrumentations: [getNodeAutoInstrumentations()],
+			instrumentations: [
+				getNodeAutoInstrumentations({
+					// Follow Python ADK approach: let all HTTP instrumentation through.
+					// This provides transparency and aligns with standard OpenTelemetry behavior.
+					// High-level LLM tracing is provided through dedicated ADK spans.
+					"@opentelemetry/instrumentation-http": {
+						ignoreIncomingRequestHook: (req) => {
+							// Ignore incoming requests (we're usually making outgoing calls)
+							return true;
+						},
+					},
+				}),
+			],
 		});
 
 		try {
@@ -244,6 +256,16 @@ export class TelemetryService {
 			"adk.llm_request": this._safeJsonStringify(requestData),
 			"adk.llm_response": this._safeJsonStringify(llmResponse),
 		});
+
+		// Add token usage information (matching Python implementation)
+		if (llmResponse.usageMetadata) {
+			span.setAttributes({
+				"gen_ai.usage.input_tokens":
+					llmResponse.usageMetadata.promptTokenCount || 0,
+				"gen_ai.usage.output_tokens":
+					llmResponse.usageMetadata.candidatesTokenCount || 0,
+			});
+		}
 
 		// Add input/output as events (preferred over deprecated attributes)
 		span.addEvent("gen_ai.content.prompt", {
