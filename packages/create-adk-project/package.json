@@ -1,11 +1,12 @@
 {
 	"name": "create-adk-project",
 	"version": "1.0.3",
-	"description": "CLI tool to create ADK TypeScript projects with different frameworks",
+	"description": "CLI tool to create ADK TypeScript projects and run agents with web/API interfaces",
 	"main": "dist/index.js",
 	"types": "dist/index.d.ts",
 	"type": "module",
 	"bin": {
+		"adk": "dist/index.js",
 		"create-adk-project": "dist/index.js"
 	},
 	"scripts": {
@@ -17,18 +18,36 @@
 		"type": "git",
 		"url": "https://github.com/IQAIcom/adk-ts.git"
 	},
-	"keywords": ["ai", "llm", "agent", "cli", "typescript", "create-project"],
+	"keywords": [
+		"ai",
+		"llm",
+		"agent",
+		"cli",
+		"typescript",
+		"create-project"
+	],
 	"author": "IQAI",
 	"license": "MIT",
 	"dependencies": {
 		"@clack/prompts": "^0.7.0",
-		"giget": "^1.2.3",
+		"@google/genai": "^1.6.0",
+		"@iqai/adk": "workspace:*",
 		"chalk": "^5.4.1",
-		"dedent": "^1.6.0"
+		"cors": "^2.8.5",
+		"dedent": "^1.6.0",
+		"dotenv": "^16.5.0",
+		"express": "^4.21.2",
+		"giget": "^1.2.3",
+		"socket.io": "^4.8.1",
+		"ts-node": "^10.9.2",
+		"typescript": "^5.3.2"
 	},
 	"devDependencies": {
 		"@iqai/tsconfig": "workspace:*",
+		"@types/cors": "^2.8.19",
+		"@types/express": "^4.17.21",
 		"@types/node": "^20.17.30",
+		"@types/socket.io": "^3.0.2",
 		"tsup": "^8.4.0",
 		"typescript": "^5.3.2",
 		"vitest": "^3.1.3"
