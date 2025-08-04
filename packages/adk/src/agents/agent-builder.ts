@@ -12,7 +12,11 @@ import type { BaseSessionService } from "../sessions/base-session-service.js";
 import { InMemorySessionService } from "../sessions/in-memory-session-service.js";
 import type { Session } from "../sessions/session.js";
 import type { BaseTool } from "../tools/base/base-tool.js";
-import type { BaseAgent } from "./base-agent.js";
+import type {
+	AfterAgentCallback,
+	BaseAgent,
+	BeforeAgentCallback,
+} from "./base-agent.js";
 import { LangGraphAgent, type LangGraphNode } from "./lang-graph-agent.js";
 import { LlmAgent } from "./llm-agent.js";
 import { LoopAgent } from "./loop-agent.js";
@@ -31,10 +35,14 @@ export interface AgentBuilderConfig {
 	planner?: BasePlanner;
 	codeExecutor?: BaseCodeExecutor;
 	subAgents?: BaseAgent[];
+	beforeAgentCallback?: BeforeAgentCallback;
+	afterAgentCallback?: AfterAgentCallback;
 	maxIterations?: number;
 	nodes?: LangGraphNode[];
 	rootNode?: string;
 	outputKey?: string;
+	inputSchema?: import("zod").ZodSchema;
+	outputSchema?: import("zod").ZodSchema;
 }
 
 /**
@@ -43,15 +51,8 @@ export interface AgentBuilderConfig {
 export interface SessionOptions {
 	userId?: string;
 	appName?: string;
-}
-
-/**
- * Internal session configuration for the AgentBuilder
- */
-interface InternalSessionConfig {
-	service: BaseSessionService;
-	userId: string;
-	appName: string;
+	state?: Record<string, any>;
+	sessionId?: string;
 }
 
 /**
@@ -71,21 +72,22 @@ export interface FullMessage extends Content {
 /**
  * Enhanced runner interface with simplified API
  */
-export interface EnhancedRunner {
-	ask(message: string | FullMessage | LlmRequest): Promise<string>;
+export interface EnhancedRunner<T = string> {
+	ask(message: string | FullMessage | LlmRequest): Promise<T>;
 	runAsync(params: {
 		userId: string;
 		sessionId: string;
 		newMessage: FullMessage;
 	}): AsyncIterable<Event>;
+	__outputSchema?: import("zod").ZodSchema;
 }
 
 /**
  * Built agent result containing the agent and runner/session
  */
-export interface BuiltAgent {
+export interface BuiltAgent<T = string> {
 	agent: BaseAgent;
-	runner: EnhancedRunner;
+	runner: EnhancedRunner<T>;
 	session: Session;
 }
 
@@ -98,6 +100,15 @@ export type AgentType =
 	| "parallel"
 	| "loop"
 	| "langgraph";
+
+/**
+ * AgentBuilder with typed output schema
+ */
+export interface AgentBuilderWithSchema<T> extends Omit<AgentBuilder, 'build' | 'ask'> {
+	build(): Promise<BuiltAgent<T>>;
+	buildWithSchema<U = T>(): Promise<BuiltAgent<U>>;
+	ask(message: string | FullMessage): Promise<T>;
+}
 
 /**
  * Configuration for creating a Runner instance
@@ -156,7 +167,8 @@ interface RunnerConfig {
  */
 export class AgentBuilder {
 	private config: AgentBuilderConfig;
-	private sessionConfig?: InternalSessionConfig;
+	private sessionService?: BaseSessionService;
+	private sessionOptions?: SessionOptions;
 	private memoryService?: BaseMemoryService;
 	private artifactService?: BaseArtifactService;
 	private agentType: AgentType = "llm";
@@ -217,6 +229,16 @@ export class AgentBuilder {
 		return this;
 	}
 
+	withInputSchema(schema: import("zod").ZodSchema): this {
+		this.config.inputSchema = schema;
+		return this;
+	}
+
+	withOutputSchema<T>(schema: import("zod").ZodType<T>): AgentBuilderWithSchema<T> {
+		this.config.outputSchema = schema;
+		return this as unknown as AgentBuilderWithSchema<T>;
+	}
+
 	/**
 	 * Add tools to the agent
 	 * @param tools Tools to add to the agent
@@ -254,6 +276,36 @@ export class AgentBuilder {
 	 */
 	withOutputKey(outputKey: string): this {
 		this.config.outputKey = outputKey;
+		return this;
+	}
+
+	/**
+	 * Add sub-agents to the agent
+	 * @param subAgents Sub-agents to add to the agent
+	 * @returns This builder instance for chaining
+	 */
+	withSubAgents(subAgents: BaseAgent[]): this {
+		this.config.subAgents = subAgents;
+		return this;
+	}
+
+	/**
+	 * Set the before agent callback
+	 * @param callback Callback to invoke before agent execution
+	 * @returns This builder instance for chaining
+	 */
+	withBeforeAgentCallback(callback: BeforeAgentCallback): this {
+		this.config.beforeAgentCallback = callback;
+		return this;
+	}
+
+	/**
+	 * Set the after agent callback
+	 * @param callback Callback to invoke after agent execution
+	 * @returns This builder instance for chaining
+	 */
+	withAfterAgentCallback(callback: AfterAgentCallback): this {
+		this.config.afterAgentCallback = callback;
 		return this;
 	}
 
@@ -315,10 +367,12 @@ export class AgentBuilder {
 		service: BaseSessionService,
 		options: SessionOptions = {},
 	): this {
-		this.sessionConfig = {
-			service,
+		this.sessionService = service;
+		this.sessionOptions = {
 			userId: options.userId || this.generateDefaultUserId(),
 			appName: options.appName || this.generateDefaultAppName(),
+			state: options.state,
+			sessionId: options.sessionId,
 		};
 		return this;
 	}
@@ -331,18 +385,20 @@ export class AgentBuilder {
 	 */
 	withSession(session: Session): this {
 		// Require that withSessionService() was called first
-		if (!this.sessionConfig?.service) {
+		if (!this.sessionService) {
 			throw new Error(
 				"Session service must be configured before using withSession(). " +
 					"Call withSessionService() first, or use withQuickSession() for in-memory sessions.",
 			);
 		}
 
-		// Use the existing session service that was already configured
-		this.sessionConfig = {
-			service: this.sessionConfig.service,
+		// Update session options with the session details
+		this.sessionOptions = {
+			...this.sessionOptions,
 			userId: session.userId,
 			appName: session.appName,
+			sessionId: session.id,
+			state: session.state,
 		};
 
 		// Store the existing session to use directly in build()
@@ -384,31 +440,33 @@ export class AgentBuilder {
 	 * Build the agent and optionally create runner and session
 	 * @returns Built agent with optional runner and session
 	 */
-	async build(): Promise<BuiltAgent> {
+	async build<T = string>(): Promise<BuiltAgent<T>> {
 		const agent = this.createAgent();
-		let runner: EnhancedRunner | undefined;
+		let runner: EnhancedRunner<T> | undefined;
 		let session: Session | undefined;
 
-		// If no session config is provided, create a default in-memory session
-		if (!this.sessionConfig) {
+		// If no session service is provided, create a default in-memory session
+		if (!this.sessionService) {
 			this.withQuickSession();
 		}
 
-		if (this.sessionConfig) {
+		if (this.sessionService && this.sessionOptions) {
 			// Use existing session if provided, otherwise create a new one
 			if (this.existingSession) {
 				session = this.existingSession;
 			} else {
-				session = await this.sessionConfig.service.createSession(
-					this.sessionConfig.appName,
-					this.sessionConfig.userId,
+				session = await this.sessionService.createSession(
+					this.sessionOptions.appName!,
+					this.sessionOptions.userId!,
+					this.sessionOptions.state,
+					this.sessionOptions.sessionId,
 				);
 			}
 
 			const runnerConfig: RunnerConfig = {
-				appName: this.sessionConfig.appName,
+				appName: this.sessionOptions.appName!,
 				agent,
-				sessionService: this.sessionConfig.service,
+				sessionService: this.sessionService,
 				memoryService: this.memoryService,
 				artifactService: this.artifactService,
 			};
@@ -416,10 +474,19 @@ export class AgentBuilder {
 			const baseRunner = new Runner(runnerConfig);
 
 			// Create enhanced runner with simplified API
-			runner = this.createEnhancedRunner(baseRunner, session);
+			runner = this.createEnhancedRunner<T>(baseRunner, session);
 		}
 
-		return { agent, runner, session };
+		return { agent, runner, session } as BuiltAgent<T>;
+	}
+
+	/**
+	 * Type-safe build method for agents with output schemas
+	 * Provides better type inference for the ask method return type
+	 */
+	async buildWithSchema<T>(): Promise<BuiltAgent<T>> {
+		const result = await this.build();
+		return result as BuiltAgent<T>;
 	}
 
 	/**
@@ -453,10 +520,15 @@ export class AgentBuilder {
 					tools: this.config.tools,
 					planner: this.config.planner,
 					codeExecutor: this.config.codeExecutor,
+					subAgents: this.config.subAgents,
+					beforeAgentCallback: this.config.beforeAgentCallback,
+					afterAgentCallback: this.config.afterAgentCallback,
 					memoryService: this.memoryService,
 					artifactService: this.artifactService,
 					outputKey: this.config.outputKey,
-					sessionService: this.sessionConfig?.service,
+					sessionService: this.sessionService,
+					inputSchema: this.config.inputSchema,
+					outputSchema: this.config.outputSchema,
 				});
 			}
 			case "sequential":
@@ -539,19 +611,21 @@ export class AgentBuilder {
 	}
 
 	/**
-	 * Create enhanced runner with simplified API
+	 * Create enhanced runner with simplified API and proper typing
 	 * @param baseRunner The base runner instance
 	 * @param session The session instance
 	 * @returns Enhanced runner with simplified API
 	 */
-	private createEnhancedRunner(
+	private createEnhancedRunner<T>(
 		baseRunner: Runner,
 		session: Session,
-	): EnhancedRunner {
-		const sessionConfig = this.sessionConfig; // Capture sessionConfig in closure
+	): EnhancedRunner<T> {
+		const sessionOptions = this.sessionOptions; // Capture sessionOptions in closure
+		const outputSchema = this.config.outputSchema;
 
 		return {
-			async ask(message: string | FullMessage | LlmRequest): Promise<string> {
+			__outputSchema: outputSchema,
+			async ask(message: string | FullMessage | LlmRequest): Promise<T> {
 				const newMessage: FullMessage =
 					typeof message === "string"
 						? { parts: [{ text: message }] }
@@ -560,12 +634,12 @@ export class AgentBuilder {
 							: message;
 				let response = "";
 
-				if (!sessionConfig) {
+				if (!sessionOptions?.userId) {
 					throw new Error("Session configuration is required");
 				}
 
 				for await (const event of baseRunner.runAsync({
-					userId: sessionConfig.userId,
+					userId: sessionOptions.userId,
 					sessionId: session.id,
 					newMessage,
 				})) {
@@ -584,7 +658,24 @@ export class AgentBuilder {
 					}
 				}
 
-				return response.trim();
+				// If we have an output schema, the response should already be validated by the processor
+				// and formatted as JSON. Try to parse it, otherwise return the raw response.
+				if (outputSchema) {
+					try {
+						const parsed = JSON.parse(response);
+						return outputSchema.parse(parsed) as T;
+					} catch (parseError) {
+						// If parsing fails, try to validate the raw response
+						try {
+							return outputSchema.parse(response) as T;
+						} catch (validationError) {
+							// If both fail, return the raw response as type T (casting)
+							return response.trim() as T;
+						}
+					}
+				}
+
+				return response.trim() as T;
 			},
 
 			runAsync(params: {

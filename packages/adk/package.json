@@ -1,6 +1,6 @@
 {
 	"name": "@iqai/adk",
-	"version": "0.1.13",
+	"version": "0.1.21",
 	"description": "Agent Development Kit for TypeScript with multi-provider LLM support",
 	"main": "dist/index.js",
 	"types": "dist/index.d.ts",
@@ -61,7 +61,8 @@
 		"socket.io": "^4.8.1",
 		"ts-node": "^10.9.2",
 		"uuid": "^11.1.0",
-		"zod": "^3.25.67"
+		"zod": "^3.25.67",
+		"zod-to-json-schema": "^3.24.6"
 	},
 	"peerDependencies": {
 		"better-sqlite3": "^11.10.0",

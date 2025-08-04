@@ -256,6 +256,9 @@ importers:
       zod:
         specifier: ^3.25.67
         version: 3.25.71
+      zod-to-json-schema:
+        specifier: ^3.24.6
+        version: 3.24.6(zod@3.25.71)
     devDependencies:
       '@iqai/tsconfig':
         specifier: workspace:*

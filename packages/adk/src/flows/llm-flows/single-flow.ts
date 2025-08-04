@@ -12,6 +12,8 @@ import {
 	requestProcessor as nlPlanningRequestProcessor,
 	responseProcessor as nlPlanningResponseProcessor,
 } from "./nl-planning";
+import { responseProcessor as outputSchemaResponseProcessor } from "./output-schema";
+import { sharedMemoryRequestProcessor } from "./shared-memory";
 
 /**
  * SingleFlow is the LLM flow that handles tool calls.
@@ -35,6 +37,7 @@ export class SingleFlow extends BaseLlmFlow {
 			instructionsRequestProcessor,
 			identityRequestProcessor,
 			contentRequestProcessor,
+			sharedMemoryRequestProcessor,
 			// Some implementations of NL Planning mark planning contents as thoughts
 			// in the post processor. Since these need to be unmarked, NL Planning
 			// should be after contents.
@@ -47,7 +50,8 @@ export class SingleFlow extends BaseLlmFlow {
 		// Add response processors
 		this.responseProcessors.push(
 			nlPlanningResponseProcessor, // Phase 5: NL Planning
-			codeExecutionResponseProcessor, // Phase 5: Code Execution (placeholder)
+			outputSchemaResponseProcessor, // Phase 6: Output Schema validation and parsing - validates response against agent's output schema
+			codeExecutionResponseProcessor, // Phase 7: Code Execution (placeholder)
 		);
 
 		this.logger.debug("SingleFlow initialized with processors");
