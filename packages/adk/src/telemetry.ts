@@ -2,6 +2,7 @@ import {
 	DiagConsoleLogger,
 	DiagLogLevel,
 	type Tracer,
+	context,
 	diag,
 	trace,
 } from "@opentelemetry/api";
@@ -262,10 +263,18 @@ export class TelemetryService {
 		generator: AsyncGenerator<T, void, unknown>,
 	): AsyncGenerator<T, void, unknown> {
 		const span = this.tracer.startSpan(spanName);
+		const spanContext = trace.setSpan(context.active(), span);
 
 		try {
-			for await (const item of generator) {
-				yield item;
+			// Execute each iteration within the span context
+			while (true) {
+				const result = await context.with(spanContext, () => generator.next());
+
+				if (result.done) {
+					break;
+				}
+
+				yield result.value as T;
 			}
 		} catch (error) {
 			span.recordException(error as Error);
