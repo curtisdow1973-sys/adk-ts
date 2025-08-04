@@ -91,6 +91,8 @@ async function main() {
 			"\n 💡 Check your Langfuse dashboard to see traces, tool usage, and metrics",
 		);
 	}
+
+	telemetryService.shutdown();
 }
 
 main().catch(console.error);
