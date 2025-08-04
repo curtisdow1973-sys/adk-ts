@@ -2,13 +2,16 @@ import express, { type Request, type Response } from "express";
 import http from "node:http";
 import fs from "node:fs";
 import path from "node:path";
+import { fileURLToPath } from "node:url";
 import cors from "cors";
 import { InMemorySessionService } from "@iqai/adk";
 import { Runner } from "@iqai/adk";
-import { BaseAgent } from "@iqai/adk";
 import type { Content, Part } from "@google/genai";
 import { loadDotenvForAgent } from "./utils";
 import { loadAgentFromFile } from "./operations";
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
 
 /**
  * Checks if a directory is a valid agent directory (contains agent.ts or index.ts)
