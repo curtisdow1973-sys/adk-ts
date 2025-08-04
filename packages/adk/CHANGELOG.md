@@ -1,5 +1,12 @@
 # @iqai/adk
 
+## 0.1.21
+
+### Patch Changes
+
+- 22c1cc6: Adds support for input and output schemas for agents, now output schema would update the instruction with the given schema to ristrict model into giving the desired output and validates it before producing output. Agent builder is wired to provide better type inference of the schema given by withOutputSchema
+- f141bc0: Improves error handling for missing models in workflows
+
 ## 0.1.20
 
 ### Patch Changes
