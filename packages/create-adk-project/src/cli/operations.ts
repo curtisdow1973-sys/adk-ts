@@ -206,11 +206,26 @@ export async function loadAgentFromFile(
 		let agent: LlmAgent | undefined;
 
 		// Pattern 1: Direct LlmAgent exports
-		if (agentModule.rootAgent && agentModule.rootAgent instanceof LlmAgent) {
+		if (
+			agentModule.rootAgent &&
+			(agentModule.rootAgent instanceof LlmAgent ||
+				agentModule.rootAgent.constructor?.name === "LlmAgent" ||
+				agentModule.rootAgent.constructor?.name === "_LlmAgent")
+		) {
 			agent = agentModule.rootAgent;
-		} else if (agentModule.agent && agentModule.agent instanceof LlmAgent) {
+		} else if (
+			agentModule.agent &&
+			(agentModule.agent instanceof LlmAgent ||
+				agentModule.agent.constructor?.name === "LlmAgent" ||
+				agentModule.agent.constructor?.name === "_LlmAgent")
+		) {
 			agent = agentModule.agent;
-		} else if (agentModule.default && agentModule.default instanceof LlmAgent) {
+		} else if (
+			agentModule.default &&
+			(agentModule.default instanceof LlmAgent ||
+				agentModule.default.constructor?.name === "LlmAgent" ||
+				agentModule.default.constructor?.name === "_LlmAgent")
+		) {
 			agent = agentModule.default;
 		}
 
