@@ -192,6 +192,17 @@ export class TelemetryService {
 			"gen_ai.tool.description": tool.description,
 			"gen_ai.tool.call.id": toolCallId,
 
+			// Session and user tracking
+			...(invocationContext && {
+				"session.id": invocationContext.session.id,
+				"user.id": invocationContext.userId,
+			}),
+
+			// Environment
+			...(process.env.NODE_ENV && {
+				"deployment.environment.name": process.env.NODE_ENV,
+			}),
+
 			// ADK-specific attributes (matching Python namespace pattern)
 			"adk.tool_call_args": this._safeJsonStringify(args),
 			"adk.event_id": functionResponseEvent.invocationId,
@@ -221,6 +232,23 @@ export class TelemetryService {
 			// Standard OpenTelemetry attributes (following Python pattern)
 			"gen_ai.system": "iqai-adk",
 			"gen_ai.request.model": llmRequest.model,
+
+			// Session and user tracking (maps to Langfuse sessionId, userId)
+			"session.id": invocationContext.session.id,
+			"user.id": invocationContext.userId,
+
+			// Environment (maps to Langfuse environment)
+			...(process.env.NODE_ENV && {
+				"deployment.environment.name": process.env.NODE_ENV,
+			}),
+
+			// Model parameters (maps to Langfuse modelParameters)
+			"gen_ai.request.max_tokens": llmRequest.config.maxOutputTokens || 0,
+			"gen_ai.request.temperature": llmRequest.config.temperature || 0,
+			"gen_ai.request.top_p": llmRequest.config.topP || 0,
+
+			"adk.system_name": "iqai-adk",
+			"adk.request_model": llmRequest.model,
 
 			// ADK-specific attributes (matching Python namespace pattern)
 			"adk.invocation_id": invocationContext.invocationId,
