@@ -280,57 +280,6 @@ export class TelemetryService {
 		}
 	}
 
-	/**
-	 * Traces tool execution by creating a dedicated span for the tool call.
-	 * This creates a separate "execute_tool {tool_name}" span that shows up in traces,
-	 * matching the Python ADK behavior.
-	 */
-	async traceToolExecution<T>(
-		tool: BaseTool,
-		args: Record<string, any>,
-		toolContext: ToolContext,
-		executeFunction: () => Promise<T>,
-	): Promise<T> {
-		const spanName = `execute_tool ${tool.name}`;
-		const span = this.tracer.startSpan(spanName);
-		const spanContext = trace.setSpan(context.active(), span);
-
-		// Set span attributes (following Python ADK pattern)
-		span.setAttributes({
-			"gen_ai.system": "iqai-adk",
-			"gen_ai.operation.name": "execute_tool",
-			"gen_ai.tool.name": tool.name,
-			"gen_ai.tool.description": tool.description,
-			"gen_ai.tool.call.id": toolContext.functionCallId || "<not specified>",
-
-			// ADK-specific attributes (matching Python namespace pattern)
-			"adk.tool_call_args": this._safeJsonStringify(args),
-			"adk.event_id": "", // Will be set when we have the response event
-			"adk.tool_response": "", // Will be set in the result logging
-			"adk.llm_request": "{}",
-			"adk.llm_response": "{}",
-		});
-
-		try {
-			// Execute tool within the span context
-			const result = await context.with(spanContext, executeFunction);
-
-			// Log tool output/result
-			span.addEvent("tool.executed", {
-				"tool.result": this._safeJsonStringify(result),
-			});
-
-			span.setStatus({ code: 1 }); // OK
-			return result;
-		} catch (error) {
-			span.recordException(error as Error);
-			span.setStatus({ code: 2, message: (error as Error).message });
-			throw error;
-		} finally {
-			span.end();
-		}
-	}
-
 	// --- Private Helper Methods ---
 
 	private _safeJsonStringify(obj: any): string {
