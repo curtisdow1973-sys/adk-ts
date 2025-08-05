@@ -69,8 +69,14 @@ export class LocalEvalService extends BaseEvalService {
 
 		const resultsByCase = new Map<string, Invocation[]>();
 		for (const result of inferenceResults) {
-			const evalId = result[0].invocationId?.split("-")[0];
-			if (!evalId) continue;
+			const invocationId = result[0].invocationId;
+			if (!invocationId) continue;
+
+			const lastHyphenIndex = invocationId.lastIndexOf("-");
+			const evalId =
+				lastHyphenIndex !== -1
+					? invocationId.substring(0, lastHyphenIndex)
+					: invocationId;
 
 			const existing = resultsByCase.get(evalId) || [];
 			resultsByCase.set(evalId, [...existing, ...result]);

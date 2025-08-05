@@ -156,19 +156,34 @@ export class ResponseEvaluator extends Evaluator {
 		const actualText = this.extractText(actual);
 		const expectedText = this.extractText(expected);
 
-		if (!actualText || !expectedText) {
+		if (!actualText.trim() || !expectedText.trim()) {
 			return 0;
 		}
 
-		const actualWords = new Set(actualText.toLowerCase().split(/\s+/));
-		const expectedWords = new Set(expectedText.toLowerCase().split(/\s+/));
+		const actualTokens = this.tokenizeText(actualText);
+		const expectedTokens = this.tokenizeText(expectedText);
 
-		const intersection = new Set(
-			[...actualWords].filter((x) => expectedWords.has(x)),
+		const actualUnigrams = new Set(actualTokens);
+		const expectedUnigrams = new Set(expectedTokens);
+
+		const commonUnigrams = new Set(
+			[...actualUnigrams].filter((token) => expectedUnigrams.has(token)),
 		);
-		const union = new Set([...actualWords, ...expectedWords]);
 
-		return union.size > 0 ? intersection.size / union.size : 0;
+		const precision =
+			actualUnigrams.size > 0 ? commonUnigrams.size / actualUnigrams.size : 0;
+
+		const recall =
+			expectedUnigrams.size > 0
+				? commonUnigrams.size / expectedUnigrams.size
+				: 0;
+
+		const fmeasure =
+			precision + recall > 0
+				? (2 * precision * recall) / (precision + recall)
+				: 0;
+
+		return fmeasure;
 	}
 
 	private extractText(content: Content): string {
@@ -179,5 +194,13 @@ export class ResponseEvaluator extends Evaluator {
 				.join(" ");
 		}
 		return "";
+	}
+
+	private tokenizeText(text: string): string[] {
+		return text
+			.toLowerCase()
+			.replace(/[^\w\s]/g, " ")
+			.split(/\s+/)
+			.filter((token) => token.length > 0);
 	}
 }
