@@ -115,7 +115,9 @@ export class AgentEvaluator {
 
 		if (failures.length > 0) {
 			throw new Error(
-				`Following are all the test failures. If you looking to get more details on the failures, then please re-run this test with \`printDetailedResults\` set to \`true\`.\n${failures.join("\n")}`,
+				`Following are all the test failures. If you looking to get more details on the failures, then please re-run this test with \`printDetailedResults\` set to \`true\`.\n${failures.join(
+					"\n",
+				)}`,
 			);
 		}
 	}
@@ -303,11 +305,9 @@ export class AgentEvaluator {
 			const content = await fs.readFile(initialSessionFile, "utf-8");
 			return JSON.parse(content);
 		} catch (error) {
-			console.warn(
-				`Failed to load initial session from ${initialSessionFile}:`,
-				error,
+			throw new Error(
+				`Failed to load initial session from ${initialSessionFile}: ${error}`,
 			);
-			return {};
 		}
 	}
 
@@ -352,7 +352,9 @@ export class AgentEvaluator {
 		const firstQuery = sample[0];
 		if (typeof firstQuery !== "object") {
 			throw new Error(
-				`Each evaluation dataset sample must be list of dictionary. But it's ${JSON.stringify(evalDataset)}`,
+				`Each evaluation dataset sample must be list of dictionary. But it's ${JSON.stringify(
+					evalDataset,
+				)}`,
 			);
 		}
 
