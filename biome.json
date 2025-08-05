@@ -32,7 +32,8 @@
 			},
 			"complexity": {
 				"noForEach": "off",
-				"noStaticOnlyClass": "off"
+				"noStaticOnlyClass": "off",
+				"noThisInStatic": "off"
 			},
 			"style": {
 				"noNonNullAssertion": "off"
