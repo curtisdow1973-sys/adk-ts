@@ -104,7 +104,8 @@ export type AgentType =
 /**
  * AgentBuilder with typed output schema
  */
-export interface AgentBuilderWithSchema<T> extends Omit<AgentBuilder, 'build' | 'ask'> {
+export interface AgentBuilderWithSchema<T>
+	extends Omit<AgentBuilder, "build" | "ask"> {
 	build(): Promise<BuiltAgent<T>>;
 	buildWithSchema<U = T>(): Promise<BuiltAgent<U>>;
 	ask(message: string | FullMessage): Promise<T>;
@@ -234,7 +235,9 @@ export class AgentBuilder {
 		return this;
 	}
 
-	withOutputSchema<T>(schema: import("zod").ZodType<T>): AgentBuilderWithSchema<T> {
+	withOutputSchema<T>(
+		schema: import("zod").ZodType<T>,
+	): AgentBuilderWithSchema<T> {
 		this.config.outputSchema = schema;
 		return this as unknown as AgentBuilderWithSchema<T>;
 	}
