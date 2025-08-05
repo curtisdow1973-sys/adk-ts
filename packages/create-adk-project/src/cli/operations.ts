@@ -276,7 +276,8 @@ export async function loadAgentFromFile(
 			agent instanceof LlmAgent ||
 			(agent &&
 				typeof agent === "object" &&
-				(agent as any).constructor?.name === "LlmAgent");
+				((agent as any).constructor?.name === "LlmAgent" ||
+					(agent as any).constructor?.name === "_LlmAgent"));
 
 		if (!isLlmAgent) {
 			throw new Error(
