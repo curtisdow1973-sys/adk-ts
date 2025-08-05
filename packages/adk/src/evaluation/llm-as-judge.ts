@@ -32,7 +32,6 @@ export class LlmAsJudge {
 				const label = critiqueParser(response.text);
 				if (label !== Label.NOT_FOUND) {
 					samples.push(label);
-					samples.push(label);
 				}
 			} catch (error) {
 				console.error("Error sampling judge model:", error);

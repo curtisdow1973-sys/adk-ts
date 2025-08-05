@@ -104,10 +104,10 @@ function getEvalStatus(score: number, threshold: number): EvalStatus {
 	return score >= threshold ? EvalStatus.PASSED : EvalStatus.FAILED;
 }
 
-async function calculateRouge1Scores(
+function calculateRouge1Scores(
 	response: string,
 	reference: string,
-): Promise<RougeScores> {
+): RougeScores {
 	if (!response.trim() || !reference.trim()) {
 		return { precision: 0, recall: 0, fmeasure: 0 };
 	}
