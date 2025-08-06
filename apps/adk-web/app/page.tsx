@@ -37,7 +37,7 @@ function HomeContent() {
 	if (!apiUrl) {
 		return (
 			<ErrorState
-				title="ADK Agent Testing Interface"
+				title="ADK-TS Web"
 				message="This interface needs to be launched from the ADK CLI. Run adk web to start."
 			/>
 		);
@@ -46,7 +46,7 @@ function HomeContent() {
 	if (!connected || error) {
 		return (
 			<ErrorState
-				title="ADK Agent Testing Interface"
+				title="ADK-TS Web"
 				message={`Failed to connect to ADK server at ${apiUrl}. Make sure the server is running.`}
 				actionLabel="Retry Connection"
 				onAction={refreshAgents}

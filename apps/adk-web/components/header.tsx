@@ -8,7 +8,7 @@ export function Header({ apiUrl }: HeaderProps) {
 	return (
 		<div className="flex items-center justify-between mb-6">
 			<div>
-				<h1 className="text-3xl font-bold">🤖 ADK Agent Testing Interface</h1>
+				<h1 className="text-3xl font-bold">🤖 ADK-TS Web</h1>
 				<p className="text-muted-foreground">Connected to {apiUrl}</p>
 			</div>
 			<Badge
