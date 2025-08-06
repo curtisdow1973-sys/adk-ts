@@ -20,8 +20,8 @@ export function useAgents(apiUrl: string | null) {
 			if (!response.ok) {
 				throw new Error(`Failed to fetch agents: ${response.status}`);
 			}
-
-			return response.json();
+			const data: AgentApiResponse = await response.json();
+			return data.agents;
 		},
 		enabled: !!apiUrl,
 		staleTime: 30000, // 30 seconds
@@ -39,13 +39,16 @@ export function useAgentAction(apiUrl: string) {
 				headers: { "Content-Type": "application/json" },
 				body: JSON.stringify({
 					apiUrl,
-					path: `/api/agents/${encodeURIComponent(agent.path)}/start`,
+					path: `/api/agents/${encodeURIComponent(agent.relativePath)}/start`,
 					data: {},
 				}),
 			});
 
 			if (!response.ok) {
-				throw new Error(`Failed to start agent: ${response.status}`);
+				const errorData = await response.text();
+				throw new Error(
+					`Failed to start agent: ${response.status} - ${errorData}`,
+				);
 			}
 
 			return response.json();
@@ -53,6 +56,7 @@ export function useAgentAction(apiUrl: string) {
 		onSuccess: () => {
 			// Invalidate and refetch agents
 			queryClient.invalidateQueries({ queryKey: ["agents", apiUrl] });
+			queryClient.invalidateQueries({ queryKey: ["running-agents", apiUrl] });
 		},
 	});
 
@@ -63,19 +67,23 @@ export function useAgentAction(apiUrl: string) {
 				headers: { "Content-Type": "application/json" },
 				body: JSON.stringify({
 					apiUrl,
-					path: `/api/agents/${encodeURIComponent(agent.path)}/stop`,
+					path: `/api/agents/${encodeURIComponent(agent.relativePath)}/stop`,
 					data: {},
 				}),
 			});
 
 			if (!response.ok) {
-				throw new Error(`Failed to stop agent: ${response.status}`);
+				const errorData = await response.text();
+				throw new Error(
+					`Failed to stop agent: ${response.status} - ${errorData}`,
+				);
 			}
 
 			return response.json();
 		},
 		onSuccess: () => {
 			queryClient.invalidateQueries({ queryKey: ["agents", apiUrl] });
+			queryClient.invalidateQueries({ queryKey: ["running-agents", apiUrl] });
 		},
 	});
 
@@ -89,13 +97,16 @@ export function useAgentAction(apiUrl: string) {
 				headers: { "Content-Type": "application/json" },
 				body: JSON.stringify({
 					apiUrl,
-					path: `/api/agents/${encodeURIComponent(agent.path)}/message`,
+					path: `/api/agents/${encodeURIComponent(agent.relativePath)}/message`,
 					data: { message },
 				}),
 			});
 
 			if (!response.ok) {
-				throw new Error(`Failed to send message: ${response.status}`);
+				const errorData = await response.text();
+				throw new Error(
+					`Failed to send message: ${response.status} - ${errorData}`,
+				);
 			}
 
 			return response.json();
