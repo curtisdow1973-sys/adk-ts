@@ -39,17 +39,17 @@ export function AgentsPanel({
 				<CardDescription>Select an agent to start testing</CardDescription>
 			</CardHeader>
 			<CardContent className="p-0">
-				<ScrollArea className="h-[calc(100vh-300px)]">
+								<ScrollArea className="h-[calc(100vh-300px)]">
 					{agents.length === 0 ? (
 						<EmptyAgentsState />
 					) : (
 						<div className="space-y-2 p-4">
 							{agents.map((agent) => (
 								<AgentItem
-									key={agent.path}
+									key={agent.relativePath}
 									agent={agent}
-									isSelected={selectedAgent?.path === agent.path}
-									status={agentStatus[agent.path]}
+									isSelected={selectedAgent?.relativePath === agent.relativePath}
+									status={agentStatus[agent.relativePath]}
 									isStartingAgent={isStartingAgent}
 									isStoppingAgent={isStoppingAgent}
 									onSelect={() => onSelectAgent(agent)}
