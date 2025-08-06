@@ -12,7 +12,7 @@ interface AgentFile {
 
 function findAgentFiles(directory: string): AgentFile[] {
 	const agents: AgentFile[] = [];
-	
+
 	if (!existsSync(directory)) {
 		return agents;
 	}
@@ -20,22 +20,25 @@ function findAgentFiles(directory: string): AgentFile[] {
 	function scanDirectory(dir: string, baseDir: string = directory) {
 		try {
 			const entries = readdirSync(dir);
-			
+
 			for (const entry of entries) {
 				const fullPath = join(dir, entry);
 				const stat = statSync(fullPath);
-				
+
 				if (stat.isDirectory()) {
 					// Recursively scan subdirectories
 					scanDirectory(fullPath, baseDir);
 				} else if (stat.isFile()) {
 					// Check if it's an agent file (agent.ts or agent.js)
 					const name = basename(entry, extname(entry));
-					if (name === 'agent' && (extname(entry) === '.ts' || extname(entry) === '.js')) {
-						const relativePath = dir.replace(baseDir, '').replace(/^\//, '');
+					if (
+						name === "agent" &&
+						(extname(entry) === ".ts" || extname(entry) === ".js")
+					) {
+						const relativePath = dir.replace(baseDir, "").replace(/^\//, "");
 						agents.push({
 							path: fullPath,
-							name: relativePath ? `${relativePath}/agent` : 'agent',
+							name: relativePath ? `${relativePath}/agent` : "agent",
 							directory: dir,
 						});
 					}
@@ -45,7 +48,7 @@ function findAgentFiles(directory: string): AgentFile[] {
 			// Ignore errors for directories we can't access
 		}
 	}
-	
+
 	scanDirectory(directory);
 	return agents;
 }
@@ -61,16 +64,13 @@ function findBestAgentFile(agentPath?: string): string | null {
 	}
 
 	// Look for agent files in current directory and ./agents directory
-	const searchPaths = [
-		process.cwd(),
-		join(process.cwd(), 'agents'),
-	];
+	const searchPaths = [process.cwd(), join(process.cwd(), "agents")];
 
 	for (const searchPath of searchPaths) {
 		const agents = findAgentFiles(searchPath);
 		if (agents.length > 0) {
 			// If multiple agents found, prefer the one in the root of the search path
-			const rootAgent = agents.find(agent => agent.name === 'agent');
+			const rootAgent = agents.find((agent) => agent.name === "agent");
 			return rootAgent ? rootAgent.path : agents[0].path;
 		}
 	}
@@ -78,33 +78,36 @@ function findBestAgentFile(agentPath?: string): string | null {
 	return null;
 }
 
-async function runAgentFile(agentPath: string, options: { port?: string }): Promise<any> {
-	const isTypeScript = extname(agentPath) === '.ts';
-	const command = isTypeScript ? 'npx' : 'node';
-	const args = isTypeScript ? ['tsx', agentPath] : [agentPath];
+async function runAgentFile(
+	agentPath: string,
+	options: { port?: string },
+): Promise<any> {
+	const isTypeScript = extname(agentPath) === ".ts";
+	const command = isTypeScript ? "npx" : "node";
+	const args = isTypeScript ? ["tsx", agentPath] : [agentPath];
 
 	// Set environment variables
 	const env = {
 		...process.env,
-		PORT: options.port || '3000',
-		NODE_ENV: 'development',
+		PORT: options.port || "3000",
+		NODE_ENV: "development",
 	};
 
 	console.log(chalk.blue(`🚀 Starting agent: ${chalk.cyan(agentPath)}`));
-	console.log(chalk.gray(`Command: ${command} ${args.join(' ')}`));
-	
+	console.log(chalk.gray(`Command: ${command} ${args.join(" ")}`));
+
 	const child = spawn(command, args, {
 		cwd: process.cwd(),
 		env,
-		stdio: 'inherit',
+		stdio: "inherit",
 	});
 
-	child.on('error', (error) => {
-		console.error(chalk.red('Failed to start agent:'), error.message);
+	child.on("error", (error) => {
+		console.error(chalk.red("Failed to start agent:"), error.message);
 		process.exit(1);
 	});
 
-	child.on('exit', (code) => {
+	child.on("exit", (code) => {
 		if (code !== 0) {
 			console.error(chalk.red(`Agent exited with code ${code}`));
 			process.exit(code || 1);
@@ -112,24 +115,33 @@ async function runAgentFile(agentPath: string, options: { port?: string }): Prom
 	});
 
 	// Handle Ctrl+C gracefully
-	process.on('SIGINT', () => {
-		console.log(chalk.yellow('\n🛑 Stopping agent...'));
-		child.kill('SIGTERM');
+	process.on("SIGINT", () => {
+		console.log(chalk.yellow("\n🛑 Stopping agent..."));
+		child.kill("SIGTERM");
 		process.exit(0);
 	});
 
 	return child;
 }
 
-export async function runAgent(agentPath?: string, options: { watch?: boolean; port?: string } = {}) {
+export async function runAgent(
+	agentPath?: string,
+	options: { watch?: boolean; port?: string } = {},
+) {
 	const resolvedAgentPath = findBestAgentFile(agentPath);
-	
+
 	if (!resolvedAgentPath) {
-		console.error(chalk.red('❌ No agent file found.'));
-		console.log(chalk.yellow('Looking for:'));
-		console.log(chalk.gray('  - agent.ts or agent.js in current directory'));
-		console.log(chalk.gray('  - agent.ts or agent.js in ./agents directory and subdirectories'));
-		console.log(chalk.gray('  - Or specify a path: adk run path/to/your/agent.ts'));
+		console.error(chalk.red("❌ No agent file found."));
+		console.log(chalk.yellow("Looking for:"));
+		console.log(chalk.gray("  - agent.ts or agent.js in current directory"));
+		console.log(
+			chalk.gray(
+				"  - agent.ts or agent.js in ./agents directory and subdirectories",
+			),
+		);
+		console.log(
+			chalk.gray("  - Or specify a path: adk run path/to/your/agent.ts"),
+		);
 		process.exit(1);
 	}
 
@@ -141,16 +153,20 @@ export async function runAgent(agentPath?: string, options: { watch?: boolean; p
 	console.log(chalk.green(`✅ Found agent: ${chalk.cyan(resolvedAgentPath)}`));
 
 	if (options.watch) {
-		console.log(chalk.blue('👀 Watch mode enabled. Agent will restart on file changes...'));
-		
+		console.log(
+			chalk.blue(
+				"👀 Watch mode enabled. Agent will restart on file changes...",
+			),
+		);
+
 		let childProcess: any = null;
-		
+
 		const startAgent = async () => {
 			if (childProcess) {
-				childProcess.kill('SIGTERM');
+				childProcess.kill("SIGTERM");
 				childProcess = null;
 			}
-			
+
 			// Small delay to ensure process is killed
 			setTimeout(() => {
 				childProcess = runAgentFile(resolvedAgentPath, { port: options.port });
@@ -160,8 +176,8 @@ export async function runAgent(agentPath?: string, options: { watch?: boolean; p
 		// Watch the agent file and its directory
 		const watchPaths = [
 			resolvedAgentPath,
-			join(process.cwd(), 'agents'),
-			join(process.cwd(), 'src'),
+			join(process.cwd(), "agents"),
+			join(process.cwd(), "src"),
 		].filter(existsSync);
 
 		const watcher = chokidar.watch(watchPaths, {
@@ -169,25 +185,25 @@ export async function runAgent(agentPath?: string, options: { watch?: boolean; p
 			persistent: true,
 		});
 
-		watcher.on('change', (path) => {
+		watcher.on("change", (path) => {
 			console.log(chalk.yellow(`📝 File changed: ${path}`));
-			console.log(chalk.blue('🔄 Restarting agent...'));
+			console.log(chalk.blue("🔄 Restarting agent..."));
 			startAgent();
 		});
 
-		watcher.on('error', (error) => {
-			console.error(chalk.red('Watcher error:'), error);
+		watcher.on("error", (error) => {
+			console.error(chalk.red("Watcher error:"), error);
 		});
 
 		// Start the agent initially
 		await startAgent();
-		
+
 		// Handle Ctrl+C gracefully
-		process.on('SIGINT', () => {
-			console.log(chalk.yellow('\n🛑 Stopping watch mode...'));
+		process.on("SIGINT", () => {
+			console.log(chalk.yellow("\n🛑 Stopping watch mode..."));
 			watcher.close();
 			if (childProcess) {
-				childProcess.kill('SIGTERM');
+				childProcess.kill("SIGTERM");
 			}
 			process.exit(0);
 		});

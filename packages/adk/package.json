@@ -5,8 +5,8 @@
 	"main": "dist/index.js",
 	"types": "dist/index.d.ts",
 	"bin": {
-    "adk": "./dist/cli/index.js"
-  },
+		"adk": "./dist/cli/index.js"
+	},
 	"scripts": {
 		"build": "tsup",
 		"test": "vitest run",

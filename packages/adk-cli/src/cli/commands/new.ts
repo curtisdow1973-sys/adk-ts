@@ -85,7 +85,10 @@ async function detectAvailablePackageManagers(): Promise<PackageManager[]> {
 	return available.length > 0 ? available : [packageManagers[0]]; // Fallback to npm
 }
 
-export async function createProject(projectName?: string, options?: { template?: string }) {
+export async function createProject(
+	projectName?: string,
+	options?: { template?: string },
+) {
 	console.clear();
 
 	// Cool ASCII art intro
@@ -127,10 +130,13 @@ export async function createProject(projectName?: string, options?: { template?:
 	}
 
 	let selectedTemplate = options?.template;
-	if (!selectedTemplate || !templates.find(t => t.value === selectedTemplate)) {
+	if (
+		!selectedTemplate ||
+		!templates.find((t) => t.value === selectedTemplate)
+	) {
 		const framework = await select({
 			message: "Which template would you like to use?",
-			options: templates.map(t => ({
+			options: templates.map((t) => ({
 				value: t.value,
 				label: t.label,
 				hint: t.hint,
