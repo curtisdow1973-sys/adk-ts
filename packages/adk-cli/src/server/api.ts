@@ -1,4 +1,4 @@
-import { type ChildProcess, spawn } from "node:child_process";
+import { type ChildProcess, spawn, execSync } from "node:child_process";
 import {
 	existsSync,
 	readFile,
@@ -94,10 +94,17 @@ export class ADKServer {
 			}
 
 			try {
-				this.startAgent(agent, agentId);
+				await this.startAgent(agent, agentId);
 				return c.json({ success: true, agentId, status: "started" });
-			} catch (error) {
-				return c.json({ error: "Failed to start agent" }, 500);
+			} catch (error: any) {
+				console.error(
+					chalk.red(`Failed to start agent ${agentId}:`),
+					error.message,
+				);
+				return c.json(
+					{ error: `Failed to start agent: ${error.message}` },
+					500,
+				);
 			}
 		});
 
@@ -110,10 +117,17 @@ export class ADKServer {
 				return c.json({ error: "Agent is not running" }, 404);
 			}
 
-			agentProcess.process.kill("SIGTERM");
-			this.runningAgents.delete(agentId);
-
-			return c.json({ success: true, agentId, status: "stopped" });
+			try {
+				agentProcess.process.kill("SIGTERM");
+				this.runningAgents.delete(agentId);
+				return c.json({ success: true, agentId, status: "stopped" });
+			} catch (error: any) {
+				console.error(
+					chalk.red(`Failed to stop agent ${agentId}:`),
+					error.message,
+				);
+				return c.json({ error: `Failed to stop agent: ${error.message}` }, 500);
+			}
 		});
 
 		// Send message to agent
@@ -129,8 +143,19 @@ export class ADKServer {
 				);
 			}
 
-			agentProcess.process.stdin.write(`${message}\n`);
-			return c.json({ success: true, agentId, message: "Message sent" });
+			try {
+				agentProcess.process.stdin.write(`${message}\n`);
+				return c.json({ success: true, agentId, message: "Message sent" });
+			} catch (error: any) {
+				console.error(
+					chalk.red(`Failed to send message to agent ${agentId}:`),
+					error.message,
+				);
+				return c.json(
+					{ error: `Failed to send message: ${error.message}` },
+					500,
+				);
+			}
 		});
 	}
 
@@ -206,19 +231,43 @@ export class ADKServer {
 	private setupSocketHandlers() {
 		this.io.on("connection", (socket) => {
 			console.log(chalk.green("👤 Client connected to ADK server"));
+			console.log(chalk.gray(`   Socket ID: ${socket.id}`));
 
 			socket.on("joinAgent", (agentId) => {
 				socket.join(`agent-${agentId}`);
-				console.log(chalk.blue(`👤 Client joined agent room: ${agentId}`));
+				console.log(
+					chalk.blue(
+						`👤 Client ${socket.id} joined agent room: agent-${agentId}`,
+					),
+				);
+
+				// Send a test message to confirm connection
+				socket.emit("agentMessage", {
+					id: Date.now(),
+					type: "system",
+					content: `Connected to agent room: ${agentId}`,
+					agentId,
+					timestamp: new Date().toISOString(),
+				});
 			});
 
 			socket.on("leaveAgent", (agentId) => {
 				socket.leave(`agent-${agentId}`);
-				console.log(chalk.yellow(`👤 Client left agent room: ${agentId}`));
+				console.log(
+					chalk.yellow(
+						`👤 Client ${socket.id} left agent room: agent-${agentId}`,
+					),
+				);
 			});
 
-			socket.on("disconnect", () => {
-				console.log(chalk.yellow("👤 Client disconnected from ADK server"));
+			socket.on("disconnect", (reason) => {
+				console.log(
+					chalk.yellow(`👤 Client ${socket.id} disconnected: ${reason}`),
+				);
+			});
+
+			socket.on("error", (error) => {
+				console.error(chalk.red(`👤 Socket ${socket.id} error:`), error);
 			});
 		});
 	}
@@ -372,22 +421,100 @@ export class ADKServer {
 		return fileName;
 	}
 
-	private startAgent(agent: AgentFile, agentId: string): ChildProcess {
+	private findNodeExecutable(): string {
+		// Always use the same Node.js executable that's running this server
+		return process.execPath;
+	}
+
+	private checkTsxAvailable(): boolean {
+		try {
+			// Check if tsx is available via npm list
+			execSync("npm list tsx --depth=0", { stdio: "ignore", timeout: 3000 });
+			return true;
+		} catch {
+			try {
+				// Check if tsx is available globally
+				execSync("npm list -g tsx --depth=0", {
+					stdio: "ignore",
+					timeout: 3000,
+				});
+				return true;
+			} catch {
+				return false;
+			}
+		}
+	}
+
+	private async startAgent(
+		agent: AgentFile,
+		agentId: string,
+	): Promise<ChildProcess> {
 		console.log(chalk.blue(`🚀 Starting agent: ${agent.name}`));
-
-		const isTypeScript = agent.path.endsWith(".ts");
-		const command = process.execPath; // Use the same node executable that's running the server
-		const args = isTypeScript
-			? [
-					"-r",
-					join(agent.directory, "node_modules", "tsx", "register"),
-					agent.path,
-				]
-			: [agent.path];
-
-		// Load environment variables from .env file in the agent directory
 		console.log(`🏠 Agent directory: ${agent.directory}`);
 		console.log(`📂 Agent path: ${agent.path}`);
+
+		const isTypeScript = agent.path.endsWith(".ts");
+		let command: string;
+		let args: string[];
+
+		if (isTypeScript) {
+			// Simple and reliable: use Node.js with tsx via require
+			if (this.checkTsxAvailable()) {
+				// Use Node.js to run tsx programmatically
+				command = this.findNodeExecutable();
+				args = [
+					"-e",
+					`require('tsx/cjs/api').register(); require('${agent.path}')`,
+				];
+				console.log(chalk.green("🔧 Using Node.js with tsx require"));
+			} else {
+				// Try to install tsx locally first
+				console.log(
+					chalk.yellow("⚠️ tsx not found, attempting to install locally..."),
+				);
+				try {
+					// Ensure we have a package.json first
+					const packageJsonPath = join(agent.directory, "package.json");
+					if (!existsSync(packageJsonPath)) {
+						execSync("npm init -y", {
+							cwd: agent.directory,
+							stdio: "pipe",
+							timeout: 10000,
+						});
+					}
+
+					execSync("npm install tsx", {
+						cwd: agent.directory,
+						stdio: "inherit",
+						timeout: 30000,
+					});
+					console.log(chalk.green("✅ tsx installed successfully"));
+
+					// Now use the locally installed tsx
+					command = this.findNodeExecutable();
+					args = [
+						"-e",
+						`require('tsx/cjs/api').register(); require('${agent.path}')`,
+					];
+					console.log(
+						chalk.green("🔧 Using Node.js with locally installed tsx"),
+					);
+				} catch (installError) {
+					throw new Error(
+						`TypeScript runtime not available and auto-installation failed.\nPlease manually install tsx in the agent directory:\n  cd ${agent.directory}\n  npm install tsx\nInstallation error: ${(installError as Error).message}`,
+					);
+				}
+			}
+		} else {
+			// JavaScript files - use Node.js directly
+			command = process.execPath;
+			args = [agent.path];
+			console.log(chalk.green("🔧 Using Node.js directly"));
+		}
+
+		console.log(chalk.gray(`🔧 Command: ${command} ${args.join(" ")}`));
+
+		// Load environment variables from .env file in the agent directory
 		const envPath = join(agent.directory, ".env");
 		const envVars = { ...process.env };
 
@@ -402,8 +529,8 @@ export class ADKServer {
 					if (trimmedLine && !trimmedLine.startsWith("#")) {
 						const equalIndex = trimmedLine.indexOf("=");
 						if (equalIndex > 0) {
-							const key = trimmedLine.substring(0, equalIndex);
-							let value = trimmedLine.substring(equalIndex + 1);
+							const key = trimmedLine.substring(0, equalIndex).trim();
+							let value = trimmedLine.substring(equalIndex + 1).trim();
 
 							// Remove surrounding quotes if present
 							if (
@@ -414,19 +541,39 @@ export class ADKServer {
 							}
 
 							envVars[key] = value;
+							// Log environment variables but hide sensitive ones
+							if (
+								!key.toLowerCase().includes("key") &&
+								!key.toLowerCase().includes("secret") &&
+								!key.toLowerCase().includes("token") &&
+								!key.toLowerCase().includes("password")
+							) {
+								console.log(`🔑 ${key} = ${value}`);
+							} else {
+								console.log(`🔑 ${key} = [HIDDEN]`);
+							}
 						}
 					}
 				}
+			} else {
+				console.log(chalk.gray(`📁 No .env file found at: ${envPath}`));
 			}
 		} catch (error) {
-			console.warn(`Warning: Could not load .env file from ${envPath}:`, error);
+			console.warn(
+				chalk.yellow(`⚠️ Warning: Could not load .env file from ${envPath}:`),
+				error,
+			);
 		}
 
-		const agentProcess = spawn(command, args, {
+		// Spawn the agent process
+		const spawnOptions = {
 			cwd: agent.directory,
-			stdio: "pipe",
+			stdio: "pipe" as const,
 			env: envVars,
-		});
+			shell: command.includes("npx"), // Use shell for npx commands
+		};
+
+		const agentProcess = spawn(command, args, spawnOptions);
 
 		const agentData: AgentProcess = {
 			process: agentProcess,
@@ -436,18 +583,59 @@ export class ADKServer {
 
 		this.runningAgents.set(agentId, agentData);
 
-		// Handle agent output
+		// Handle agent output with better parsing
 		agentProcess.stdout?.on("data", (data) => {
-			const message = data.toString();
-			console.log(chalk.gray(`[${agent.name}] ${message.trim()}`));
+			const rawMessage = data.toString();
+			console.log(chalk.gray(`[${agent.name}] ${rawMessage.trim()}`));
 
-			this.io.to(`agent-${agentId}`).emit("agentMessage", {
-				id: Date.now(),
-				type: "stdout",
-				content: message,
-				agentId,
-				timestamp: new Date().toISOString(),
-			});
+			// Split into lines and process each one
+			const lines = rawMessage.split("\n");
+			for (const line of lines) {
+				const trimmedLine = line.trim();
+				if (!trimmedLine) continue;
+
+				// Check if this line contains an agent response
+				let isAgentResponse = false;
+				let content = trimmedLine;
+
+				// Look for response patterns
+				if (
+					trimmedLine.includes("🤖 Response:") ||
+					trimmedLine.includes("Response:") ||
+					trimmedLine.match(/🤖.*:/)
+				) {
+					isAgentResponse = true;
+					// Extract just the response content
+					const responseMatch = trimmedLine.match(/🤖\s*Response:\s*(.+)/) ||
+						trimmedLine.match(/Response:\s*(.+)/) || [null, trimmedLine];
+					if (responseMatch && responseMatch[1]) {
+						content = responseMatch[1].trim();
+					}
+				}
+
+				// Always emit the message, but mark agent responses specially
+				const messageType = isAgentResponse ? "agent" : "stdout";
+
+				const socketMessage = {
+					id: Date.now() + Math.random(), // Ensure unique IDs
+					type: messageType,
+					content: content,
+					agentId,
+					timestamp: new Date().toISOString(),
+				};
+
+				console.log(
+					chalk.blue(`[WebSocket] Emitting message to agent-${agentId}:`),
+					{
+						type: messageType,
+						content:
+							content.substring(0, 100) + (content.length > 100 ? "..." : ""),
+						agentId,
+					},
+				);
+
+				this.io.to(`agent-${agentId}`).emit("agentMessage", socketMessage);
+			}
 		});
 
 		agentProcess.stderr?.on("data", (data) => {
@@ -482,19 +670,36 @@ export class ADKServer {
 		});
 
 		agentProcess.on("error", (error) => {
-			console.error(chalk.red(`[${agent.name}] Error: ${error.message}`));
+			console.error(
+				chalk.red(`[${agent.name}] Process error: ${error.message}`),
+			);
 
 			agentData.status = "error";
+			this.runningAgents.delete(agentId);
 
 			this.io.to(`agent-${agentId}`).emit("agentMessage", {
 				id: Date.now(),
 				type: "error",
-				content: `Error: ${error.message}`,
+				content: `Process error: ${error.message}`,
 				agentId,
 				timestamp: new Date().toISOString(),
 			});
+
+			// Provide helpful error messages for common issues
+			if (error.message.includes("ENOENT")) {
+				if (command.includes("npx")) {
+					console.error(
+						chalk.red(
+							`💡 Tip: Make sure 'tsx' is installed. Run: npm install -g tsx`,
+						),
+					);
+				} else {
+					console.error(chalk.red(`💡 Tip: Command not found: ${command}`));
+				}
+			}
 		});
 
+		// Send initial success message
 		this.io.to(`agent-${agentId}`).emit("agentMessage", {
 			id: Date.now(),
 			type: "system",
@@ -517,6 +722,20 @@ export class ADKServer {
 					chalk.cyan(`🔌 WebSocket Server: ws://${this.host}:${this.port}`),
 				);
 				console.log(chalk.gray(`📁 Watching for agents in: ${this.agentsDir}`));
+
+				// Check TypeScript runtime availability
+				const tsxAvailable = this.checkTsxAvailable();
+
+				if (tsxAvailable) {
+					console.log(chalk.green("🔧 TypeScript support: tsx available"));
+				} else {
+					console.log(
+						chalk.yellow(
+							"⚠️ TypeScript support: Not available (will attempt auto-install)",
+						),
+					);
+				}
+
 				resolve();
 			});
 
@@ -536,7 +755,15 @@ export class ADKServer {
 
 			// Stop all running agents
 			for (const [agentId, agentData] of this.runningAgents) {
-				agentData.process.kill("SIGTERM");
+				try {
+					agentData.process.kill("SIGTERM");
+					console.log(chalk.gray(`🛑 Stopped agent: ${agentId}`));
+				} catch (error) {
+					console.warn(
+						chalk.yellow(`⚠️ Warning: Could not stop agent ${agentId}:`),
+						error,
+					);
+				}
 			}
 			this.runningAgents.clear();
 
