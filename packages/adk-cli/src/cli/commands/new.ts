@@ -17,31 +17,31 @@ const templates: Template[] = [
 		value: "simple-agent",
 		label: "🤖 Simple Agent",
 		hint: "Basic agent with chat capabilities",
-		source: "github:IQAIcom/adk-ts/starter-templates/simple-agent",
+		source: "github:IQAIcom/adk-ts/apps/starter-templates/simple-agent",
 	},
 	{
 		value: "discord-bot",
 		label: "🎮 Discord Bot",
 		hint: "Agent integrated with Discord",
-		source: "github:IQAIcom/adk-ts/starter-templates/discord-bot",
+		source: "github:IQAIcom/adk-ts/apps/starter-templates/discord-bot",
 	},
 	{
 		value: "telegram-bot",
 		label: "📱 Telegram Bot",
 		hint: "Agent integrated with Telegram",
-		source: "github:IQAIcom/adk-ts/starter-templates/telegram-bot",
+		source: "github:IQAIcom/adk-ts/apps/starter-templates/telegram-bot",
 	},
 	{
 		value: "hono-server",
 		label: "🚀 Hono Server",
 		hint: "Web server with agent endpoints",
-		source: "github:IQAIcom/adk-ts/starter-templates/hono-server",
+		source: "github:IQAIcom/adk-ts/apps/starter-templates/hono-server",
 	},
 	{
 		value: "mcp-starter",
 		label: "🔌 MCP Integration",
 		hint: "Model Context Protocol server",
-		source: "github:IQAIcom/adk-ts/starter-templates/mcp-starter",
+		source: "github:IQAIcom/adk-ts/apps/starter-templates/mcp-starter",
 	},
 ];
 
