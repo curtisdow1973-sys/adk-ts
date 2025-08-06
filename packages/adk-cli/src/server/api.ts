@@ -134,7 +134,7 @@ export class ADKServer {
 		// Setup Socket.IO
 		this.io = new Server(httpServer, {
 			cors: {
-				origin: ["http://localhost:3000", "https://adk-web.iqai.com"],
+				origin: ["http://localhost:3000", "http://localhost:3001"],
 				methods: ["GET", "POST"],
 				credentials: true,
 			},
