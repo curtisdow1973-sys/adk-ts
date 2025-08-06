@@ -55,7 +55,7 @@ export async function startAgent({
 }: { apiUrl: string; agent: Agent }) {
 	return makeApiCall({
 		apiUrl,
-		path: `/api/agents/${encodeURIComponent(agent.path)}/start`,
+		path: `/api/agents/${encodeURIComponent(agent.relativePath)}/start`,
 	});
 }
 
@@ -65,7 +65,7 @@ export async function stopAgent({
 }: { apiUrl: string; agent: Agent }) {
 	return makeApiCall({
 		apiUrl,
-		path: `/api/agents/${encodeURIComponent(agent.path)}/stop`,
+		path: `/api/agents/${encodeURIComponent(agent.relativePath)}/stop`,
 	});
 }
 
@@ -78,9 +78,14 @@ export async function sendMessageToAgent({
 	agent: Agent;
 	message: string;
 }) {
+	console.log("Sending message to agent:", {
+		agentPath: agent.path,
+		agentRelativePath: agent.relativePath,
+		message,
+	});
 	return makeApiCall({
 		apiUrl,
-		path: `/api/agents/${encodeURIComponent(agent.path)}/message`,
+		path: `/api/agents/${encodeURIComponent(agent.relativePath)}/message`,
 		data: { message },
 	});
 }
