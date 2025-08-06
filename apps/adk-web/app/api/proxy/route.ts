@@ -47,7 +47,9 @@ export async function POST(request: NextRequest) {
 			);
 		}
 
-		const response = await fetch(`${apiUrl}${path}`, {
+		const fullUrl = `${apiUrl}${path}`;
+
+		const response = await fetch(fullUrl, {
 			method: "POST",
 			headers: {
 				"Content-Type": "application/json",
@@ -56,7 +58,13 @@ export async function POST(request: NextRequest) {
 		});
 
 		if (!response.ok) {
-			throw new Error(`HTTP error! status: ${response.status}`);
+			const errorText = await response.text();
+			console.error("API server error:", errorText);
+			console.error("Full URL that failed:", fullUrl);
+			console.error("Request body:", JSON.stringify(data));
+			throw new Error(
+				`HTTP error! status: ${response.status}, body: ${errorText}`,
+			);
 		}
 
 		const responseData = await response.json();
@@ -64,7 +72,10 @@ export async function POST(request: NextRequest) {
 	} catch (error) {
 		console.error("Proxy error:", error);
 		return NextResponse.json(
-			{ error: "Failed to proxy request" },
+			{
+				error: "Failed to proxy request",
+				details: error instanceof Error ? error.message : String(error),
+			},
 			{ status: 500 },
 		);
 	}
