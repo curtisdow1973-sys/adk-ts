@@ -42,11 +42,4 @@ export const starters: StarterOption[] = [
 		template: "github:IQAIcom/adk-ts/apps/starter-templates/mcp-starter",
 		isLocal: false,
 	},
-	{
-		value: "adk-agent-starter",
-		label: "🤖 Legacy ADK Agent Starter",
-		hint: "Complete agent development starter template (GitHub)",
-		template: "github:IQAIcom/adk-agent-starter",
-		isLocal: false,
-	},
 ];
