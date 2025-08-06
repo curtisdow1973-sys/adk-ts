@@ -2,7 +2,8 @@ import { program } from "commander";
 import chalk from "chalk";
 import { createProject } from "./commands/new.js";
 import { runAgent } from "./commands/run.js";
-import { startWebUI } from "./commands/web.js";
+import { webCommand } from "./commands/web.js";
+import { serveCommand } from "./commands/serve.js";
 
 const packageJson = {
 	name: "@iqai/adk-cli",
@@ -55,16 +56,41 @@ program
 	.command("web")
 	.description("Start a web interface for testing agents")
 	.option("-p, --port <port>", "Port for web server", "3001")
+	.option("-h, --host <host>", "Host for web server", "localhost")
 	.option(
 		"-d, --dir <directory>",
-		"Directory to scan for agents (default: ./agents)",
-		"./agents",
+		"Directory to scan for agents (default: current directory)",
+		"."
+	)
+	.option(
+		"--web-url <url>",
+		"URL of the web application",
+		"https://adk-web.iqai.com"
 	)
 	.action(async (options) => {
 		try {
-			await startWebUI(options);
+			await webCommand(options);
 		} catch (error) {
 			console.error(chalk.red("Error starting web UI:"), error);
+			process.exit(1);
+		}
+	});
+
+program
+	.command("serve")
+	.description("Start an API server for agent management")
+	.option("-p, --port <port>", "Port for the server", "3001")
+	.option("-h, --host <host>", "Host for the server", "localhost")
+	.option(
+		"-d, --dir <directory>",
+		"Directory to scan for agents (default: current directory)",
+		"."
+	)
+	.action(async (options) => {
+		try {
+			await serveCommand(options);
+		} catch (error) {
+			console.error(chalk.red("Error starting server:"), error);
 			process.exit(1);
 		}
 	});

@@ -5,7 +5,7 @@
 	"main": "dist/index.js",
 	"types": "dist/index.d.ts",
 	"bin": {
-		"adk": "./dist/cli/index.js"
+		"adk": "./dist/cli/index.mjs"
 	},
 	"scripts": {
 		"build": "tsup",
@@ -27,15 +27,14 @@
 		"chalk": "^5.4.1",
 		"chokidar": "^4.0.3",
 		"commander": "^12.1.0",
-		"express": "^4.19.2",
+		"hono": "^4.6.13",
+		"@hono/node-server": "^1.18.1",
 		"cors": "^2.8.5",
 		"socket.io": "^4.8.1",
-		"react": "^18.3.1",
-		"react-dom": "^18.3.1",
-		"@types/react": "^18.3.12",
-		"@types/react-dom": "^18.3.1",
+		"socket.io-client": "^4.8.1",
 		"giget": "^2.0.0",
-		"dedent": "^1.6.0"
+		"dedent": "^1.6.0",
+		"open": "^10.2.0"
 	},
 	"devDependencies": {
 		"@iqai/tsconfig": "workspace:*",
