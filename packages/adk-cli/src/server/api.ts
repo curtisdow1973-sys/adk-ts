@@ -1,8 +1,9 @@
 import { type ChildProcess, spawn } from "node:child_process";
-import { existsSync, readdirSync, statSync } from "node:fs";
+import { existsSync, readFile, readdirSync, statSync } from "node:fs";
 import { type IncomingMessage, createServer } from "node:http";
-import { basename, extname, join } from "node:path";
+import { basename, dirname, extname, join } from "node:path";
 import type { Readable } from "node:stream";
+import { promisify } from "node:util";
 import chalk from "chalk";
 import { Hono } from "hono";
 import { cors } from "hono/cors";
@@ -55,8 +56,8 @@ export class ADKServer {
 		});
 
 		// Get all available agents
-		this.app.get("/api/agents", (c) => {
-			const agents = this.findAgentFiles(this.agentsDir);
+		this.app.get("/api/agents", async (c) => {
+			const agents = await this.findAgentFiles(this.agentsDir);
 			return c.json({ agents });
 		});
 
@@ -75,7 +76,7 @@ export class ADKServer {
 		// Start an agent
 		this.app.post("/api/agents/:agentId/start", async (c) => {
 			const agentId = c.req.param("agentId");
-			const agents = this.findAgentFiles(this.agentsDir);
+			const agents = await this.findAgentFiles(this.agentsDir);
 			const agent = agents.find((a) => a.relativePath === agentId);
 
 			if (!agent) {
@@ -216,14 +217,14 @@ export class ADKServer {
 		});
 	}
 
-	private findAgentFiles(directory: string): AgentFile[] {
+	private async findAgentFiles(directory: string): Promise<AgentFile[]> {
 		const agents: AgentFile[] = [];
 
 		if (!existsSync(directory)) {
 			return agents;
 		}
 
-		const scanDirectory = (dir: string, baseDir: string = directory) => {
+		const scanDirectory = async (dir: string, baseDir: string = directory) => {
 			try {
 				const entries = readdirSync(dir);
 
@@ -232,24 +233,25 @@ export class ADKServer {
 					const stat = statSync(fullPath);
 
 					if (stat.isDirectory()) {
-						scanDirectory(fullPath, baseDir);
+						// Skip node_modules and other common directories we don't want to scan
+						if (this.shouldSkipDirectory(entry, fullPath)) {
+							continue;
+						}
+						await scanDirectory(fullPath, baseDir);
 					} else if (stat.isFile()) {
-						const name = basename(entry, extname(entry));
-						if (
-							name === "agent" &&
-							(extname(entry) === ".ts" || extname(entry) === ".js")
-						) {
-							const relativePath = dir.replace(baseDir, "").replace(/^\//, "");
-							const displayName = relativePath
-								? `${relativePath}/agent`
-								: "agent";
+						// Look for agent files (TypeScript or JavaScript)
+						if (await this.isAgentFile(entry, fullPath)) {
+							const relativePath = fullPath
+								.replace(baseDir, "")
+								.replace(/^[/\\]/, "");
+
+							const displayName = this.getAgentDisplayName(fullPath, baseDir);
+
 							agents.push({
 								path: fullPath,
 								name: displayName,
 								directory: dir,
-								relativePath: fullPath
-									.replace(process.cwd(), "")
-									.replace(/^\//, ""),
+								relativePath,
 							});
 						}
 					}
@@ -259,8 +261,87 @@ export class ADKServer {
 			}
 		};
 
-		scanDirectory(directory);
+		await scanDirectory(directory);
 		return agents;
+	}
+
+	private shouldSkipDirectory(dirName: string, fullPath: string): boolean {
+		const skipDirs = [
+			"node_modules",
+			".git",
+			".next",
+			"dist",
+			"build",
+			".turbo",
+			"coverage",
+			".nyc_output",
+			"__pycache__",
+			".pytest_cache",
+			".vscode",
+			".idea",
+		];
+
+		return skipDirs.includes(dirName);
+	}
+
+	private async isAgentFile(
+		fileName: string,
+		fullPath: string,
+	): Promise<boolean> {
+		// Only look for files explicitly named "agent.ts" or "agent.js"
+		const name = basename(fileName, extname(fileName));
+		const ext = extname(fileName);
+
+		if (name !== "agent" || !(ext === ".ts" || ext === ".js")) {
+			return false;
+		}
+
+		try {
+			const readFileAsync = promisify(readFile);
+			const content = await readFileAsync(fullPath, "utf-8");
+
+			// Check for common agent export patterns
+			const agentExportPatterns = [
+				// Default exports of LlmAgent
+				/export\s+default\s+.*(?:LlmAgent|Agent)/,
+				// Named exports
+				/export\s+(?:const|let|var)\s+(?:rootAgent|agent|Agent|RootAgent)/,
+				// Object exports
+				/export\s*\{\s*(?:rootAgent|agent|Agent|RootAgent|default)/,
+				// Class exports that might be agents
+				/export\s+(?:default\s+)?class\s+\w*Agent/,
+				// Variable assignments that look like agents
+				/(?:rootAgent|agent|Agent|RootAgent)\s*[:=]\s*new\s+LlmAgent/,
+			];
+
+			// Check if any pattern matches
+			const hasAgentExport = agentExportPatterns.some((pattern) =>
+				pattern.test(content),
+			);
+
+			// Additional check for ADK imports (stronger signal this is an ADK agent)
+			const hasAdkImport =
+				/from\s+['"]@iqai\/adk['"]/.test(content) ||
+				/import.*LlmAgent/.test(content);
+
+			return hasAgentExport && hasAdkImport;
+		} catch (error) {
+			// If we can't read the file, assume it's not a valid agent
+			return false;
+		}
+	}
+
+	private getAgentDisplayName(fullPath: string, baseDir: string): string {
+		const relativePath = fullPath.replace(baseDir, "").replace(/^[/\\]/, "");
+		const fileName = basename(fullPath, extname(fullPath));
+
+		// If it's in a subdirectory, include the directory name
+		const dir = dirname(relativePath);
+		if (dir && dir !== ".") {
+			return `${dir}/${fileName}`;
+		}
+
+		return fileName;
 	}
 
 	private startAgent(agent: AgentFile, agentId: string): ChildProcess {

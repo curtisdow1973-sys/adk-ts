@@ -1,7 +1,7 @@
 import { spawn } from "node:child_process";
 import { existsSync } from "node:fs";
-import { join } from "node:path";
 import { createServer } from "node:http";
+import { join } from "node:path";
 import chalk from "chalk";
 import open from "open";
 import { type ServeOptions, serveCommand } from "./serve.js";
@@ -50,21 +50,38 @@ export async function webCommand(options: WebOptions = {}): Promise<void> {
 			useLocal = false;
 		} else {
 			console.log(chalk.blue("🌐 Starting local web app..."));
+			console.log(chalk.gray(`   Web app path: ${webAppPath}`));
+			console.log(chalk.gray(`   Attempting to start on port: ${webPort}`));
 
 			try {
 				// Find an available port for the web app
+				console.log(chalk.gray("   Checking port availability..."));
+				const originalWebPort = webPort;
 				webPort = await findAvailablePort(webPort, host);
-				
-				if (webPort !== (options.webPort || 3000)) {
-					console.log(chalk.yellow(`⚠️  Port ${options.webPort || 3000} is in use, using port ${webPort} instead`));
+
+				if (webPort !== originalWebPort) {
+					console.log(
+						chalk.yellow(
+							`⚠️  Port ${originalWebPort} is in use, using port ${webPort} instead`,
+						),
+					);
+				} else {
+					console.log(chalk.green(`✅ Port ${webPort} is available`));
 				}
 
 				// Start the Next.js development server
-				const webProcess = spawn("pnpm", ["dev", "--port", webPort.toString()], {
-					cwd: webAppPath,
-					stdio: ["inherit", "pipe", "pipe"],
-					shell: true,
-				});
+				console.log(
+					chalk.gray(`   Starting Next.js server on port ${webPort}...`),
+				);
+				const webProcess = spawn(
+					"pnpm",
+					["dev", "--turbopack", "--port", webPort.toString()],
+					{
+						cwd: webAppPath,
+						stdio: ["inherit", "pipe", "pipe"],
+						shell: true,
+					},
+				);
 
 				let webServerStarted = false;
 				let startupError = "";
@@ -72,7 +89,15 @@ export async function webCommand(options: WebOptions = {}): Promise<void> {
 				// Monitor the web process output
 				webProcess.stdout?.on("data", (data) => {
 					const output = data.toString();
-					if (output.includes("Local:") || output.includes("localhost")) {
+					// Look for Next.js startup indicators
+					if (
+						output.includes("Ready in") ||
+						output.includes("Local:") ||
+						output.includes("localhost") ||
+						output.includes("started server on") ||
+						output.includes(`http://localhost:${webPort}`)
+					) {
+						console.log(chalk.green("✅ Web server startup detected!"));
 						webServerStarted = true;
 					}
 					process.stdout.write(output);
@@ -80,8 +105,15 @@ export async function webCommand(options: WebOptions = {}): Promise<void> {
 
 				webProcess.stderr?.on("data", (data) => {
 					const output = data.toString();
-					if (output.includes("EADDRINUSE") || output.includes("address already in use")) {
-						startupError = "Port is already in use";
+					console.log(chalk.red(`[stderr] ${output.trim()}`));
+
+					if (
+						output.includes("EADDRINUSE") ||
+						output.includes("address already in use") ||
+						output.includes("listen EADDRINUSE") ||
+						output.includes("Failed to start server")
+					) {
+						startupError = `Port error: ${output.trim()}`;
 					}
 					process.stderr.write(output);
 				});
@@ -90,9 +122,13 @@ export async function webCommand(options: WebOptions = {}): Promise<void> {
 				await new Promise<void>((resolve, reject) => {
 					const timeout = setTimeout(() => {
 						if (!webServerStarted) {
-							reject(new Error("Web server startup timeout"));
+							reject(
+								new Error(
+									"Web server startup timeout - server may have failed to start",
+								),
+							);
 						}
-					}, 10000); // 10 second timeout
+					}, 15000); // 15 second timeout (increased)
 
 					const checkStartup = () => {
 						if (webServerStarted) {
@@ -101,22 +137,33 @@ export async function webCommand(options: WebOptions = {}): Promise<void> {
 						} else if (startupError) {
 							clearTimeout(timeout);
 							reject(new Error(startupError));
-						} else {
-							setTimeout(checkStartup, 500);
 						}
 					};
 
+					// Check immediately and then every 500ms
+					const interval = setInterval(checkStartup, 500);
+
 					webProcess.on("exit", (code) => {
 						clearTimeout(timeout);
-						if (code !== 0) {
+						clearInterval(interval);
+						if (code !== 0 && !webServerStarted) {
 							reject(new Error(`Web server exited with code ${code}`));
 						}
 					});
 
-					setTimeout(checkStartup, 1000); // Start checking after 1 second
+					webProcess.on("error", (error) => {
+						clearTimeout(timeout);
+						clearInterval(interval);
+						reject(error);
+					});
+
+					// Start checking after 2 seconds to give the server time to start
+					setTimeout(() => {
+						checkStartup();
+					}, 2000);
 				});
 
-				const webAppUrl = `http://${host}:${webPort}`;
+				const webAppUrl = `http://${host}:${webPort}?apiUrl=${encodeURIComponent(`http://${host}:${apiPort}`)}`;
 				console.log(
 					chalk.green(`✅ ADK API Server running at http://${host}:${apiPort}`),
 				);
@@ -134,7 +181,9 @@ export async function webCommand(options: WebOptions = {}): Promise<void> {
 
 				console.log();
 				console.log(
-					chalk.yellow("🔄 Local web interface is connected to your ADK server"),
+					chalk.yellow(
+						"🔄 Local web interface is connected to your ADK server",
+					),
 				);
 				console.log(
 					chalk.gray(
@@ -158,8 +207,14 @@ export async function webCommand(options: WebOptions = {}): Promise<void> {
 
 				return;
 			} catch (error) {
-				console.log(chalk.red(`❌ Failed to start local web app: ${error instanceof Error ? error.message : String(error)}`));
-				console.log(chalk.yellow("🔗 Falling back to production web interface..."));
+				console.log(
+					chalk.red(
+						`❌ Failed to start local web app: ${error instanceof Error ? error.message : String(error)}`,
+					),
+				);
+				console.log(
+					chalk.yellow("🔗 Falling back to production web interface..."),
+				);
 				useLocal = false;
 			}
 		}
@@ -219,18 +274,19 @@ function findWebAppPath(): string | null {
 function isPortAvailable(port: number, host = "localhost") {
 	return new Promise<boolean>((resolve) => {
 		const server = createServer();
-		
+
 		server.listen(port, host, () => {
 			server.close(() => resolve(true));
 		});
-		
+
 		server.on("error", () => resolve(false));
 	});
 }
 
 async function findAvailablePort(startPort: number, host = "localhost") {
 	let port = startPort;
-	while (port < startPort + 100) { // Try up to 100 ports
+	while (port < startPort + 100) {
+		// Try up to 100 ports
 		if (await isPortAvailable(port, host)) {
 			return port;
 		}
