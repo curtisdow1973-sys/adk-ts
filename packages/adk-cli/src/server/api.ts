@@ -1,11 +1,12 @@
+import { type ChildProcess, spawn } from "node:child_process";
+import { existsSync, readdirSync, statSync } from "node:fs";
+import { type IncomingMessage, createServer } from "node:http";
+import { basename, extname, join } from "node:path";
+import type { Readable } from "node:stream";
+import chalk from "chalk";
 import { Hono } from "hono";
 import { cors } from "hono/cors";
-import { createServer } from "node:http";
 import { Server } from "socket.io";
-import chalk from "chalk";
-import { spawn, type ChildProcess } from "node:child_process";
-import { existsSync, readdirSync, statSync } from "node:fs";
-import { basename, extname, join } from "node:path";
 
 interface AgentFile {
 	path: string;
@@ -23,7 +24,7 @@ interface AgentProcess {
 export class ADKServer {
 	private app: Hono;
 	private server: any;
-	private io: Server;
+	private io!: Server;
 	private runningAgents = new Map<string, AgentProcess>();
 	private agentsDir: string;
 	private port: number;
@@ -44,7 +45,6 @@ export class ADKServer {
 			"*",
 			cors({
 				origin: ["http://localhost:3000", "https://adk-web.iqai.com"],
-				methods: ["GET", "POST", "PUT", "DELETE"],
 				credentials: true,
 			}),
 		);
@@ -143,46 +143,56 @@ export class ADKServer {
 		this.setupSocketHandlers();
 
 		// Handle Hono app through HTTP server
-		httpServer.on("request", (req, res) => {
-			// Convert Node.js request to Hono request
-			this.app
-				.fetch(
-					new Request(`http://localhost:${this.port}${req.url}`, {
-						method: req.method,
-						headers: req.headers as any,
-						body:
-							req.method !== "GET" && req.method !== "HEAD" ? req : undefined,
-					}),
-				)
-				.then((response) => {
-					res.statusCode = response.status;
+		httpServer.on("request", async (req, res) => {
+			try {
+				// Convert Node.js request to Hono request
+				const url = `http://localhost:${this.port}${req.url}`;
 
-					// Set headers
-					response.headers.forEach((value, key) => {
-						res.setHeader(key, value);
-					});
-
-					// Send body
-					if (response.body) {
-						response.body.pipeTo(
-							new WritableStream({
-								write(chunk) {
-									res.write(chunk);
-								},
-								close() {
-									res.end();
-								},
-							}),
-						);
-					} else {
-						res.end();
+				// Handle request body for non-GET/HEAD requests
+				let body: BodyInit | null = null;
+				if (req.method !== "GET" && req.method !== "HEAD") {
+					const chunks: Buffer[] = [];
+					for await (const chunk of req as Readable) {
+						chunks.push(chunk);
 					}
-				})
-				.catch((error) => {
-					console.error("Request error:", error);
-					res.statusCode = 500;
-					res.end("Internal Server Error");
+					body = Buffer.concat(chunks);
+				}
+
+				const response = await this.app.fetch(
+					new Request(url, {
+						method: req.method,
+						headers: req.headers as HeadersInit,
+						body,
+					}),
+				);
+
+				res.statusCode = response.status;
+
+				// Set headers
+				response.headers.forEach((value: string, key: string) => {
+					res.setHeader(key, value);
 				});
+
+				// Send body
+				if (response.body) {
+					response.body.pipeTo(
+						new WritableStream({
+							write(chunk) {
+								res.write(chunk);
+							},
+							close() {
+								res.end();
+							},
+						}),
+					);
+				} else {
+					res.end();
+				}
+			} catch (error: any) {
+				console.error("Request error:", error);
+				res.statusCode = 500;
+				res.end("Internal Server Error");
+			}
 		});
 	}
 
