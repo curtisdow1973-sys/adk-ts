@@ -55,16 +55,22 @@ program
 program
 	.command("web")
 	.description("Start a web interface for testing agents")
-	.option("-p, --port <port>", "Port for web server", "3001")
-	.option("-h, --host <host>", "Host for web server", "localhost")
+	.option("-p, --port <port>", "Port for API server", "3001")
+	.option("--web-port <port>", "Port for web app (when using --local)", "3000")
+	.option("-h, --host <host>", "Host for servers", "localhost")
 	.option(
 		"-d, --dir <directory>",
 		"Directory to scan for agents (default: current directory)",
 		".",
 	)
 	.option(
+		"--local",
+		"Run local web app instead of opening production URL",
+		false,
+	)
+	.option(
 		"--web-url <url>",
-		"URL of the web application",
+		"URL of the web application (used when not --local)",
 		"https://adk-web.iqai.com",
 	)
 	.action(async (options) => {

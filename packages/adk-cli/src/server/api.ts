@@ -44,7 +44,7 @@ export class ADKServer {
 		this.app.use(
 			"*",
 			cors({
-				origin: ["http://localhost:3000", "https://adk-web.iqai.com"],
+				origin: ["http://localhost:3000", "http://localhost:3001"],
 				credentials: true,
 			}),
 		);
@@ -87,7 +87,7 @@ export class ADKServer {
 			}
 
 			try {
-				const agentProcess = this.startAgent(agent, agentId);
+				this.startAgent(agent, agentId);
 				return c.json({ success: true, agentId, status: "started" });
 			} catch (error) {
 				return c.json({ error: "Failed to start agent" }, 500);
