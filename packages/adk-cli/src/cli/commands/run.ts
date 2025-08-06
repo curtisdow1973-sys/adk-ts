@@ -26,6 +26,15 @@ function findAgentFiles(directory: string): AgentFile[] {
 				const stat = statSync(fullPath);
 
 				if (stat.isDirectory()) {
+					// Skip node_modules and other common directories to exclude
+					if (
+						entry === "node_modules" ||
+						entry === ".git" ||
+						entry === "dist" ||
+						entry === "build"
+					) {
+						continue;
+					}
 					// Recursively scan subdirectories
 					scanDirectory(fullPath, baseDir);
 				} else if (stat.isFile()) {
@@ -72,6 +81,21 @@ function findBestAgentFile(agentPath?: string): string | null {
 			// If multiple agents found, prefer the one in the root of the search path
 			const rootAgent = agents.find((agent) => agent.name === "agent");
 			return rootAgent ? rootAgent.path : agents[0].path;
+		}
+	}
+
+	// If no agent.ts files found, look for common entry points
+	const commonEntryPoints = [
+		"src/index.ts",
+		"src/index.js",
+		"index.ts",
+		"index.js",
+	];
+
+	for (const entryPoint of commonEntryPoints) {
+		const fullPath = join(process.cwd(), entryPoint);
+		if (existsSync(fullPath)) {
+			return fullPath;
 		}
 	}
 
@@ -181,7 +205,28 @@ export async function runAgent(
 		].filter(existsSync);
 
 		const watcher = chokidar.watch(watchPaths, {
-			ignored: /node_modules|\.git|dist|build/,
+			ignored: [
+				/node_modules/,
+				/\.git/,
+				/dist/,
+				/build/,
+				/\.next/,
+				/\.turbo/,
+				/coverage/,
+				/\.nyc_output/,
+				/\.cache/,
+				/\.parcel-cache/,
+				/\.eslintcache/,
+				/\.stylelintcache/,
+				/\.prettiercache/,
+				/\.vscode/,
+				/\.idea/,
+				/\.DS_Store/,
+				/Thumbs\.db/,
+				/\.log$/,
+				/\.tmp$/,
+				/\.temp$/,
+			],
 			persistent: true,
 		});
 
