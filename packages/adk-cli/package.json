@@ -1,53 +1,54 @@
 {
-	"name": "create-adk-project",
-	"version": "1.0.3",
-	"description": "CLI tool to create ADK TypeScript projects and run agents with web/API interfaces",
+	"name": "@iqai/adk-cli",
+	"version": "0.1.0",
+	"description": "CLI tool for creating, running, and testing ADK agents",
 	"main": "dist/index.js",
 	"types": "dist/index.d.ts",
-	"type": "module",
 	"bin": {
-		"adk": "dist/index.js",
-		"create-adk-project": "dist/index.js"
+		"adk": "./dist/cli/index.js"
 	},
 	"scripts": {
 		"build": "tsup",
 		"dev": "tsup --watch",
-		"test": "vitest run"
+		"test": "vitest run",
+		"test:watch": "vitest"
 	},
 	"repository": {
 		"type": "git",
-		"url": "https://github.com/IQAIcom/adk-ts.git"
+		"url": "https://github.com/IQAIcom/adk-ts.git",
+		"directory": "packages/adk-cli"
 	},
 	"keywords": [
 		"ai",
 		"llm",
 		"agent",
 		"cli",
-		"typescript",
-		"create-project"
+		"adk",
+		"typescript"
 	],
 	"author": "IQAI",
 	"license": "MIT",
 	"dependencies": {
-		"@clack/prompts": "^0.7.0",
-		"@google/genai": "^1.6.0",
 		"@iqai/adk": "workspace:*",
+		"@clack/prompts": "^0.11.0",
 		"chalk": "^5.4.1",
+		"chokidar": "^4.0.3",
+		"commander": "^12.1.0",
+		"express": "^4.19.2",
 		"cors": "^2.8.5",
-		"dedent": "^1.6.0",
-		"dotenv": "^16.5.0",
-		"express": "^4.21.2",
-		"giget": "^1.2.3",
 		"socket.io": "^4.8.1",
-		"ts-node": "^10.9.2",
-		"typescript": "^5.3.2"
+		"react": "^18.3.1",
+		"react-dom": "^18.3.1",
+		"@types/react": "^18.3.12",
+		"@types/react-dom": "^18.3.1",
+		"giget": "^2.0.0",
+		"dedent": "^1.6.0"
 	},
 	"devDependencies": {
 		"@iqai/tsconfig": "workspace:*",
-		"@types/cors": "^2.8.19",
 		"@types/express": "^4.17.21",
+		"@types/cors": "^2.8.19",
 		"@types/node": "^20.17.30",
-		"@types/socket.io": "^3.0.2",
 		"tsup": "^8.4.0",
 		"typescript": "^5.3.2",
 		"vitest": "^3.1.3"
@@ -58,7 +59,6 @@
 	},
 	"files": [
 		"dist",
-		"templates",
 		"!**/*.test.*",
 		"!**/*.json",
 		"CHANGELOG.md",
