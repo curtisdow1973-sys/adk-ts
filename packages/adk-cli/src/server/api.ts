@@ -1,5 +1,11 @@
 import { type ChildProcess, spawn } from "node:child_process";
-import { existsSync, readFile, readdirSync, statSync } from "node:fs";
+import {
+	existsSync,
+	readFile,
+	readFileSync,
+	readdirSync,
+	statSync,
+} from "node:fs";
 import { type IncomingMessage, createServer } from "node:http";
 import { basename, dirname, extname, join } from "node:path";
 import type { Readable } from "node:stream";
@@ -241,16 +247,18 @@ export class ADKServer {
 					} else if (stat.isFile()) {
 						// Look for agent files (TypeScript or JavaScript)
 						if (await this.isAgentFile(entry, fullPath)) {
-							const relativePath = fullPath
-								.replace(baseDir, "")
-								.replace(/^[/\\]/, "");
-
 							const displayName = this.getAgentDisplayName(fullPath, baseDir);
+
+							// Use the displayName as relativePath (without file extension)
+							const relativePath = displayName;
+
+							// Set directory to project root (where .env file is located)
+							const projectRoot = basename(dir) === "src" ? dirname(dir) : dir;
 
 							agents.push({
 								path: fullPath,
 								name: displayName,
-								directory: dir,
+								directory: projectRoot,
 								relativePath,
 							});
 						}
@@ -288,14 +296,28 @@ export class ADKServer {
 		fileName: string,
 		fullPath: string,
 	): Promise<boolean> {
-		// Only look for files explicitly named "agent.ts" or "agent.js"
 		const name = basename(fileName, extname(fileName));
 		const ext = extname(fileName);
 
-		if (name !== "agent" || !(ext === ".ts" || ext === ".js")) {
-			return false;
+		// Check for files explicitly named "agent.ts" or "agent.js"
+		if (name === "agent" && (ext === ".ts" || ext === ".js")) {
+			return await this.hasAgentContent(fullPath);
 		}
 
+		// Check for common entry points in src/ directory
+		const commonEntryPoints = ["index", "main", "agent"];
+		if (commonEntryPoints.includes(name) && (ext === ".ts" || ext === ".js")) {
+			// Only consider src/ directory files as potential agents
+			const dirName = basename(dirname(fullPath));
+			if (dirName === "src") {
+				return await this.hasAgentContent(fullPath);
+			}
+		}
+
+		return false;
+	}
+
+	private async hasAgentContent(fullPath: string): Promise<boolean> {
 		try {
 			const readFileAsync = promisify(readFile);
 			const content = await readFileAsync(fullPath, "utf-8");
@@ -312,6 +334,11 @@ export class ADKServer {
 				/export\s+(?:default\s+)?class\s+\w*Agent/,
 				// Variable assignments that look like agents
 				/(?:rootAgent|agent|Agent|RootAgent)\s*[:=]\s*new\s+LlmAgent/,
+				// AgentBuilder patterns
+				/AgentBuilder\.(?:create|withModel|withInstruction)/,
+				// Simple function calls that might be agents
+				/\.ask\(/,
+				/\.run\(/,
 			];
 
 			// Check if any pattern matches
@@ -322,9 +349,10 @@ export class ADKServer {
 			// Additional check for ADK imports (stronger signal this is an ADK agent)
 			const hasAdkImport =
 				/from\s+['"]@iqai\/adk['"]/.test(content) ||
-				/import.*LlmAgent/.test(content);
+				/import.*LlmAgent/.test(content) ||
+				/import.*AgentBuilder/.test(content);
 
-			return hasAgentExport && hasAdkImport;
+			return hasAgentExport || hasAdkImport;
 		} catch (error) {
 			// If we can't read the file, assume it's not a valid agent
 			return false;
@@ -348,12 +376,56 @@ export class ADKServer {
 		console.log(chalk.blue(`🚀 Starting agent: ${agent.name}`));
 
 		const isTypeScript = agent.path.endsWith(".ts");
-		const command = isTypeScript ? "npx" : "node";
-		const args = isTypeScript ? ["tsx", agent.path] : [agent.path];
+		const command = process.execPath; // Use the same node executable that's running the server
+		const args = isTypeScript
+			? [
+					"-r",
+					join(agent.directory, "node_modules", "tsx", "register"),
+					agent.path,
+				]
+			: [agent.path];
+
+		// Load environment variables from .env file in the agent directory
+		console.log(`🏠 Agent directory: ${agent.directory}`);
+		console.log(`📂 Agent path: ${agent.path}`);
+		const envPath = join(agent.directory, ".env");
+		const envVars = { ...process.env };
+
+		try {
+			if (existsSync(envPath)) {
+				console.log(`📁 Loading .env file from: ${envPath}`);
+				const envContent = readFileSync(envPath, "utf-8");
+				const envLines = envContent.split("\n");
+
+				for (const line of envLines) {
+					const trimmedLine = line.trim();
+					if (trimmedLine && !trimmedLine.startsWith("#")) {
+						const equalIndex = trimmedLine.indexOf("=");
+						if (equalIndex > 0) {
+							const key = trimmedLine.substring(0, equalIndex);
+							let value = trimmedLine.substring(equalIndex + 1);
+
+							// Remove surrounding quotes if present
+							if (
+								(value.startsWith('"') && value.endsWith('"')) ||
+								(value.startsWith("'") && value.endsWith("'"))
+							) {
+								value = value.slice(1, -1);
+							}
+
+							envVars[key] = value;
+						}
+					}
+				}
+			}
+		} catch (error) {
+			console.warn(`Warning: Could not load .env file from ${envPath}:`, error);
+		}
 
 		const agentProcess = spawn(command, args, {
 			cwd: agent.directory,
-			stdio: ["pipe", "pipe", "pipe"],
+			stdio: "pipe",
+			env: envVars,
 		});
 
 		const agentData: AgentProcess = {
