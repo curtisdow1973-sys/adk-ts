@@ -10,7 +10,9 @@ export interface ServeOptions {
 	quiet?: boolean;
 }
 
-export async function serveCommand(options: ServeOptions = {}): Promise<ADKServer> {
+export async function serveCommand(
+	options: ServeOptions = {},
+): Promise<ADKServer> {
 	const port = options.port || 3001;
 	const host = options.host || "localhost";
 	const agentsDir = resolve(options.dir || ".");
@@ -32,13 +34,19 @@ export async function serveCommand(options: ServeOptions = {}): Promise<ADKServe
 		await server.start();
 
 		if (!options.quiet) {
-			console.log(chalk.green(`✅ ADK Server running at http://${host}:${port}`));
+			console.log(
+				chalk.green(`✅ ADK Server running at http://${host}:${port}`),
+			);
 			console.log(chalk.cyan("   API endpoints:"));
 			console.log(chalk.gray("   • GET  /health         - Health check"));
-			console.log(chalk.gray("   • GET  /agents         - List available agents"));
+			console.log(
+				chalk.gray("   • GET  /agents         - List available agents"),
+			);
 			console.log(chalk.gray("   • POST /agents/:id/run - Start an agent"));
 			console.log(chalk.gray("   • POST /agents/:id/stop - Stop an agent"));
-			console.log(chalk.gray("   • WS   /socket.io      - Real-time communication"));
+			console.log(
+				chalk.gray("   • WS   /socket.io      - Real-time communication"),
+			);
 			console.log();
 			console.log(chalk.yellow("Press Ctrl+C to stop the server"));
 		}

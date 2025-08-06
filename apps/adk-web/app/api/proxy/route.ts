@@ -1,65 +1,71 @@
-import type { NextRequest } from 'next/server';
-import { NextResponse } from 'next/server';
+import type { NextRequest } from "next/server";
+import { NextResponse } from "next/server";
 
 export async function GET(request: NextRequest) {
-  try {
-    const { searchParams } = new URL(request.url);
-    const apiUrl = searchParams.get('apiUrl');
-    const path = searchParams.get('path') || '';
-    
-    if (!apiUrl) {
-      return NextResponse.json({ error: 'API URL is required' }, { status: 400 });
-    }
+	try {
+		const { searchParams } = new URL(request.url);
+		const apiUrl = searchParams.get("apiUrl");
+		const path = searchParams.get("path") || "";
 
-    const response = await fetch(`${apiUrl}${path}`, {
-      headers: {
-        'Content-Type': 'application/json',
-      },
-    });
+		if (!apiUrl) {
+			return NextResponse.json(
+				{ error: "API URL is required" },
+				{ status: 400 },
+			);
+		}
 
-    if (!response.ok) {
-      throw new Error(`HTTP error! status: ${response.status}`);
-    }
+		const response = await fetch(`${apiUrl}${path}`, {
+			headers: {
+				"Content-Type": "application/json",
+			},
+		});
 
-    const data = await response.json();
-    return NextResponse.json(data);
-  } catch (error) {
-    console.error('Proxy error:', error);
-    return NextResponse.json(
-      { error: 'Failed to proxy request' },
-      { status: 500 }
-    );
-  }
+		if (!response.ok) {
+			throw new Error(`HTTP error! status: ${response.status}`);
+		}
+
+		const data = await response.json();
+		return NextResponse.json(data);
+	} catch (error) {
+		console.error("Proxy error:", error);
+		return NextResponse.json(
+			{ error: "Failed to proxy request" },
+			{ status: 500 },
+		);
+	}
 }
 
 export async function POST(request: NextRequest) {
-  try {
-    const body = await request.json();
-    const { apiUrl, path, data } = body;
-    
-    if (!apiUrl) {
-      return NextResponse.json({ error: 'API URL is required' }, { status: 400 });
-    }
+	try {
+		const body = await request.json();
+		const { apiUrl, path, data } = body;
 
-    const response = await fetch(`${apiUrl}${path}`, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify(data),
-    });
+		if (!apiUrl) {
+			return NextResponse.json(
+				{ error: "API URL is required" },
+				{ status: 400 },
+			);
+		}
 
-    if (!response.ok) {
-      throw new Error(`HTTP error! status: ${response.status}`);
-    }
+		const response = await fetch(`${apiUrl}${path}`, {
+			method: "POST",
+			headers: {
+				"Content-Type": "application/json",
+			},
+			body: JSON.stringify(data),
+		});
 
-    const responseData = await response.json();
-    return NextResponse.json(responseData);
-  } catch (error) {
-    console.error('Proxy error:', error);
-    return NextResponse.json(
-      { error: 'Failed to proxy request' },
-      { status: 500 }
-    );
-  }
+		if (!response.ok) {
+			throw new Error(`HTTP error! status: ${response.status}`);
+		}
+
+		const responseData = await response.json();
+		return NextResponse.json(responseData);
+	} catch (error) {
+		console.error("Proxy error:", error);
+		return NextResponse.json(
+			{ error: "Failed to proxy request" },
+			{ status: 500 },
+		);
+	}
 }

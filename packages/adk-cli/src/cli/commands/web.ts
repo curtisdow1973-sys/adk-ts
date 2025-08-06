@@ -21,7 +21,7 @@ export async function webCommand(options: WebOptions = {}): Promise<void> {
 		port,
 		dir: options.dir,
 		host,
-		quiet: true
+		quiet: true,
 	};
 
 	const server = await serveCommand(serveOptions);
@@ -29,10 +29,10 @@ export async function webCommand(options: WebOptions = {}): Promise<void> {
 	// Construct the web app URL with API endpoint
 	const apiUrl = `http://${host}:${port}`;
 	const webAppUrl = `${webUrl}?apiUrl=${encodeURIComponent(apiUrl)}`;
-	
+
 	console.log(chalk.green(`✅ ADK Server running at ${apiUrl}`));
 	console.log(chalk.cyan(`🚀 Opening web interface: ${webAppUrl}`));
-	
+
 	try {
 		await open(webAppUrl);
 		console.log(chalk.green("✅ Web interface opened in browser"));
@@ -42,9 +42,15 @@ export async function webCommand(options: WebOptions = {}): Promise<void> {
 	}
 
 	console.log();
-	console.log(chalk.yellow("🔄 Web interface is connected to your local ADK server"));
-	console.log(chalk.gray("   Any agents you run will be accessible through the web UI"));
-	console.log(chalk.yellow("Press Ctrl+C to stop both server and web interface"));
+	console.log(
+		chalk.yellow("🔄 Web interface is connected to your local ADK server"),
+	);
+	console.log(
+		chalk.gray("   Any agents you run will be accessible through the web UI"),
+	);
+	console.log(
+		chalk.yellow("Press Ctrl+C to stop both server and web interface"),
+	);
 }
 
 // Legacy function name for backward compatibility

@@ -60,12 +60,12 @@ program
 	.option(
 		"-d, --dir <directory>",
 		"Directory to scan for agents (default: current directory)",
-		"."
+		".",
 	)
 	.option(
 		"--web-url <url>",
 		"URL of the web application",
-		"https://adk-web.iqai.com"
+		"https://adk-web.iqai.com",
 	)
 	.action(async (options) => {
 		try {
@@ -84,7 +84,7 @@ program
 	.option(
 		"-d, --dir <directory>",
 		"Directory to scan for agents (default: current directory)",
-		"."
+		".",
 	)
 	.action(async (options) => {
 		try {

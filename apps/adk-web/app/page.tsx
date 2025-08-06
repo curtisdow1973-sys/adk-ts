@@ -1,14 +1,27 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import {
+	Card,
+	CardContent,
+	CardDescription,
+	CardHeader,
+	CardTitle,
+} from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Separator } from "@/components/ui/separator";
 import { Alert, AlertDescription } from "@/components/ui/alert";
-import { Loader2, Play, Square, MessageCircle, Bot, AlertCircle } from "lucide-react";
+import {
+	Loader2,
+	Play,
+	Square,
+	MessageCircle,
+	Bot,
+	AlertCircle,
+} from "lucide-react";
 
 interface Agent {
 	path: string;
@@ -29,7 +42,9 @@ export default function Home() {
 	const [selectedAgent, setSelectedAgent] = useState<Agent | null>(null);
 	const [messages, setMessages] = useState<Message[]>([]);
 	const [inputMessage, setInputMessage] = useState("");
-	const [agentStatus, setAgentStatus] = useState<Record<string, "running" | "stopped">>({});
+	const [agentStatus, setAgentStatus] = useState<
+		Record<string, "running" | "stopped">
+	>({});
 	const [apiUrl, setApiUrl] = useState<string>("");
 	const [connected, setConnected] = useState(false);
 	const [loading, setLoading] = useState(true);
@@ -38,7 +53,7 @@ export default function Home() {
 		// Get API URL from query params
 		const urlParams = new URLSearchParams(window.location.search);
 		const apiUrlParam = urlParams.get("apiUrl");
-		
+
 		if (apiUrlParam) {
 			setApiUrl(apiUrlParam);
 			loadAgents(apiUrlParam);
@@ -49,7 +64,9 @@ export default function Home() {
 
 	const loadAgents = async (url: string) => {
 		try {
-			const response = await fetch(`/api/proxy?apiUrl=${encodeURIComponent(url)}&path=/api/agents`);
+			const response = await fetch(
+				`/api/proxy?apiUrl=${encodeURIComponent(url)}&path=/api/agents`,
+			);
 			if (response.ok) {
 				const agentsData = await response.json();
 				setAgents(agentsData);
@@ -67,18 +84,18 @@ export default function Home() {
 
 	const startAgent = async (agent: Agent) => {
 		try {
-			const response = await fetch('/api/proxy', {
-				method: 'POST',
-				headers: { 'Content-Type': 'application/json' },
+			const response = await fetch("/api/proxy", {
+				method: "POST",
+				headers: { "Content-Type": "application/json" },
 				body: JSON.stringify({
 					apiUrl,
 					path: `/api/agents/${encodeURIComponent(agent.path)}/start`,
-					data: {}
-				})
+					data: {},
+				}),
 			});
-			
+
 			if (response.ok) {
-				setAgentStatus(prev => ({ ...prev, [agent.path]: "running" }));
+				setAgentStatus((prev) => ({ ...prev, [agent.path]: "running" }));
 				if (selectedAgent?.path === agent.path) {
 					addMessage("system", `Agent ${agent.name} started successfully`);
 				}
@@ -91,18 +108,18 @@ export default function Home() {
 
 	const stopAgent = async (agent: Agent) => {
 		try {
-			const response = await fetch('/api/proxy', {
-				method: 'POST',
-				headers: { 'Content-Type': 'application/json' },
+			const response = await fetch("/api/proxy", {
+				method: "POST",
+				headers: { "Content-Type": "application/json" },
 				body: JSON.stringify({
 					apiUrl,
 					path: `/api/agents/${encodeURIComponent(agent.path)}/stop`,
-					data: {}
-				})
+					data: {},
+				}),
 			});
-			
+
 			if (response.ok) {
-				setAgentStatus(prev => ({ ...prev, [agent.path]: "stopped" }));
+				setAgentStatus((prev) => ({ ...prev, [agent.path]: "stopped" }));
 				if (selectedAgent?.path === agent.path) {
 					addMessage("system", `Agent ${agent.name} stopped`);
 				}
@@ -117,16 +134,16 @@ export default function Home() {
 		if (!inputMessage.trim() || !selectedAgent) return;
 
 		addMessage("user", inputMessage);
-		
+
 		try {
-			const response = await fetch('/api/proxy', {
-				method: 'POST',
-				headers: { 'Content-Type': 'application/json' },
+			const response = await fetch("/api/proxy", {
+				method: "POST",
+				headers: { "Content-Type": "application/json" },
 				body: JSON.stringify({
 					apiUrl,
 					path: `/api/agents/${encodeURIComponent(selectedAgent.path)}/message`,
-					data: { message: inputMessage }
-				})
+					data: { message: inputMessage },
+				}),
 			});
 
 			if (!response.ok) {
@@ -140,7 +157,7 @@ export default function Home() {
 	};
 
 	const addMessage = (type: Message["type"], content: string) => {
-		setMessages(prev => [
+		setMessages((prev) => [
 			...prev,
 			{
 				id: Date.now(),
@@ -153,12 +170,14 @@ export default function Home() {
 
 	const selectAgent = (agent: Agent) => {
 		setSelectedAgent(agent);
-		setMessages([{
-			id: Date.now(),
-			type: "system",
-			content: `Selected agent: ${agent.name}`,
-			timestamp: new Date(),
-		}]);
+		setMessages([
+			{
+				id: Date.now(),
+				type: "system",
+				content: `Selected agent: ${agent.name}`,
+				timestamp: new Date(),
+			},
+		]);
 	};
 
 	if (loading) {
@@ -177,11 +196,15 @@ export default function Home() {
 			<div className="container mx-auto p-8">
 				<div className="max-w-2xl mx-auto text-center">
 					<Bot className="h-16 w-16 mx-auto mb-4" />
-					<h1 className="text-3xl font-bold mb-4">ADK Agent Testing Interface</h1>
+					<h1 className="text-3xl font-bold mb-4">
+						ADK Agent Testing Interface
+					</h1>
 					<Alert>
 						<AlertCircle className="h-4 w-4" />
 						<AlertDescription>
-							This interface needs to be launched from the ADK CLI. Run <code className="bg-muted px-1 py-0.5 rounded">adk web</code> to start.
+							This interface needs to be launched from the ADK CLI. Run{" "}
+							<code className="bg-muted px-1 py-0.5 rounded">adk web</code> to
+							start.
 						</AlertDescription>
 					</Alert>
 				</div>
@@ -194,11 +217,14 @@ export default function Home() {
 			<div className="container mx-auto p-8">
 				<div className="max-w-2xl mx-auto text-center">
 					<Bot className="h-16 w-16 mx-auto mb-4" />
-					<h1 className="text-3xl font-bold mb-4">ADK Agent Testing Interface</h1>
+					<h1 className="text-3xl font-bold mb-4">
+						ADK Agent Testing Interface
+					</h1>
 					<Alert>
 						<AlertCircle className="h-4 w-4" />
 						<AlertDescription>
-							Failed to connect to ADK server at {apiUrl}. Make sure the server is running.
+							Failed to connect to ADK server at {apiUrl}. Make sure the server
+							is running.
 						</AlertDescription>
 					</Alert>
 					<Button onClick={() => loadAgents(apiUrl)} className="mt-4">
@@ -216,7 +242,10 @@ export default function Home() {
 					<h1 className="text-3xl font-bold">🤖 ADK Agent Testing Interface</h1>
 					<p className="text-muted-foreground">Connected to {apiUrl}</p>
 				</div>
-				<Badge variant="outline" className="bg-green-50 text-green-700 border-green-200">
+				<Badge
+					variant="outline"
+					className="bg-green-50 text-green-700 border-green-200"
+				>
 					Connected
 				</Badge>
 			</div>
@@ -226,9 +255,7 @@ export default function Home() {
 				<Card className="lg:col-span-1">
 					<CardHeader>
 						<CardTitle>Available Agents ({agents.length})</CardTitle>
-						<CardDescription>
-							Select an agent to start testing
-						</CardDescription>
+						<CardDescription>Select an agent to start testing</CardDescription>
 					</CardHeader>
 					<CardContent className="p-0">
 						<ScrollArea className="h-[calc(100vh-300px)]">
@@ -305,7 +332,9 @@ export default function Home() {
 					<CardHeader>
 						<CardTitle className="flex items-center gap-2">
 							<MessageCircle className="h-5 w-5" />
-							{selectedAgent ? `Chat with ${selectedAgent.name}` : "Select an Agent"}
+							{selectedAgent
+								? `Chat with ${selectedAgent.name}`
+								: "Select an Agent"}
 						</CardTitle>
 						{selectedAgent && (
 							<CardDescription>
@@ -322,7 +351,9 @@ export default function Home() {
 											<div
 												key={message.id}
 												className={`flex ${
-													message.type === "user" ? "justify-end" : "justify-start"
+													message.type === "user"
+														? "justify-end"
+														: "justify-start"
 												}`}
 											>
 												<div
@@ -330,8 +361,8 @@ export default function Home() {
 														message.type === "user"
 															? "bg-primary text-primary-foreground"
 															: message.type === "system"
-															? "bg-yellow-50 text-yellow-800 border border-yellow-200"
-															: "bg-muted"
+																? "bg-yellow-50 text-yellow-800 border border-yellow-200"
+																: "bg-muted"
 													}`}
 												>
 													<p className="text-sm">{message.content}</p>

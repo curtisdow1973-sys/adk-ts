@@ -40,11 +40,14 @@ export class ADKServer {
 
 	private setupRoutes() {
 		// Enable CORS for all routes
-		this.app.use("*", cors({
-			origin: ["http://localhost:3000", "https://adk-web.iqai.com"],
-			methods: ["GET", "POST", "PUT", "DELETE"],
-			credentials: true
-		}));
+		this.app.use(
+			"*",
+			cors({
+				origin: ["http://localhost:3000", "https://adk-web.iqai.com"],
+				methods: ["GET", "POST", "PUT", "DELETE"],
+				credentials: true,
+			}),
+		);
 
 		// Health check
 		this.app.get("/health", (c) => {
@@ -59,11 +62,13 @@ export class ADKServer {
 
 		// Get running agents
 		this.app.get("/api/agents/running", (c) => {
-			const running = Array.from(this.runningAgents.entries()).map(([id, agent]) => ({
-				id,
-				status: agent.status,
-				startTime: agent.startTime
-			}));
+			const running = Array.from(this.runningAgents.entries()).map(
+				([id, agent]) => ({
+					id,
+					status: agent.status,
+					startTime: agent.startTime,
+				}),
+			);
 			return c.json({ running });
 		});
 
@@ -71,7 +76,7 @@ export class ADKServer {
 		this.app.post("/api/agents/:agentId/start", async (c) => {
 			const agentId = c.req.param("agentId");
 			const agents = this.findAgentFiles(this.agentsDir);
-			const agent = agents.find(a => a.relativePath === agentId);
+			const agent = agents.find((a) => a.relativePath === agentId);
 
 			if (!agent) {
 				return c.json({ error: "Agent not found" }, 404);
@@ -111,7 +116,10 @@ export class ADKServer {
 			const agentProcess = this.runningAgents.get(agentId);
 
 			if (!agentProcess || !agentProcess.process.stdin) {
-				return c.json({ error: "Agent is not running or does not accept input" }, 404);
+				return c.json(
+					{ error: "Agent is not running or does not accept input" },
+					404,
+				);
 			}
 
 			agentProcess.process.stdin.write(`${message}\n`);
@@ -128,8 +136,8 @@ export class ADKServer {
 			cors: {
 				origin: ["http://localhost:3000", "https://adk-web.iqai.com"],
 				methods: ["GET", "POST"],
-				credentials: true
-			}
+				credentials: true,
+			},
 		});
 
 		this.setupSocketHandlers();
@@ -137,36 +145,44 @@ export class ADKServer {
 		// Handle Hono app through HTTP server
 		httpServer.on("request", (req, res) => {
 			// Convert Node.js request to Hono request
-			this.app.fetch(new Request(`http://localhost:${this.port}${req.url}`, {
-				method: req.method,
-				headers: req.headers as any,
-				body: req.method !== "GET" && req.method !== "HEAD" ? req : undefined
-			})).then(response => {
-				res.statusCode = response.status;
-				
-				// Set headers
-				response.headers.forEach((value, key) => {
-					res.setHeader(key, value);
-				});
+			this.app
+				.fetch(
+					new Request(`http://localhost:${this.port}${req.url}`, {
+						method: req.method,
+						headers: req.headers as any,
+						body:
+							req.method !== "GET" && req.method !== "HEAD" ? req : undefined,
+					}),
+				)
+				.then((response) => {
+					res.statusCode = response.status;
 
-				// Send body
-				if (response.body) {
-					response.body.pipeTo(new WritableStream({
-						write(chunk) {
-							res.write(chunk);
-						},
-						close() {
-							res.end();
-						}
-					}));
-				} else {
-					res.end();
-				}
-			}).catch(error => {
-				console.error("Request error:", error);
-				res.statusCode = 500;
-				res.end("Internal Server Error");
-			});
+					// Set headers
+					response.headers.forEach((value, key) => {
+						res.setHeader(key, value);
+					});
+
+					// Send body
+					if (response.body) {
+						response.body.pipeTo(
+							new WritableStream({
+								write(chunk) {
+									res.write(chunk);
+								},
+								close() {
+									res.end();
+								},
+							}),
+						);
+					} else {
+						res.end();
+					}
+				})
+				.catch((error) => {
+					console.error("Request error:", error);
+					res.statusCode = 500;
+					res.end("Internal Server Error");
+				});
 		});
 	}
 
@@ -242,9 +258,7 @@ export class ADKServer {
 
 		const isTypeScript = agent.path.endsWith(".ts");
 		const command = isTypeScript ? "npx" : "node";
-		const args = isTypeScript 
-			? ["tsx", agent.path]
-			: [agent.path];
+		const args = isTypeScript ? ["tsx", agent.path] : [agent.path];
 
 		const agentProcess = spawn(command, args, {
 			cwd: agent.directory,
@@ -254,7 +268,7 @@ export class ADKServer {
 		const agentData: AgentProcess = {
 			process: agentProcess,
 			status: "running",
-			startTime: new Date()
+			startTime: new Date(),
 		};
 
 		this.runningAgents.set(agentId, agentData);
@@ -263,55 +277,58 @@ export class ADKServer {
 		agentProcess.stdout?.on("data", (data) => {
 			const message = data.toString();
 			console.log(chalk.gray(`[${agent.name}] ${message.trim()}`));
-			
+
 			this.io.to(`agent-${agentId}`).emit("agentMessage", {
 				id: Date.now(),
 				type: "stdout",
 				content: message,
 				agentId,
-				timestamp: new Date().toISOString()
+				timestamp: new Date().toISOString(),
 			});
 		});
 
 		agentProcess.stderr?.on("data", (data) => {
 			const message = data.toString();
 			console.error(chalk.red(`[${agent.name}] ${message.trim()}`));
-			
+
 			this.io.to(`agent-${agentId}`).emit("agentMessage", {
 				id: Date.now(),
 				type: "stderr",
 				content: message,
 				agentId,
-				timestamp: new Date().toISOString()
+				timestamp: new Date().toISOString(),
 			});
 		});
 
 		agentProcess.on("close", (code) => {
-			const status = code === 0 ? "Agent completed successfully" : `Agent exited with code ${code}`;
+			const status =
+				code === 0
+					? "Agent completed successfully"
+					: `Agent exited with code ${code}`;
 			console.log(chalk.yellow(`[${agent.name}] ${status}`));
-			
+
 			this.runningAgents.delete(agentId);
-			
+
 			this.io.to(`agent-${agentId}`).emit("agentMessage", {
 				id: Date.now(),
 				type: "system",
 				content: status,
 				agentId,
-				timestamp: new Date().toISOString()
+				timestamp: new Date().toISOString(),
 			});
 		});
 
 		agentProcess.on("error", (error) => {
 			console.error(chalk.red(`[${agent.name}] Error: ${error.message}`));
-			
+
 			agentData.status = "error";
-			
+
 			this.io.to(`agent-${agentId}`).emit("agentMessage", {
 				id: Date.now(),
 				type: "error",
 				content: `Error: ${error.message}`,
 				agentId,
-				timestamp: new Date().toISOString()
+				timestamp: new Date().toISOString(),
 			});
 		});
 
@@ -320,7 +337,7 @@ export class ADKServer {
 			type: "system",
 			content: `Agent ${agent.name} started`,
 			agentId,
-			timestamp: new Date().toISOString()
+			timestamp: new Date().toISOString(),
 		});
 
 		return agentProcess;
@@ -330,14 +347,21 @@ export class ADKServer {
 		return new Promise((resolve, reject) => {
 			this.server.listen(this.port, this.host, () => {
 				console.log(chalk.green("✅ ADK Server started!"));
-				console.log(chalk.cyan(`🌐 API Server: http://${this.host}:${this.port}`));
-				console.log(chalk.cyan(`🔌 WebSocket Server: ws://${this.host}:${this.port}`));
+				console.log(
+					chalk.cyan(`🌐 API Server: http://${this.host}:${this.port}`),
+				);
+				console.log(
+					chalk.cyan(`🔌 WebSocket Server: ws://${this.host}:${this.port}`),
+				);
 				console.log(chalk.gray(`📁 Watching for agents in: ${this.agentsDir}`));
 				resolve();
 			});
 
 			this.server.on("error", (error: Error) => {
-				console.error(chalk.red("❌ Failed to start ADK server:"), error.message);
+				console.error(
+					chalk.red("❌ Failed to start ADK server:"),
+					error.message,
+				);
 				reject(error);
 			});
 		});
