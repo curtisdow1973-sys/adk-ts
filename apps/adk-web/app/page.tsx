@@ -1,6 +1,9 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { ThemeToggle } from "@/components/theme-toggle";
+import { Alert, AlertDescription } from "@/components/ui/alert";
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
 import {
 	Card,
 	CardContent,
@@ -8,20 +11,18 @@ import {
 	CardHeader,
 	CardTitle,
 } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Badge } from "@/components/ui/badge";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Separator } from "@/components/ui/separator";
-import { Alert, AlertDescription } from "@/components/ui/alert";
 import {
+	AlertCircle,
+	Bot,
 	Loader2,
+	MessageCircle,
 	Play,
 	Square,
-	MessageCircle,
-	Bot,
-	AlertCircle,
 } from "lucide-react";
+import { useEffect, useState } from "react";
 
 interface Agent {
 	path: string;
@@ -242,12 +243,15 @@ export default function Home() {
 					<h1 className="text-3xl font-bold">🤖 ADK Agent Testing Interface</h1>
 					<p className="text-muted-foreground">Connected to {apiUrl}</p>
 				</div>
-				<Badge
-					variant="outline"
-					className="bg-green-50 text-green-700 border-green-200"
-				>
-					Connected
-				</Badge>
+				<div className="flex items-center gap-4">
+					<ThemeToggle />
+					<Badge
+						variant="outline"
+						className="bg-green-50 text-green-700 border-green-200"
+					>
+						Connected
+					</Badge>
+				</div>
 			</div>
 
 			<div className="grid grid-cols-1 lg:grid-cols-3 gap-6 flex-1 min-h-0">
