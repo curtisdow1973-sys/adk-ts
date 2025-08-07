@@ -1,12 +1,12 @@
 "use client";
 
-import { AgentsPanel } from "@/components/agents-panel";
 import { ChatPanel } from "@/components/chat-panel";
-import { Header } from "@/components/header";
+import { Footer } from "@/components/footer";
+import { Navbar } from "@/components/navbar";
 import { ErrorState, LoadingState } from "@/components/ui/states";
 import { useAgents } from "@/hooks/useAgents";
 import { useSearchParams } from "next/navigation";
-import { Suspense } from "react";
+import { Suspense, useEffect } from "react";
 
 function HomeContent() {
 	const searchParams = useSearchParams();
@@ -36,6 +36,13 @@ function HomeContent() {
 		isSendingMessage,
 	} = useAgents(finalApiUrl);
 
+	// Auto-select first agent if none selected and agents are available
+	useEffect(() => {
+		if (agents.length > 0 && !selectedAgent) {
+			selectAgent(agents[0]);
+		}
+	}, [agents, selectedAgent, selectAgent]);
+
 	if (loading) {
 		return <LoadingState message="Connecting to ADK server..." />;
 	}
@@ -61,21 +68,16 @@ function HomeContent() {
 	}
 
 	return (
-		<div className="container mx-auto p-6 h-screen flex flex-col">
-			<Header apiUrl={finalApiUrl} />
+		<div className="min-h-screen flex flex-col bg-background">
+			<Navbar
+				apiUrl={finalApiUrl}
+				agents={agents}
+				selectedAgent={selectedAgent}
+				agentStatus={agentStatus}
+				onSelectAgent={selectAgent}
+			/>
 
-			<div className="grid grid-cols-1 lg:grid-cols-3 gap-6 flex-1 min-h-0">
-				<AgentsPanel
-					agents={agents}
-					selectedAgent={selectedAgent}
-					agentStatus={agentStatus}
-					onSelectAgent={selectAgent}
-					onStartAgent={startAgent}
-					onStopAgent={stopAgent}
-					isStartingAgent={isStartingAgent}
-					isStoppingAgent={isStoppingAgent}
-				/>
-
+			<main className="flex-1 flex flex-col min-h-0">
 				<ChatPanel
 					selectedAgent={selectedAgent}
 					messages={messages}
@@ -83,7 +85,9 @@ function HomeContent() {
 					onSendMessage={sendMessage}
 					isSendingMessage={isSendingMessage}
 				/>
-			</div>
+			</main>
+
+			<Footer />
 		</div>
 	);
 }
