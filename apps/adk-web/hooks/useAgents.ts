@@ -1,8 +1,7 @@
 "use client";
 
-import { useCallback, useEffect, useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { io, type Socket } from "socket.io-client";
+import { useCallback, useEffect, useState } from "react";
 import type { Agent, Message } from "../app/(dashboard)/_schema/types";
 
 interface AgentApiResponse {
@@ -21,19 +20,21 @@ interface AgentMessage {
 	id: number;
 	type: "stdout" | "stderr" | "system" | "error";
 	content: string;
-	agentId: string;
 	timestamp: string;
+}
+
+interface AgentMessagesResponse {
+	messages: AgentMessage[];
 }
 
 export function useAgents(apiUrl: string) {
 	const queryClient = useQueryClient();
 	const [selectedAgent, setSelectedAgent] = useState<Agent | null>(null);
 	const [messages, setMessages] = useState<Message[]>([]);
-	const [connected, setConnected] = useState(false);
-	const [socket, setSocket] = useState<Socket | null>(null);
 	const [agentStatus, setAgentStatus] = useState<
 		Record<string, "running" | "stopped" | "error">
 	>({});
+	const [lastMessageId, setLastMessageId] = useState<number>(0);
 
 	// Fetch available agents
 	const {
@@ -74,9 +75,29 @@ export function useAgents(apiUrl: string) {
 			}
 			return response.json();
 		},
-		enabled: !!apiUrl && connected,
-		refetchInterval: 5000,
+		enabled: !!apiUrl,
+		refetchInterval: 2000, // Poll every 2 seconds
 		staleTime: 1000,
+	});
+
+	// Fetch messages for selected agent
+	const { data: agentMessages } = useQuery({
+		queryKey: ["agent-messages", apiUrl, selectedAgent?.relativePath],
+		queryFn: async (): Promise<AgentMessagesResponse> => {
+			if (!apiUrl || !selectedAgent)
+				throw new Error("API URL and agent required");
+
+			const response = await fetch(
+				`/api/proxy?apiUrl=${encodeURIComponent(apiUrl)}&path=/api/agents/${encodeURIComponent(selectedAgent.relativePath)}/messages`,
+			);
+			if (!response.ok) {
+				throw new Error(`Failed to fetch agent messages: ${response.status}`);
+			}
+			return response.json();
+		},
+		enabled: !!apiUrl && !!selectedAgent,
+		refetchInterval: 1000, // Poll every 1 second for messages
+		staleTime: 500,
 	});
 
 	// Update agent status when running agents data changes
@@ -90,100 +111,31 @@ export function useAgents(apiUrl: string) {
 		}
 	}, [runningAgents]);
 
-	// WebSocket connection for real-time messages
+	// Update messages when agent messages change
 	useEffect(() => {
-		console.log("🔧 WebSocket useEffect triggered");
-		console.log("apiUrl:", apiUrl);
-		console.log("selectedAgent:", selectedAgent);
-
-		if (!apiUrl) {
-			console.log("❌ No apiUrl provided for WebSocket connection");
-			return;
-		}
-
-		console.log("🚀 Setting up WebSocket connection to:", apiUrl);
-
-		try {
-			const newSocket = io(apiUrl, {
-				transports: ["websocket", "polling"],
-				timeout: 10000,
-				forceNew: true,
-			});
-
-			console.log("📡 Socket.IO client created:", newSocket);
-
-			newSocket.on("connect", () => {
-				console.log("✅ Connected to ADK server WebSocket");
-				console.log("Socket ID:", newSocket.id);
-				setConnected(true);
-			});
-
-			newSocket.on("disconnect", (reason) => {
-				console.log("❌ Disconnected from ADK server WebSocket:", reason);
-				setConnected(false);
-			});
-
-			newSocket.on("connect_error", (error) => {
-				console.error("🔥 WebSocket connection error:", error);
-				console.error("Error details:", error.message);
-				console.error("Attempted to connect to:", apiUrl);
-				setConnected(false);
-			});
-
-			newSocket.on("agentMessage", (message: AgentMessage) => {
-				console.log("📨 Received agentMessage:", message);
-				if (selectedAgent && message.agentId === selectedAgent.relativePath) {
-					console.log(
-						"✅ Adding message to chat for agent:",
-						selectedAgent.relativePath,
-					);
-					const newMessage: Message = {
-						id: message.id,
+		if (agentMessages?.messages && selectedAgent) {
+			const newMessages = agentMessages.messages
+				.filter((msg) => msg.id > lastMessageId)
+				.map(
+					(msg): Message => ({
+						id: msg.id,
 						type:
-							message.type === "stdout"
+							msg.type === "stdout"
 								? "assistant"
-								: (message.type as Message["type"]),
-						content: message.content.trim(),
-						timestamp: new Date(message.timestamp),
-					};
-					setMessages((prev) => {
-						const updated = [...prev, newMessage];
-						console.log("💬 Messages updated, total count:", updated.length);
-						return updated;
-					});
-				} else {
-					console.log(
-						"⚠️ Message not for selected agent. Selected:",
-						selectedAgent?.relativePath,
-						"Message for:",
-						message.agentId,
-					);
-				}
-			});
+								: msg.type === "system"
+									? "system"
+									: "system",
+						content: msg.content.trim(),
+						timestamp: new Date(msg.timestamp),
+					}),
+				);
 
-			setSocket(newSocket);
-
-			return () => {
-				console.log("🧹 Cleaning up WebSocket connection");
-				newSocket.close();
-			};
-		} catch (error) {
-			console.error("💥 Error creating Socket.IO client:", error);
+			if (newMessages.length > 0) {
+				setMessages((prev) => [...prev, ...newMessages]);
+				setLastMessageId(Math.max(...agentMessages.messages.map((m) => m.id)));
+			}
 		}
-	}, [apiUrl, selectedAgent]);
-
-	// Join agent room when agent is selected
-	useEffect(() => {
-		if (socket && selectedAgent && socket.connected) {
-			console.log("🏠 Joining agent room:", selectedAgent.relativePath);
-			socket.emit("joinAgent", selectedAgent.relativePath);
-
-			return () => {
-				console.log("🚪 Leaving agent room:", selectedAgent.relativePath);
-				socket.emit("leaveAgent", selectedAgent.relativePath);
-			};
-		}
-	}, [socket, selectedAgent, socket?.connected]);
+	}, [agentMessages, selectedAgent, lastMessageId]);
 
 	// Start agent mutation
 	const startAgentMutation = useMutation({
@@ -276,6 +228,12 @@ export function useAgents(apiUrl: string) {
 			}
 			return response.json();
 		},
+		onSuccess: () => {
+			// Force refresh messages after sending
+			queryClient.invalidateQueries({
+				queryKey: ["agent-messages", apiUrl, selectedAgent?.relativePath],
+			});
+		},
 		onError: (error) => {
 			// Add error message to chat
 			const errorMessage: Message = {
@@ -299,6 +257,7 @@ export function useAgents(apiUrl: string) {
 				timestamp: new Date(),
 			},
 		]);
+		setLastMessageId(0); // Reset message tracking for new agent
 	}, []);
 
 	// Action handlers
@@ -329,7 +288,7 @@ export function useAgents(apiUrl: string) {
 		selectedAgent,
 		messages,
 		agentStatus,
-		connected,
+		connected: !!apiUrl, // Always "connected" if we have an API URL
 		loading,
 		error,
 		startAgent,

@@ -5,7 +5,7 @@
 	"main": "dist/index.js",
 	"types": "dist/index.d.ts",
 	"bin": {
-		"adk": "./dist/cli-main.mjs"
+		"adk": "./dist/index.mjs"
 	},
 	"scripts": {
 		"build": "tsup",
