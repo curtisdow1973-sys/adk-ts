@@ -29,8 +29,7 @@
 		"commander": "^12.1.0",
 		"dedent": "^1.6.0",
 		"giget": "^2.0.0",
-		"hono": "^4.6.13",
-		"open": "^10.2.0"
+		"hono": "^4.6.13"
 	},
 	"devDependencies": {
 		"@iqai/tsconfig": "workspace:*",

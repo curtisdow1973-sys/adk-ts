@@ -10,7 +10,12 @@ import { Suspense } from "react";
 
 function HomeContent() {
 	const searchParams = useSearchParams();
-	const apiUrl = searchParams.get("apiUrl") || "";
+	const apiUrl = searchParams.get("apiUrl");
+	const port = searchParams.get("port");
+	
+	// Support both legacy apiUrl and new port parameter
+	// Default to port 8042 if neither is provided
+	const finalApiUrl = apiUrl || (port ? `http://localhost:${port}` : "http://localhost:8042");
 
 	const {
 		agents,
@@ -28,13 +33,13 @@ function HomeContent() {
 		isStartingAgent,
 		isStoppingAgent,
 		isSendingMessage,
-	} = useAgents(apiUrl);
+	} = useAgents(finalApiUrl);
 
 	if (loading) {
 		return <LoadingState message="Connecting to ADK server..." />;
 	}
 
-	if (!apiUrl) {
+	if (!finalApiUrl) {
 		return (
 			<ErrorState
 				title="ADK-TS Web"
@@ -47,7 +52,7 @@ function HomeContent() {
 		return (
 			<ErrorState
 				title="ADK-TS Web"
-				message={`Failed to connect to ADK server at ${apiUrl}. Make sure the server is running.`}
+				message={`Failed to connect to ADK server at ${finalApiUrl}. Make sure the server is running.`}
 				actionLabel="Retry Connection"
 				onAction={refreshAgents}
 			/>
@@ -56,7 +61,7 @@ function HomeContent() {
 
 	return (
 		<div className="container mx-auto p-6 h-screen flex flex-col">
-			<Header apiUrl={apiUrl} />
+			<Header apiUrl={finalApiUrl} />
 
 			<div className="grid grid-cols-1 lg:grid-cols-3 gap-6 flex-1 min-h-0">
 				<AgentsPanel

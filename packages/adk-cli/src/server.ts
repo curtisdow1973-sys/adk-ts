@@ -42,7 +42,7 @@ export class ADKServer {
 	private port: number;
 	private host: string;
 
-	constructor(agentsDir: string, port = 3001, host = "localhost") {
+	constructor(agentsDir: string, port = 8042, host = "localhost") {
 		this.agentsDir = agentsDir;
 		this.port = port;
 		this.host = host;

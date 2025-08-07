@@ -1,5 +1,4 @@
 import chalk from "chalk";
-import open from "open";
 import { type ServeOptions, serveCommand } from "./serve.js";
 
 export interface WebCommandOptions {
@@ -14,7 +13,7 @@ export interface WebCommandOptions {
 export async function webCommand(
 	options: WebCommandOptions = {},
 ): Promise<void> {
-	const apiPort = options.port || 3001;
+	const apiPort = options.port || 8042; // Default to port 8042 to match serve command
 	const webPort = options.webPort || 3000;
 	const host = options.host || "localhost";
 	const useLocal = options.local || false;
@@ -32,24 +31,29 @@ export async function webCommand(
 
 	await serveCommand(serveOptions);
 
-	const apiUrl = `http://${host}:${apiPort}`;
 	let webAppUrl: string;
 
 	if (useLocal) {
 		// Local development: assume web app is already running on webPort
-		webAppUrl = `http://${host}:${webPort}?apiUrl=${encodeURIComponent(apiUrl)}`;
-		console.log(chalk.green(`✅ Local web interface ready at ${webAppUrl}`));
+		// Only add port parameter if it's not the default
+		if (apiPort === 8042) {
+			webAppUrl = `http://${host}:${webPort}`;
+		} else {
+			webAppUrl = `http://${host}:${webPort}?port=${apiPort}`;
+		}
 	} else {
 		// Production: use hosted web interface
-		webAppUrl = `${webUrl}?apiUrl=${encodeURIComponent(apiUrl)}`;
-		console.log(chalk.green(`✅ Web interface ready at ${webAppUrl}`));
+		// Only add port parameter if it's not the default
+		if (apiPort === 8042) {
+			webAppUrl = webUrl;
+		} else {
+			webAppUrl = `${webUrl}?port=${apiPort}`;
+		}
 	}
 
-	try {
-		await open(webAppUrl);
-	} catch (error) {
-		console.log(chalk.cyan(webAppUrl));
-	}
+	// Show the URL and server info
+	console.log(chalk.cyan(`🔗 Open this URL in your browser: ${webAppUrl}`));
+	console.log(chalk.gray(`   API Server: http://${host}:${apiPort}`));
 
 	console.log(chalk.cyan("Press Ctrl+C to stop the API server"));
 }

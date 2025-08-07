@@ -54,7 +54,7 @@ program
 program
 	.command("web")
 	.description("Start a web interface for testing agents")
-	.option("-p, --port <port>", "Port for API server", "3001")
+	.option("-p, --port <port>", "Port for API server", "8042")
 	.option("--web-port <port>", "Port for web app (when using --local)", "3000")
 	.option("-h, --host <host>", "Host for servers", "localhost")
 	.option(
@@ -84,7 +84,7 @@ program
 program
 	.command("serve")
 	.description("Start an API server for agent management")
-	.option("-p, --port <port>", "Port for the server", "3001")
+	.option("-p, --port <port>", "Port for the server", "8042")
 	.option("-h, --host <host>", "Host for the server", "localhost")
 	.option(
 		"-d, --dir <directory>",

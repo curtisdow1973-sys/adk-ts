@@ -13,7 +13,7 @@ export interface ServeOptions {
 export async function serveCommand(
 	options: ServeOptions = {},
 ): Promise<ADKServer> {
-	const port = options.port || 3001;
+	const port = options.port || 8042; // Default to port 8042 to avoid common conflicts
 	const host = options.host || "localhost";
 	const agentsDir = resolve(options.dir || ".");
 

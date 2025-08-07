@@ -190,7 +190,7 @@ export async function runAgent(
 ) {
 	// If server option is enabled, start ADK server only
 	if (options.server) {
-		const apiPort = 3001;
+		const apiPort = 8042; // Use new default port
 		const host = options.host || "localhost";
 
 		console.log(chalk.blue("🚀 Starting ADK Server..."));
@@ -223,7 +223,7 @@ export async function runAgent(
 	}
 
 	// Interactive chat mode (default)
-	const apiUrl = `http://${options.host || "localhost"}:3001`;
+	const apiUrl = `http://${options.host || "localhost"}:8042`; // Use new default port
 
 	p.intro("🤖 ADK Agent Chat");
 
@@ -236,7 +236,7 @@ export async function runAgent(
 
 			// Start server in the background
 			const serveOptions: ServeOptions = {
-				port: 3001,
+				port: 8042, // Use new default port
 				dir: process.cwd(),
 				host: options.host || "localhost",
 				quiet: true,
