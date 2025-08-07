@@ -337,7 +337,6 @@ export class ADKServer {
 
 			// Update the agent name with the actual agent name
 			agent.name = agentModule.agent.name;
-
 		} catch (error) {
 			console.error(`❌ Failed to load agent "${agent.name}":`, error);
 			throw new Error(
@@ -365,9 +364,14 @@ export class ADKServer {
 		agentPath: string,
 		message: string,
 	): Promise<string> {
+		// Auto-start the agent if it's not already running
+		if (!this.loadedAgents.has(agentPath)) {
+			await this.startAgent(agentPath);
+		}
+
 		const loadedAgent = this.loadedAgents.get(agentPath);
 		if (!loadedAgent) {
-			throw new Error("Agent is not running");
+			throw new Error("Agent failed to start");
 		}
 
 		try {
