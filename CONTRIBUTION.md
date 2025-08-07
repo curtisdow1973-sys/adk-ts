@@ -37,7 +37,7 @@ If you cannot find an open or closed issue addressing the problem, [open a new i
 
 Be sure to include a **clear title and description**, the **exact steps to reproduce the bug**, the **behavior you observed after following the steps**, and the **behavior you expected to see instead**. If possible, include a link to a **reproducible example** or a **code sample** that demonstrates the issue.
 
-[🔝 Back to top](#table-of-content)
+[🔝 Back to top](#table-of-contents)
 
 <span id="suggesting-enhancementsfeatures"></span>
 
