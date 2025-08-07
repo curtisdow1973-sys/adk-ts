@@ -22,7 +22,7 @@ export abstract class BaseLlmFlow {
 	protected logger = new Logger({ name: "BaseLlmFlow" });
 
 	async *runAsync(invocationContext: InvocationContext): AsyncGenerator<Event> {
-		this.logger.info(`Agent '${invocationContext.agent.name}' started.`);
+		this.logger.debug(`Agent '${invocationContext.agent.name}' started.`);
 
 		let stepCount = 0;
 		while (true) {
@@ -34,7 +34,7 @@ export abstract class BaseLlmFlow {
 			}
 
 			if (!lastEvent || lastEvent.isFinalResponse()) {
-				this.logger.info(
+				this.logger.debug(
 					`Agent '${invocationContext.agent.name}' finished after ${stepCount} steps.`,
 				);
 				break;
@@ -72,7 +72,7 @@ export abstract class BaseLlmFlow {
 		}
 
 		if (invocationContext.endInvocation) {
-			this.logger.info("Invocation ended during preprocessing.");
+			this.logger.debug("Invocation ended during preprocessing.");
 			return;
 		}
 
@@ -253,7 +253,7 @@ export abstract class BaseLlmFlow {
 
 				const transferToAgent = functionResponseEvent.actions?.transferToAgent;
 				if (transferToAgent) {
-					this.logger.info(`🔄 Live transfer to agent '${transferToAgent}'`);
+					this.logger.debug(`🔄 Live transfer to agent '${transferToAgent}'`);
 
 					const agentToRun = this._getAgentToRun(
 						invocationContext,
@@ -308,7 +308,7 @@ export abstract class BaseLlmFlow {
 
 			const transferToAgent = functionResponseEvent.actions?.transferToAgent;
 			if (transferToAgent) {
-				this.logger.info(`🔄 Transferring to agent '${transferToAgent}'`);
+				this.logger.debug(`🔄 Transferring to agent '${transferToAgent}'`);
 
 				const agentToRun = this._getAgentToRun(
 					invocationContext,
