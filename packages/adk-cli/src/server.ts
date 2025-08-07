@@ -155,8 +155,6 @@ export class ADKServer {
 				? process.cwd()
 				: this.agentsDir;
 
-		console.log(`🔍 Scanning for agents in: ${scanDir}`);
-
 		const shouldSkipDirectory = (dirName: string): boolean => {
 			const skipDirs = [
 				"node_modules",
@@ -183,7 +181,6 @@ export class ADKServer {
 				if (stat.isDirectory()) {
 					// Skip common build/dependency directories
 					if (!shouldSkipDirectory(item)) {
-						console.log(`📁 Scanning directory: ${fullPath}`);
 						scanDirectory(fullPath);
 					}
 				} else if (item === "agent.ts" || item === "agent.js") {
@@ -192,10 +189,6 @@ export class ADKServer {
 					const existingAgent = this.agents.get(relativePath);
 					const name =
 						existingAgent?.name || relativePath.split("/").pop() || "unknown";
-
-					console.log(
-						`🤖 Found agent: ${item} in ${dir} (relative: ${relativePath})`,
-					);
 
 					this.agents.set(relativePath, {
 						relativePath,
@@ -264,9 +257,6 @@ export class ADKServer {
 							}
 						}
 					}
-					console.log(
-						`📋 Loaded environment variables from ${envPath} into current process`,
-					);
 				} catch (error) {
 					console.warn(
 						`⚠️ Warning: Could not load .env file: ${error instanceof Error ? error.message : String(error)}`,
@@ -348,7 +338,6 @@ export class ADKServer {
 			// Update the agent name with the actual agent name
 			agent.name = agentModule.agent.name;
 
-			console.log(`✅ Agent "${agent.name}" loaded successfully`);
 		} catch (error) {
 			console.error(`❌ Failed to load agent "${agent.name}":`, error);
 			throw new Error(
@@ -370,8 +359,6 @@ export class ADKServer {
 			agent.isRunning = false;
 			agent.instance = undefined;
 		}
-
-		console.log(`🛑 Agent "${agentPath}" stopped`);
 	}
 
 	private async sendMessageToAgent(
@@ -437,7 +424,6 @@ export class ADKServer {
 							}
 						}
 					}
-					console.log(`📋 Loaded environment variables from ${envPath}`);
 				} catch (error) {
 					console.warn(
 						`⚠️ Warning: Could not load .env file: ${error instanceof Error ? error.message : String(error)}`,
@@ -470,10 +456,6 @@ export class ADKServer {
 						}));
 					} else {
 						console.log('NO_AGENT_EXPORT');
-						console.log('Available exports:', Object.keys(module));
-						if (module.default) {
-							console.log('Default export keys:', Object.keys(module.default));
-						}
 					}
 				}).catch(err => {
 					console.log('IMPORT_ERROR:', err.message);
