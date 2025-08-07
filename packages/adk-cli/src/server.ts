@@ -1,10 +1,18 @@
 import { spawn } from "node:child_process";
-import { existsSync, readdirSync, statSync, unlinkSync } from "node:fs";
+import {
+	existsSync,
+	readFileSync,
+	readdirSync,
+	statSync,
+	unlinkSync,
+} from "node:fs";
 import { tmpdir } from "node:os";
 import { dirname, join, relative } from "node:path";
 import { pathToFileURL } from "node:url";
 import { serve } from "@hono/node-server";
 import type { LlmAgent } from "@iqai/adk";
+import { AgentBuilder } from "@iqai/adk";
+import type { EnhancedRunner } from "@iqai/adk";
 import { Hono } from "hono";
 import { cors } from "hono/cors";
 
@@ -25,7 +33,7 @@ interface AgentMessage {
 
 interface LoadedAgent {
 	agent: LlmAgent;
-	runner: any; // AgentBuilder's enhanced runner
+	runner: EnhancedRunner; // AgentBuilder's enhanced runner
 	messages: AgentMessage[];
 	messageIdCounter: number;
 }
@@ -121,6 +129,8 @@ export class ADKServer {
 				? process.cwd()
 				: this.agentsDir;
 
+		console.log(`🔍 Scanning for agents in: ${scanDir}`);
+
 		const shouldSkipDirectory = (dirName: string): boolean => {
 			const skipDirs = [
 				"node_modules",
@@ -147,23 +157,33 @@ export class ADKServer {
 				if (stat.isDirectory()) {
 					// Skip common build/dependency directories
 					if (!shouldSkipDirectory(item)) {
+						console.log(`📁 Scanning directory: ${fullPath}`);
 						scanDirectory(fullPath);
 					}
 				} else if (item === "agent.ts" || item === "agent.js") {
 					const relativePath = relative(scanDir, dir);
-					const name = relativePath.split("/").pop() || "unknown";
+					// Use the existing agent name if already loaded, otherwise use directory name
+					const existingAgent = this.agents.get(relativePath);
+					const name =
+						existingAgent?.name || relativePath.split("/").pop() || "unknown";
+
+					console.log(
+						`🤖 Found agent: ${item} in ${dir} (relative: ${relativePath})`,
+					);
 
 					this.agents.set(relativePath, {
 						relativePath,
-						name,
+						name, // Preserve the actual agent name if already loaded
 						absolutePath: dir,
 						isRunning: this.loadedAgents.has(relativePath),
+						instance: existingAgent?.instance,
 					});
 				}
 			}
 		};
 
 		scanDirectory(scanDir);
+		console.log(`✅ Agent scan complete. Found ${this.agents.size} agents.`);
 	}
 
 	private async startAgent(agentPath: string): Promise<void> {
@@ -188,6 +208,44 @@ export class ADKServer {
 				throw new Error(
 					`No agent.js or agent.ts file found in ${agent.absolutePath}`,
 				);
+			}
+
+			// Load environment variables from the project directory before importing
+			let projectRoot = dirname(agentFilePath);
+			while (projectRoot !== "/" && projectRoot !== dirname(projectRoot)) {
+				if (
+					existsSync(join(projectRoot, "package.json")) ||
+					existsSync(join(projectRoot, ".env"))
+				) {
+					break;
+				}
+				projectRoot = dirname(projectRoot);
+			}
+
+			const envPath = join(projectRoot, ".env");
+			if (existsSync(envPath)) {
+				try {
+					const envContent = readFileSync(envPath, "utf8");
+					const envLines = envContent.split("\n");
+					for (const line of envLines) {
+						const trimmedLine = line.trim();
+						if (trimmedLine && !trimmedLine.startsWith("#")) {
+							const [key, ...valueParts] = trimmedLine.split("=");
+							if (key && valueParts.length > 0) {
+								const value = valueParts.join("=").replace(/^"(.*)"$/, "$1");
+								// Set environment variables in current process
+								process.env[key.trim()] = value.trim();
+							}
+						}
+					}
+					console.log(
+						`📋 Loaded environment variables from ${envPath} into current process`,
+					);
+				} catch (error) {
+					console.warn(
+						`⚠️ Warning: Could not load .env file: ${error instanceof Error ? error.message : String(error)}`,
+					);
+				}
 			}
 
 			const agentFileUrl = pathToFileURL(agentFilePath).href;
@@ -227,19 +285,27 @@ export class ADKServer {
 				);
 			}
 
-			// Create a simple wrapper to interact with the agent
-			const simpleRunner = {
-				async ask(message: string): Promise<string> {
-					// For now, return a simple response - this will be improved
-					// when we implement proper agent interaction
-					return `Echo from ${agentModule.agent.name}: ${message}`;
-				},
-			};
+			// Create a proper runner using AgentBuilder to wrap the existing agent
+			const agentBuilder = AgentBuilder.create(agentModule.agent.name)
+				.withModel(agentModule.agent.model)
+				.withDescription(agentModule.agent.description || "")
+				.withInstruction(agentModule.agent.instruction || "");
+
+			// Only add tools if they exist and are valid
+			if (
+				agentModule.agent.tools &&
+				Array.isArray(agentModule.agent.tools) &&
+				agentModule.agent.tools.length > 0
+			) {
+				agentBuilder.withTools(agentModule.agent.tools);
+			}
+
+			const { runner } = await agentBuilder.build();
 
 			// Store the loaded agent with its runner
 			const loadedAgent: LoadedAgent = {
 				agent: agentModule.agent,
-				runner: simpleRunner,
+				runner: runner,
 				messages: [],
 				messageIdCounter: 1,
 			};
@@ -247,6 +313,9 @@ export class ADKServer {
 			this.loadedAgents.set(agentPath, loadedAgent);
 			agent.isRunning = true;
 			agent.instance = agentModule.agent;
+
+			// Update the agent name with the actual agent name
+			agent.name = agentModule.agent.name;
 
 			console.log(`✅ Agent "${agent.name}" loaded successfully`);
 		} catch (error) {
@@ -335,6 +404,43 @@ export class ADKServer {
 			const tempJsFile = join(tmpdir(), `agent-${Date.now()}.mjs`);
 
 			// Use tsx to compile and execute the TypeScript file directly
+			// Find the project root (where package.json or .env might be)
+			let projectRoot = dirname(filePath);
+			while (projectRoot !== "/" && projectRoot !== dirname(projectRoot)) {
+				if (
+					existsSync(join(projectRoot, "package.json")) ||
+					existsSync(join(projectRoot, ".env"))
+				) {
+					break;
+				}
+				projectRoot = dirname(projectRoot);
+			}
+
+			// Load environment variables from the project's .env file if it exists
+			const envPath = join(projectRoot, ".env");
+			const envVars: Record<string, string> = {};
+			if (existsSync(envPath)) {
+				try {
+					const envContent = readFileSync(envPath, "utf8");
+					const envLines = envContent.split("\n");
+					for (const line of envLines) {
+						const trimmedLine = line.trim();
+						if (trimmedLine && !trimmedLine.startsWith("#")) {
+							const [key, ...valueParts] = trimmedLine.split("=");
+							if (key && valueParts.length > 0) {
+								const value = valueParts.join("=").replace(/^"(.*)"$/, "$1");
+								envVars[key.trim()] = value.trim();
+							}
+						}
+					}
+					console.log(`📋 Loaded environment variables from ${envPath}`);
+				} catch (error) {
+					console.warn(
+						`⚠️ Warning: Could not load .env file: ${error instanceof Error ? error.message : String(error)}`,
+					);
+				}
+			}
+
 			const tsxProcess = spawn(
 				"npx",
 				[
@@ -371,7 +477,8 @@ export class ADKServer {
 			`,
 				],
 				{
-					cwd: dirname(filePath),
+					cwd: projectRoot, // Use project root instead of just the file directory
+					env: { ...process.env, ...envVars }, // Merge current env with project .env
 					stdio: ["pipe", "pipe", "pipe"],
 					timeout: 10000, // 10 second timeout
 				},
