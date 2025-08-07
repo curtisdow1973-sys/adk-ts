@@ -163,7 +163,7 @@ export async function handleFunctionCallsAsync(
 			// Execute tool within the span context
 			const functionResponse = await context.with(spanContext, async () => {
 				const result = await callToolAsync(tool, functionArgs, toolContext);
-				
+
 				// Handle long running tools
 				if (tool.isLongRunning && !result) {
 					return null;
@@ -182,7 +182,7 @@ export async function handleFunctionCallsAsync(
 				telemetryService.traceToolCall(
 					tool,
 					functionArgs,
-					functionResponseEvent
+					functionResponseEvent,
 				);
 
 				return { result, event: functionResponseEvent };

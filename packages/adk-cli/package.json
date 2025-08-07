@@ -5,7 +5,7 @@
 	"main": "dist/index.js",
 	"types": "dist/index.d.ts",
 	"bin": {
-		"adk": "./dist/cli/index.mjs"
+		"adk": "./dist/cli-main.mjs"
 	},
 	"scripts": {
 		"build": "tsup",
@@ -18,14 +18,7 @@
 		"url": "https://github.com/IQAIcom/adk-ts.git",
 		"directory": "packages/adk-cli"
 	},
-	"keywords": [
-		"ai",
-		"llm",
-		"agent",
-		"cli",
-		"adk",
-		"typescript"
-	],
+	"keywords": ["ai", "llm", "agent", "cli", "adk", "typescript"],
 	"author": "IQAI",
 	"license": "MIT",
 	"dependencies": {
@@ -34,18 +27,13 @@
 		"@iqai/adk": "workspace:*",
 		"chalk": "^5.4.1",
 		"commander": "^12.1.0",
-		"cors": "^2.8.5",
 		"dedent": "^1.6.0",
 		"giget": "^2.0.0",
 		"hono": "^4.6.13",
-		"open": "^10.2.0",
-		"socket.io": "^4.8.1",
-		"socket.io-client": "^4.8.1"
+		"open": "^10.2.0"
 	},
 	"devDependencies": {
 		"@iqai/tsconfig": "workspace:*",
-		"@types/cors": "^2.8.19",
-		"@types/express": "^4.17.21",
 		"@types/node": "^20.17.30",
 		"tsup": "^8.4.0",
 		"typescript": "^5.3.2",
