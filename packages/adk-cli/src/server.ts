@@ -41,11 +41,18 @@ export class ADKServer {
 	private agentsDir: string;
 	private port: number;
 	private host: string;
+	private quiet: boolean;
 
-	constructor(agentsDir: string, port = 8042, host = "localhost") {
+	constructor(
+		agentsDir: string,
+		port = 8042,
+		host = "localhost",
+		quiet = false,
+	) {
 		this.agentsDir = agentsDir;
 		this.port = port;
 		this.host = host;
+		this.quiet = quiet;
 		this.sessionService = new InMemorySessionService();
 		this.app = new Hono();
 		this.setupRoutes();
@@ -227,7 +234,9 @@ export class ADKServer {
 		};
 
 		scanDirectory(scanDir);
-		console.log(`✅ Agent scan complete. Found ${this.agents.size} agents.`);
+		if (!this.quiet) {
+			console.log(`✅ Agent scan complete. Found ${this.agents.size} agents.`);
+		}
 	}
 
 	private async startAgent(agentPath: string): Promise<void> {

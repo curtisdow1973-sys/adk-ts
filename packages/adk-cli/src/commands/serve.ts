@@ -26,7 +26,7 @@ export async function serveCommand(
 		console.log(chalk.blue(`🚀 ADK Server starting on http://${host}:${port}`));
 	}
 
-	const server = new ADKServer(agentsDir, port, host);
+	const server = new ADKServer(agentsDir, port, host, options.quiet);
 
 	try {
 		await server.start();

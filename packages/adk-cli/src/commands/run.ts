@@ -1,6 +1,23 @@
 import * as p from "@clack/prompts";
+import { spinner } from "@clack/prompts";
 import chalk from "chalk";
+import { marked } from "marked";
+import { markedTerminal } from "marked-terminal";
 import { type ServeOptions, serveCommand } from "./serve.js";
+
+// Configure marked for terminal output
+marked.use(markedTerminal() as any);
+
+// Render markdown to terminal-formatted text
+async function renderMarkdown(text: string): Promise<string> {
+	try {
+		const result = await marked(text);
+		return typeof result === "string" ? result : text;
+	} catch (error) {
+		// Fallback to plain text if markdown parsing fails
+		return text;
+	}
+}
 
 interface Agent {
 	relativePath: string;
@@ -109,6 +126,9 @@ class AgentChatClient {
 			throw new Error("No agent selected");
 		}
 
+		const s = spinner();
+		s.start("🤖 Thinking...");
+
 		try {
 			const response = await fetch(
 				`${this.apiUrl}/api/agents/${encodeURIComponent(this.selectedAgent.relativePath)}/message`,
@@ -123,16 +143,20 @@ class AgentChatClient {
 
 			if (!response.ok) {
 				const errorText = await response.text();
+				s.stop("❌ Failed to send message");
 				throw new Error(`Failed to send message: ${errorText}`);
 			}
 
 			const result = await response.json();
+			s.stop("🤖 Assistant:");
 
-			// Display agent response
+			// Display agent response directly
 			if (result.response) {
-				console.log(chalk.green(`🤖: ${result.response}`));
+				const formattedResponse = await renderMarkdown(result.response);
+				console.log(formattedResponse);
 			}
 		} catch (error) {
+			s.stop("❌ Error sending message");
 			console.error(chalk.red("❌ Error sending message"));
 		}
 	}
@@ -142,14 +166,10 @@ class AgentChatClient {
 			throw new Error("Agent not selected");
 		}
 
-		console.log(chalk.green(`💬 Chat with ${this.selectedAgent.name}`));
-		console.log(chalk.gray("Press Ctrl+C to exit"));
-		console.log();
-
 		while (true) {
 			try {
 				const message = await p.text({
-					message: "Message:",
+					message: "💬 Message:",
 					placeholder: "Type your message here...",
 				});
 
@@ -229,7 +249,8 @@ export async function runAgent(
 		const healthResponse = await fetch(`${apiUrl}/health`).catch(() => null);
 
 		if (!healthResponse || !healthResponse.ok) {
-			console.log(chalk.gray("Starting server..."));
+			const serverSpinner = spinner();
+			serverSpinner.start("🚀 Starting server...");
 
 			// Start server in the background
 			const serveOptions: ServeOptions = {
@@ -243,6 +264,7 @@ export async function runAgent(
 
 			// Wait a moment for server to be ready
 			await new Promise((resolve) => setTimeout(resolve, 1000));
+			serverSpinner.stop("✅ Server ready");
 		}
 
 		const client = new AgentChatClient(apiUrl);
@@ -250,14 +272,43 @@ export async function runAgent(
 		// Connect to server
 		await client.connect();
 
-		// Select agent
-		const selectedAgent = await client.selectAgent();
+		// Select agent with spinner
+		const agentSpinner = spinner();
+		agentSpinner.start("🔍 Scanning for agents...");
+
+		const agents = await client.fetchAgents();
+
+		let selectedAgent: Agent;
+		if (agents.length === 0) {
+			agentSpinner.stop("❌ No agents found");
+			p.cancel("No agents found in the current directory");
+			process.exit(1);
+		} else if (agents.length === 1) {
+			selectedAgent = agents[0];
+			agentSpinner.stop(`🤖 Found agent: ${selectedAgent.name}`);
+		} else {
+			agentSpinner.stop(`🤖 Found ${agents.length} agents`);
+			const choice = await p.select({
+				message: "Choose an agent to chat with:",
+				options: agents.map((agent) => ({
+					label: `${agent.name} ${agent.isRunning ? chalk.green("(running)") : chalk.gray("(stopped)")}`,
+					value: agent,
+					hint: agent.relativePath,
+				})),
+			});
+
+			if (p.isCancel(choice)) {
+				p.cancel("Operation cancelled");
+				process.exit(0);
+			}
+			selectedAgent = choice;
+		}
+
 		client.setSelectedAgent(selectedAgent);
 
 		// Start agent if not running
 		await client.startAgent(selectedAgent);
 
-		// Start chat
 		await client.startChat();
 
 		client.disconnect();
