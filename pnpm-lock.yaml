@@ -284,9 +284,6 @@ importers:
       chalk:
         specifier: ^5.4.1
         version: 5.4.1
-      chokidar:
-        specifier: ^4.0.3
-        version: 4.0.3
       cors:
         specifier: ^2.8.5
         version: 2.8.5
@@ -372,9 +369,6 @@ importers:
       chalk:
         specifier: ^5.4.1
         version: 5.4.1
-      chokidar:
-        specifier: ^4.0.3
-        version: 4.0.3
       commander:
         specifier: ^12.1.0
         version: 12.1.0

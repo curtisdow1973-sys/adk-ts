@@ -64,7 +64,17 @@ class AgentChatClient {
 			if (!response.ok) {
 				throw new Error(`HTTP ${response.status}: ${response.statusText}`);
 			}
-			return await response.json();
+			const data = await response.json();
+			console.log("DEBUG: Agents response:", JSON.stringify(data, null, 2));
+			
+			// Handle different response structures
+			if (Array.isArray(data)) {
+				return data;
+			} else if (data && Array.isArray(data.agents)) {
+				return data.agents;
+			} else {
+				throw new Error(`Unexpected response format: ${JSON.stringify(data)}`);
+			}
 		} catch (error) {
 			throw new Error(`Failed to fetch agents: ${error instanceof Error ? error.message : String(error)}`);
 		}
