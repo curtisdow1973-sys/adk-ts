@@ -1,5 +1,5 @@
 import * as p from "@clack/prompts";
-import { spinner } from "@clack/prompts";
+import { log, spinner } from "@clack/prompts";
 import chalk from "chalk";
 import { marked } from "marked";
 import { markedTerminal } from "marked-terminal";
@@ -150,14 +150,13 @@ class AgentChatClient {
 			const result = await response.json();
 			s.stop("🤖 Assistant:");
 
-			// Display agent response directly
+			// Display agent response using Clack's log.message
 			if (result.response) {
 				const formattedResponse = await renderMarkdown(result.response);
-				console.log(formattedResponse);
+				log.message(formattedResponse.trim());
 			}
 		} catch (error) {
-			s.stop("❌ Error sending message");
-			console.error(chalk.red("❌ Error sending message"));
+			log.error("Failed to send message");
 		}
 	}
 
