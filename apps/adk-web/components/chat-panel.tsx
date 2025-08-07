@@ -9,7 +9,7 @@ import {
 import { Input } from "@/components/ui/input";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Separator } from "@/components/ui/separator";
-import type { Agent, Message } from "@/lib/api";
+import type { Agent, Message } from "@/app/(dashboard)/_schema/types";
 import { Loader2, MessageCircle } from "lucide-react";
 import { useState } from "react";
 
@@ -49,7 +49,7 @@ export function ChatPanel({
 				</CardTitle>
 				{selectedAgent && (
 					<CardDescription>
-						Status: {agentStatus[selectedAgent.path] || "stopped"}
+						Status: {agentStatus[selectedAgent.relativePath] || "stopped"}
 					</CardDescription>
 				)}
 			</CardHeader>

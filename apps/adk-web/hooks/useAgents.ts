@@ -18,7 +18,7 @@ interface RunningAgentsResponse {
 
 interface AgentMessage {
 	id: number;
-	type: "stdout" | "stderr" | "system" | "error";
+	type: "user" | "assistant" | "system" | "error";
 	content: string;
 	timestamp: string;
 }
@@ -80,7 +80,7 @@ export function useAgents(apiUrl: string) {
 		staleTime: 1000,
 	});
 
-	// Fetch messages for selected agent
+	// Fetch messages for selected agent (no polling - only load once and on invalidation)
 	const { data: agentMessages } = useQuery({
 		queryKey: ["agent-messages", apiUrl, selectedAgent?.relativePath],
 		queryFn: async (): Promise<AgentMessagesResponse> => {
@@ -96,8 +96,7 @@ export function useAgents(apiUrl: string) {
 			return response.json();
 		},
 		enabled: !!apiUrl && !!selectedAgent,
-		refetchInterval: 1000, // Poll every 1 second for messages
-		staleTime: 500,
+		staleTime: 30000, // Cache for 30 seconds
 	});
 
 	// Update agent status when running agents data changes
@@ -114,28 +113,22 @@ export function useAgents(apiUrl: string) {
 	// Update messages when agent messages change
 	useEffect(() => {
 		if (agentMessages?.messages && selectedAgent) {
-			const newMessages = agentMessages.messages
-				.filter((msg) => msg.id > lastMessageId)
-				.map(
-					(msg): Message => ({
-						id: msg.id,
-						type:
-							msg.type === "stdout"
-								? "assistant"
-								: msg.type === "system"
-									? "system"
-									: "system",
-						content: msg.content.trim(),
-						timestamp: new Date(msg.timestamp),
-					}),
-				);
+			// Get all messages from the session service and replace current messages
+			const allMessages = agentMessages.messages.map(
+				(msg): Message => ({
+					id: msg.id,
+					type: msg.type === "error" ? "system" : msg.type,
+					content: msg.content.trim(),
+					timestamp: new Date(msg.timestamp),
+				}),
+			);
 
-			if (newMessages.length > 0) {
-				setMessages((prev) => [...prev, ...newMessages]);
-				setLastMessageId(Math.max(...agentMessages.messages.map((m) => m.id)));
+			setMessages(allMessages);
+			if (allMessages.length > 0) {
+				setLastMessageId(Math.max(...allMessages.map((m) => m.id)));
 			}
 		}
-	}, [agentMessages, selectedAgent, lastMessageId]);
+	}, [agentMessages, selectedAgent]);
 
 	// Start agent mutation
 	const startAgentMutation = useMutation({
@@ -202,9 +195,9 @@ export function useAgents(apiUrl: string) {
 			agent,
 			message,
 		}: { agent: Agent; message: string }) => {
-			// Add user message to chat immediately
+			// Add optimistic user message immediately
 			const userMessage: Message = {
-				id: Date.now(),
+				id: Date.now(), // Temporary ID
 				type: "user",
 				content: message,
 				timestamp: new Date(),
@@ -221,6 +214,8 @@ export function useAgents(apiUrl: string) {
 				}),
 			});
 			if (!response.ok) {
+				// Remove optimistic message on error
+				setMessages((prev) => prev.filter((m) => m.id !== userMessage.id));
 				const errorData = await response.text();
 				throw new Error(
 					`Failed to send message: ${response.status} - ${errorData}`,
@@ -229,34 +224,22 @@ export function useAgents(apiUrl: string) {
 			return response.json();
 		},
 		onSuccess: () => {
-			// Force refresh messages after sending
+			// Fetch updated messages after successful send
 			queryClient.invalidateQueries({
 				queryKey: ["agent-messages", apiUrl, selectedAgent?.relativePath],
 			});
+			// Also refresh running agents status since auto-start may have occurred
+			queryClient.invalidateQueries({ queryKey: ["running-agents", apiUrl] });
 		},
 		onError: (error) => {
-			// Add error message to chat
-			const errorMessage: Message = {
-				id: Date.now(),
-				type: "system",
-				content: `Error: ${error.message}`,
-				timestamp: new Date(),
-			};
-			setMessages((prev) => [...prev, errorMessage]);
+			console.error("Failed to send message:", error);
 		},
 	});
 
 	// Agent selection handler
 	const selectAgent = useCallback((agent: Agent) => {
 		setSelectedAgent(agent);
-		setMessages([
-			{
-				id: Date.now(),
-				type: "system",
-				content: `Selected agent: ${agent.name}`,
-				timestamp: new Date(),
-			},
-		]);
+		setMessages([]); // Clear messages when switching agents - they'll be loaded from the session
 		setLastMessageId(0); // Reset message tracking for new agent
 	}, []);
 

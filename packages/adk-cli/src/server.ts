@@ -185,17 +185,30 @@ export class ADKServer {
 					}
 				} else if (item === "agent.ts" || item === "agent.js") {
 					const relativePath = relative(scanDir, dir);
-					// Use the existing agent name if already loaded, otherwise use directory name
-					const existingAgent = this.agents.get(relativePath);
-					const name =
-						existingAgent?.name || relativePath.split("/").pop() || "unknown";
+					
+					// Try to get the actual agent name if it's already loaded
+					const loadedAgent = this.loadedAgents.get(relativePath);
+					let agentName = relativePath.split("/").pop() || "unknown";
+					
+					// If agent is loaded, use its actual name
+					if (loadedAgent?.agent?.name) {
+						agentName = loadedAgent.agent.name;
+					} else {
+						// Try to quickly extract name from agent file if not loaded
+						try {
+							const agentFilePath = join(dir, item);
+							agentName = this.extractAgentNameFromFile(agentFilePath) || agentName;
+						} catch {
+							// Fallback to directory name if extraction fails
+						}
+					}
 
 					this.agents.set(relativePath, {
 						relativePath,
-						name, // Preserve the actual agent name if already loaded
+						name: agentName,
 						absolutePath: dir,
 						isRunning: this.loadedAgents.has(relativePath),
-						instance: existingAgent?.instance,
+						instance: loadedAgent?.agent,
 					});
 				}
 			}
@@ -610,5 +623,22 @@ export class ADKServer {
 
 	public getPort(): number {
 		return this.port;
+	}
+
+	private extractAgentNameFromFile(filePath: string): string | null {
+		try {
+			const content = readFileSync(filePath, "utf-8");
+			
+			// Look for agent name in export statements
+			// Match patterns like: name: "agent_name" or name:"agent_name"
+			const nameMatch = content.match(/name\s*:\s*["']([^"']+)["']/);
+			if (nameMatch?.[1]) {
+				return nameMatch[1];
+			}
+			
+			return null;
+		} catch {
+			return null;
+		}
 	}
 }

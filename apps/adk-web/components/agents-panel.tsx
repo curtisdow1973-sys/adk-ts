@@ -8,7 +8,7 @@ import {
 	CardTitle,
 } from "@/components/ui/card";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import type { Agent } from "@/lib/api";
+import type { Agent } from "@/app/(dashboard)/_schema/types";
 import { Bot, Loader2, Play, Square } from "lucide-react";
 
 interface AgentsPanelProps {
