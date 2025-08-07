@@ -1,3 +1,4 @@
+import type { Agent, Message } from "@/app/(dashboard)/_schema/types";
 import { Button } from "@/components/ui/button";
 import {
 	Card,
@@ -9,7 +10,6 @@ import {
 import { Input } from "@/components/ui/input";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Separator } from "@/components/ui/separator";
-import type { Agent, Message } from "@/app/(dashboard)/_schema/types";
 import { Loader2, MessageCircle } from "lucide-react";
 import { useState } from "react";
 
