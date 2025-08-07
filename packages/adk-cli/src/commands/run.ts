@@ -128,9 +128,6 @@ class AgentChatClient {
 
 			const result = await response.json();
 
-			// Display user message
-			console.log(chalk.blue(`You: ${message}`));
-
 			// Display agent response
 			if (result.response) {
 				console.log(chalk.green(`🤖: ${result.response}`));

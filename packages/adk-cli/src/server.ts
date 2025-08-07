@@ -317,10 +317,7 @@ export class ADKServer {
 			}
 
 			// Additional validation to ensure it looks like an LlmAgent
-			if (
-				!agentModule.agent.model ||
-				!agentModule.agent.instruction !== undefined
-			) {
+			if (!agentModule.agent.model || !agentModule.agent.instruction) {
 				console.warn(
 					`Warning: Agent in ${agentFilePath} may not be a valid LlmAgent instance. Expected model and instruction properties.`,
 				);
