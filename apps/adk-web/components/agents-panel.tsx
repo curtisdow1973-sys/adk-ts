@@ -14,7 +14,7 @@ import { Bot, Loader2, Play, Square } from "lucide-react";
 interface AgentsPanelProps {
 	agents: Agent[];
 	selectedAgent: Agent | null;
-	agentStatus: Record<string, "running" | "stopped">;
+	agentStatus: Record<string, "running" | "stopped" | "error">;
 	onSelectAgent: (agent: Agent) => void;
 	onStartAgent: (agent: Agent) => void;
 	onStopAgent: (agent: Agent) => void;
@@ -39,7 +39,7 @@ export function AgentsPanel({
 				<CardDescription>Select an agent to start testing</CardDescription>
 			</CardHeader>
 			<CardContent className="p-0">
-								<ScrollArea className="h-[calc(100vh-300px)]">
+				<ScrollArea className="h-[calc(100vh-300px)]">
 					{agents.length === 0 ? (
 						<EmptyAgentsState />
 					) : (
@@ -48,7 +48,9 @@ export function AgentsPanel({
 								<AgentItem
 									key={agent.relativePath}
 									agent={agent}
-									isSelected={selectedAgent?.relativePath === agent.relativePath}
+									isSelected={
+										selectedAgent?.relativePath === agent.relativePath
+									}
 									status={agentStatus[agent.relativePath]}
 									isStartingAgent={isStartingAgent}
 									isStoppingAgent={isStoppingAgent}
@@ -84,7 +86,7 @@ function EmptyAgentsState() {
 interface AgentItemProps {
 	agent: Agent;
 	isSelected: boolean;
-	status?: "running" | "stopped";
+	status?: "running" | "stopped" | "error";
 	isStartingAgent?: boolean;
 	isStoppingAgent?: boolean;
 	onSelect: () => void;
@@ -150,15 +152,20 @@ function AgentItem({
 }
 
 interface StatusIndicatorProps {
-	status?: "running" | "stopped";
+	status?: "running" | "stopped" | "error";
 }
 
 function StatusIndicator({ status }: StatusIndicatorProps) {
-	return (
-		<div
-			className={`w-2 h-2 rounded-full ${
-				status === "running" ? "bg-green-500" : "bg-red-500"
-			}`}
-		/>
-	);
+	const getStatusColor = () => {
+		switch (status) {
+			case "running":
+				return "bg-green-500";
+			case "error":
+				return "bg-red-500";
+			default:
+				return "bg-gray-500";
+		}
+	};
+
+	return <div className={`w-2 h-2 rounded-full ${getStatusColor()}`} />;
 }

@@ -16,7 +16,7 @@ import { useState } from "react";
 interface ChatPanelProps {
 	selectedAgent: Agent | null;
 	messages: Message[];
-	agentStatus: Record<string, "running" | "stopped">;
+	agentStatus: Record<string, "running" | "stopped" | "error">;
 	onSendMessage: (message: string) => void;
 	isSendingMessage?: boolean;
 }

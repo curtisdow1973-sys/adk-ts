@@ -1,7 +1,7 @@
 import * as p from "@clack/prompts";
 import chalk from "chalk";
-import { io, type Socket } from "socket.io-client";
-import { serveCommand, type ServeOptions } from "./serve.js";
+import { type Socket, io } from "socket.io-client";
+import { type ServeOptions, serveCommand } from "./serve.js";
 
 interface Agent {
 	relativePath: string;
@@ -41,12 +41,18 @@ class AgentChatClient {
 			});
 
 			this.socket.on("connect_error", (error) => {
-				console.error(chalk.red("❌ Failed to connect to ADK server:"), error.message);
+				console.error(
+					chalk.red("❌ Failed to connect to ADK server:"),
+					error.message,
+				);
 				reject(error);
 			});
 
 			this.socket.on("agentMessage", (message: AgentMessage) => {
-				if (this.selectedAgent && message.agentId === this.selectedAgent.relativePath) {
+				if (
+					this.selectedAgent &&
+					message.agentId === this.selectedAgent.relativePath
+				) {
 					this.messages.push(message);
 					this.displayMessage(message);
 				}
@@ -66,17 +72,19 @@ class AgentChatClient {
 			}
 			const data = await response.json();
 			console.log("DEBUG: Agents response:", JSON.stringify(data, null, 2));
-			
+
 			// Handle different response structures
 			if (Array.isArray(data)) {
 				return data;
-			} else if (data && Array.isArray(data.agents)) {
-				return data.agents;
-			} else {
-				throw new Error(`Unexpected response format: ${JSON.stringify(data)}`);
 			}
+			if (data && Array.isArray(data.agents)) {
+				return data.agents;
+			}
+			throw new Error(`Unexpected response format: ${JSON.stringify(data)}`);
 		} catch (error) {
-			throw new Error(`Failed to fetch agents: ${error instanceof Error ? error.message : String(error)}`);
+			throw new Error(
+				`Failed to fetch agents: ${error instanceof Error ? error.message : String(error)}`,
+			);
 		}
 	}
 
@@ -88,7 +96,9 @@ class AgentChatClient {
 		}
 
 		if (agents.length === 1) {
-			console.log(chalk.blue(`🤖 Found one agent: ${chalk.cyan(agents[0].name)}`));
+			console.log(
+				chalk.blue(`🤖 Found one agent: ${chalk.cyan(agents[0].name)}`),
+			);
 			return agents[0];
 		}
 
@@ -118,9 +128,12 @@ class AgentChatClient {
 		console.log(chalk.blue(`🚀 Starting agent: ${agent.name}`));
 
 		try {
-			const response = await fetch(`${this.apiUrl}/api/agents/${encodeURIComponent(agent.relativePath)}/start`, {
-				method: "POST",
-			});
+			const response = await fetch(
+				`${this.apiUrl}/api/agents/${encodeURIComponent(agent.relativePath)}/start`,
+				{
+					method: "POST",
+				},
+			);
 
 			if (!response.ok) {
 				const errorText = await response.text();
@@ -129,7 +142,9 @@ class AgentChatClient {
 
 			console.log(chalk.green(`✅ Agent ${agent.name} started successfully`));
 		} catch (error) {
-			throw new Error(`Failed to start agent: ${error instanceof Error ? error.message : String(error)}`);
+			throw new Error(
+				`Failed to start agent: ${error instanceof Error ? error.message : String(error)}`,
+			);
 		}
 	}
 
@@ -139,13 +154,16 @@ class AgentChatClient {
 		}
 
 		try {
-			const response = await fetch(`${this.apiUrl}/api/agents/${encodeURIComponent(this.selectedAgent.relativePath)}/message`, {
-				method: "POST",
-				headers: {
-					"Content-Type": "application/json",
+			const response = await fetch(
+				`${this.apiUrl}/api/agents/${encodeURIComponent(this.selectedAgent.relativePath)}/message`,
+				{
+					method: "POST",
+					headers: {
+						"Content-Type": "application/json",
+					},
+					body: JSON.stringify({ message }),
 				},
-				body: JSON.stringify({ message }),
-			});
+			);
 
 			if (!response.ok) {
 				const errorText = await response.text();
@@ -162,9 +180,11 @@ class AgentChatClient {
 			};
 			this.messages.push(userMessage);
 			this.displayMessage(userMessage);
-
 		} catch (error) {
-			console.error(chalk.red("❌ Error sending message:"), error instanceof Error ? error.message : String(error));
+			console.error(
+				chalk.red("❌ Error sending message:"),
+				error instanceof Error ? error.message : String(error),
+			);
 		}
 	}
 
@@ -196,7 +216,9 @@ class AgentChatClient {
 
 		console.log();
 		console.log(chalk.green(`� Chat started with ${this.selectedAgent.name}`));
-		console.log(chalk.gray("   Type your messages below. Press Ctrl+C to exit."));
+		console.log(
+			chalk.gray("   Type your messages below. Press Ctrl+C to exit."),
+		);
 		console.log();
 
 		while (true) {
@@ -236,7 +258,12 @@ class AgentChatClient {
 
 export async function runAgent(
 	agentPath?: string,
-	options: { watch?: boolean; port?: string; server?: boolean; host?: string } = {},
+	options: {
+		watch?: boolean;
+		port?: string;
+		server?: boolean;
+		host?: string;
+	} = {},
 ) {
 	// If server option is enabled, start ADK server only
 	if (options.server) {
@@ -244,7 +271,9 @@ export async function runAgent(
 		const host = options.host || "localhost";
 
 		console.log(chalk.blue("🚀 Starting ADK Server for agent management..."));
-		console.log(chalk.gray("   This enables web interface and API management of agents"));
+		console.log(
+			chalk.gray("   This enables web interface and API management of agents"),
+		);
 
 		const serveOptions: ServeOptions = {
 			port: apiPort,
@@ -259,10 +288,16 @@ export async function runAgent(
 			console.log();
 			console.log(chalk.green("✅ ADK Server started successfully!"));
 			console.log(chalk.cyan(`🌐 Server running at http://${host}:${apiPort}`));
-			console.log(chalk.cyan("🔌 WebSocket server available for real-time communication"));
+			console.log(
+				chalk.cyan("🔌 WebSocket server available for real-time communication"),
+			);
 			console.log();
 			console.log(chalk.yellow("💡 Available commands:"));
-			console.log(chalk.gray("   • Run 'adk run' in another terminal to chat with agents"));
+			console.log(
+				chalk.gray(
+					"   • Run 'adk run' in another terminal to chat with agents",
+				),
+			);
 			console.log(chalk.gray("   • Run 'adk web' to open web interface"));
 			console.log();
 			console.log(chalk.yellow("Press Ctrl+C to stop the server"));
@@ -307,7 +342,7 @@ export async function runAgent(
 			console.log(chalk.green("✅ ADK server started"));
 
 			// Wait a moment for server to be ready
-			await new Promise(resolve => setTimeout(resolve, 1000));
+			await new Promise((resolve) => setTimeout(resolve, 1000));
 		}
 
 		const client = new AgentChatClient(apiUrl);
@@ -327,9 +362,10 @@ export async function runAgent(
 
 		client.disconnect();
 		p.outro("� Chat ended. Goodbye!");
-
 	} catch (error) {
-		p.cancel(`Error: ${error instanceof Error ? error.message : String(error)}`);
+		p.cancel(
+			`Error: ${error instanceof Error ? error.message : String(error)}`,
+		);
 		process.exit(1);
 	}
 }
