@@ -76,8 +76,7 @@ export function useAgents(apiUrl: string) {
 			return response.json();
 		},
 		enabled: !!apiUrl,
-		refetchInterval: 2000, // Poll every 2 seconds
-		staleTime: 1000,
+		staleTime: 30000, // Cache for 30 seconds
 	});
 
 	// Fetch messages for selected agent (no polling - only load once and on invalidation)
