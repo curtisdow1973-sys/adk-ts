@@ -61,7 +61,18 @@ export class ADKServer {
 
 		// List agents
 		this.app.get("/api/agents", (c) => {
-			this.scanAgents(); // Refresh agents list
+			const agentsList = Array.from(this.agents.values()).map((agent) => ({
+				path: agent.absolutePath,
+				name: agent.name,
+				directory: agent.absolutePath,
+				relativePath: agent.relativePath,
+			}));
+			return c.json({ agents: agentsList });
+		});
+
+		// Refresh agents list
+		this.app.post("/api/agents/refresh", (c) => {
+			this.scanAgents();
 			const agentsList = Array.from(this.agents.values()).map((agent) => ({
 				path: agent.absolutePath,
 				name: agent.name,
