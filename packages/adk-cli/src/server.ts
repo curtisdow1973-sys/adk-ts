@@ -11,7 +11,7 @@ import { dirname, join, relative } from "node:path";
 import { pathToFileURL } from "node:url";
 import { serve } from "@hono/node-server";
 import type { LlmAgent } from "@iqai/adk";
-import { AgentBuilder } from "@iqai/adk";
+import { AgentBuilder, InMemorySessionService } from "@iqai/adk";
 import type { EnhancedRunner } from "@iqai/adk";
 import { Hono } from "hono";
 import { cors } from "hono/cors";
@@ -24,23 +24,18 @@ interface Agent {
 	instance?: LlmAgent; // Store the loaded agent instance
 }
 
-interface AgentMessage {
-	id: number;
-	type: "user" | "assistant" | "system" | "error";
-	content: string;
-	timestamp: string;
-}
-
 interface LoadedAgent {
 	agent: LlmAgent;
 	runner: EnhancedRunner; // AgentBuilder's enhanced runner
-	messages: AgentMessage[];
-	messageIdCounter: number;
+	sessionId: string; // Session ID for this agent instance
+	userId: string; // User ID for session management
+	appName: string; // App name for session management
 }
 
 export class ADKServer {
 	private agents: Map<string, Agent> = new Map();
 	private loadedAgents: Map<string, LoadedAgent> = new Map();
+	private sessionService: InMemorySessionService;
 	private app: Hono;
 	private server: any;
 	private agentsDir: string;
@@ -51,6 +46,7 @@ export class ADKServer {
 		this.agentsDir = agentsDir;
 		this.port = port;
 		this.host = host;
+		this.sessionService = new InMemorySessionService();
 		this.app = new Hono();
 		this.setupRoutes();
 		this.scanAgents();
@@ -102,13 +98,43 @@ export class ADKServer {
 		});
 
 		// Get agent messages
-		this.app.get("/api/agents/:id/messages", (c) => {
+		this.app.get("/api/agents/:id/messages", async (c) => {
 			const agentPath = decodeURIComponent(c.req.param("id"));
 			const loadedAgent = this.loadedAgents.get(agentPath);
 			if (!loadedAgent) {
 				return c.json({ messages: [] });
 			}
-			return c.json({ messages: loadedAgent.messages });
+
+			try {
+				// Get session from session service
+				const session = await this.sessionService.getSession(
+					loadedAgent.appName,
+					loadedAgent.userId,
+					loadedAgent.sessionId,
+				);
+
+				if (!session || !session.events) {
+					return c.json({ messages: [] });
+				}
+
+				// Convert session events to message format
+				const messages = session.events.map((event, index) => ({
+					id: index + 1,
+					type: event.author === "user" ? "user" : "assistant",
+					content:
+						event.content?.parts
+							?.map((part) =>
+								typeof part === "object" && "text" in part ? part.text : "",
+							)
+							.join("") || "",
+					timestamp: new Date(event.timestamp || Date.now()).toISOString(),
+				}));
+
+				return c.json({ messages });
+			} catch (error) {
+				console.error("Error fetching messages:", error);
+				return c.json({ messages: [] });
+			}
 		});
 
 		// Send message to agent
@@ -289,7 +315,11 @@ export class ADKServer {
 			const agentBuilder = AgentBuilder.create(agentModule.agent.name)
 				.withModel(agentModule.agent.model)
 				.withDescription(agentModule.agent.description || "")
-				.withInstruction(agentModule.agent.instruction || "");
+				.withInstruction(agentModule.agent.instruction || "")
+				.withSessionService(this.sessionService, {
+					userId: `user_${agentPath}`,
+					appName: "adk-server",
+				});
 
 			// Only add tools if they exist and are valid
 			if (
@@ -300,14 +330,15 @@ export class ADKServer {
 				agentBuilder.withTools(agentModule.agent.tools);
 			}
 
-			const { runner } = await agentBuilder.build();
+			const { runner, session } = await agentBuilder.build();
 
 			// Store the loaded agent with its runner
 			const loadedAgent: LoadedAgent = {
 				agent: agentModule.agent,
 				runner: runner,
-				messages: [],
-				messageIdCounter: 1,
+				sessionId: session.id,
+				userId: `user_${agentPath}`,
+				appName: "adk-server",
 			};
 
 			this.loadedAgents.set(agentPath, loadedAgent);
@@ -353,27 +384,9 @@ export class ADKServer {
 		}
 
 		try {
-			// Add the user message to the messages
-			const userMessage = {
-				id: loadedAgent.messageIdCounter++,
-				type: "user" as const,
-				content: message,
-				timestamp: new Date().toISOString(),
-			};
-			loadedAgent.messages.push(userMessage);
-
-			// Send message to the agent using the runner
+			// Send message to the agent using the runner with session service
+			// The session service will automatically handle message persistence
 			const response = await loadedAgent.runner.ask(message);
-
-			// Add the agent response to the messages
-			const agentMessage = {
-				id: loadedAgent.messageIdCounter++,
-				type: "assistant" as const, // Changed from "agent" to "assistant"
-				content: response,
-				timestamp: new Date().toISOString(),
-			};
-			loadedAgent.messages.push(agentMessage);
-
 			return response;
 		} catch (error) {
 			const errorMessage =
@@ -382,15 +395,6 @@ export class ADKServer {
 				`Error sending message to agent ${agentPath}:`,
 				errorMessage,
 			);
-
-			// Add error message to messages
-			loadedAgent.messages.push({
-				id: loadedAgent.messageIdCounter++,
-				type: "error" as const,
-				content: `Error: ${errorMessage}`,
-				timestamp: new Date().toISOString(),
-			});
-
 			throw new Error(`Failed to send message to agent: ${errorMessage}`);
 		}
 	}
