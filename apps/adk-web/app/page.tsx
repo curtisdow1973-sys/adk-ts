@@ -12,10 +12,11 @@ function HomeContent() {
 	const searchParams = useSearchParams();
 	const apiUrl = searchParams.get("apiUrl");
 	const port = searchParams.get("port");
-	
+
 	// Support both legacy apiUrl and new port parameter
 	// Default to port 8042 if neither is provided
-	const finalApiUrl = apiUrl || (port ? `http://localhost:${port}` : "http://localhost:8042");
+	const finalApiUrl =
+		apiUrl || (port ? `http://localhost:${port}` : "http://localhost:8042");
 
 	const {
 		agents,
