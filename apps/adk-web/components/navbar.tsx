@@ -1,4 +1,4 @@
-import type { Agent } from "@/app/(dashboard)/_schema/types";
+import type { Agent } from "@/app/(dashboard)/_schema";
 import { ThemeToggle } from "@/components/theme-toggle";
 import { Badge } from "@/components/ui/badge";
 import {

@@ -1,7 +1,7 @@
 "use client";
 
 import { useCallback, useState } from "react";
-import type { Agent, Message } from "../_schema/types";
+import type { Agent, Message } from "../_schema";
 
 export function useChat() {
 	const [messages, setMessages] = useState<Message[]>([]);

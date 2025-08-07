@@ -1,7 +1,7 @@
 "use client";
 
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import type { Agent } from "../_schema/types";
+import type { Agent } from "../_schema";
 
 interface AgentApiResponse {
 	agents: Agent[];

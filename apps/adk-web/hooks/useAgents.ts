@@ -2,7 +2,7 @@
 
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useCallback, useEffect, useState } from "react";
-import type { Agent, Message } from "../app/(dashboard)/_schema/types";
+import type { Agent, Message } from "../app/(dashboard)/_schema";
 
 interface AgentApiResponse {
 	agents: Agent[];
@@ -129,65 +129,6 @@ export function useAgents(apiUrl: string) {
 		}
 	}, [agentMessages, selectedAgent]);
 
-	// Start agent mutation
-	const startAgentMutation = useMutation({
-		mutationFn: async ({ agent }: { agent: Agent }) => {
-			const response = await fetch("/api/proxy", {
-				method: "POST",
-				headers: { "Content-Type": "application/json" },
-				body: JSON.stringify({
-					apiUrl,
-					path: `/api/agents/${encodeURIComponent(agent.relativePath)}/start`,
-					data: {},
-				}),
-			});
-			if (!response.ok) {
-				const errorData = await response.text();
-				throw new Error(
-					`Failed to start agent: ${response.status} - ${errorData}`,
-				);
-			}
-			return response.json();
-		},
-		onSuccess: (_, { agent }) => {
-			setAgentStatus((prev) => ({ ...prev, [agent.relativePath]: "running" }));
-			queryClient.invalidateQueries({ queryKey: ["running-agents", apiUrl] });
-		},
-		onError: (error, { agent }) => {
-			setAgentStatus((prev) => ({ ...prev, [agent.relativePath]: "error" }));
-			console.error("Failed to start agent:", error);
-		},
-	});
-
-	// Stop agent mutation
-	const stopAgentMutation = useMutation({
-		mutationFn: async ({ agent }: { agent: Agent }) => {
-			const response = await fetch("/api/proxy", {
-				method: "POST",
-				headers: { "Content-Type": "application/json" },
-				body: JSON.stringify({
-					apiUrl,
-					path: `/api/agents/${encodeURIComponent(agent.relativePath)}/stop`,
-					data: {},
-				}),
-			});
-			if (!response.ok) {
-				const errorData = await response.text();
-				throw new Error(
-					`Failed to stop agent: ${response.status} - ${errorData}`,
-				);
-			}
-			return response.json();
-		},
-		onSuccess: (_, { agent }) => {
-			setAgentStatus((prev) => ({ ...prev, [agent.relativePath]: "stopped" }));
-			queryClient.invalidateQueries({ queryKey: ["running-agents", apiUrl] });
-		},
-		onError: (error) => {
-			console.error("Failed to stop agent:", error);
-		},
-	});
-
 	// Send message mutation
 	const sendMessageMutation = useMutation({
 		mutationFn: async ({
@@ -243,20 +184,6 @@ export function useAgents(apiUrl: string) {
 	}, []);
 
 	// Action handlers
-	const startAgent = useCallback(
-		(agent: Agent) => {
-			startAgentMutation.mutate({ agent });
-		},
-		[startAgentMutation],
-	);
-
-	const stopAgent = useCallback(
-		(agent: Agent) => {
-			stopAgentMutation.mutate({ agent });
-		},
-		[stopAgentMutation],
-	);
-
 	const sendMessage = useCallback(
 		(message: string) => {
 			if (!selectedAgent) return;
@@ -273,13 +200,9 @@ export function useAgents(apiUrl: string) {
 		connected: !!apiUrl, // Always "connected" if we have an API URL
 		loading,
 		error,
-		startAgent,
-		stopAgent,
 		sendMessage,
 		selectAgent,
 		refreshAgents,
-		isStartingAgent: startAgentMutation.isPending,
-		isStoppingAgent: stopAgentMutation.isPending,
 		isSendingMessage: sendMessageMutation.isPending,
 	};
 }

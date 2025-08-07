@@ -26,13 +26,9 @@ function HomeContent() {
 		connected,
 		loading,
 		error,
-		startAgent,
-		stopAgent,
 		sendMessage,
 		selectAgent,
 		refreshAgents,
-		isStartingAgent,
-		isStoppingAgent,
 		isSendingMessage,
 	} = useAgents(finalApiUrl);
 
