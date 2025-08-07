@@ -36,13 +36,13 @@ program
 
 program
 	.command("run")
-	.description("Run an agent from the current directory")
+	.description("Start an interactive chat with an agent")
 	.argument(
 		"[agent-path]",
-		"Path to the agent file (default: looks for agent.ts in current/agents directory)",
+		"Path to specific agent (optional - will show selector if multiple agents found)",
 	)
-	.option("-w, --watch", "Watch for file changes and restart agent")
-	.option("-p, --port <port>", "Port for agent server (if applicable)", "3000")
+	.option("-s, --server", "Start ADK server only (without chat interface)")
+	.option("-h, --host <host>", "Host for server (when using --server)", "localhost")
 	.action(async (agentPath, options) => {
 		try {
 			await runAgent(agentPath, options);
