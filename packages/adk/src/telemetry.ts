@@ -89,7 +89,7 @@ export class TelemetryService {
 			this.isInitialized = true;
 			// Update tracer with actual config
 			this.tracer = trace.getTracer("iqai-adk", config.appVersion || "0.1.0");
-			diag.info("OpenTelemetry SDK started successfully.");
+			diag.debug("OpenTelemetry SDK started successfully.");
 		} catch (error) {
 			diag.error("Error starting OpenTelemetry SDK:", error);
 			throw error;
@@ -142,7 +142,7 @@ export class TelemetryService {
 			await Promise.race([this.sdk.shutdown(), timeoutPromise]);
 
 			this.isInitialized = false;
-			diag.info("Telemetry terminated successfully.");
+			diag.debug("Telemetry terminated successfully.");
 		} catch (error) {
 			if (error instanceof Error && error.message.includes("timeout")) {
 				diag.warn("Telemetry shutdown timed out, some traces may be lost");
