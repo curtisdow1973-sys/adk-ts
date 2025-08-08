@@ -3,6 +3,7 @@ import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { ScrollArea } from "@/components/ui/scroll-area";
+import { cn } from "@/lib/utils";
 import { Bot, Loader2, MessageSquare, Send, User } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 
@@ -114,21 +115,23 @@ function ChatMessage({ message, agentName }: ChatMessageProps) {
 
 	return (
 		<div
-			className={`w-full p-4 hover:bg-muted/20 transition-colors ${
-				isUser ? "bg-primary/5" : isSystem ? "bg-yellow-50/50" : "bg-muted/10"
-			}`}
+			className={cn(
+				"w-full p-4 hover:bg-muted/20 transition-colors",
+				isUser ? "bg-primary/5" : isSystem ? "bg-yellow-50/50" : "bg-muted/10",
+			)}
 		>
 			<div className="flex gap-3 w-full">
 				{/* Avatar */}
 				<Avatar className="h-10 w-10 flex-shrink-0">
 					<AvatarFallback
-						className={`text-xs font-medium ${
+						className={cn(
+							"text-xs font-medium",
 							isUser
 								? "bg-primary text-primary-foreground"
 								: isSystem
 									? "bg-yellow-100 text-yellow-800"
-									: "bg-muted text-muted-foreground"
-						}`}
+									: "bg-muted text-muted-foreground",
+						)}
 					>
 						{isUser ? (
 							<User className="h-4 w-4" />

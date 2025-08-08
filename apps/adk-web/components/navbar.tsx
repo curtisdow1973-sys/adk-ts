@@ -8,6 +8,7 @@ import {
 	SelectTrigger,
 	SelectValue,
 } from "@/components/ui/select";
+import { cn } from "@/lib/utils";
 import { Bot } from "lucide-react";
 import Image from "next/image";
 
@@ -75,7 +76,6 @@ export function Navbar({
 					<div className="flex items-center space-x-4">
 						{agents.length > 0 && (
 							<div className="flex items-center space-x-2">
-								<Bot className="h-4 w-4 text-muted-foreground" />
 								<Select
 									value={selectedAgent?.relativePath || ""}
 									onValueChange={(value) => {
@@ -86,13 +86,15 @@ export function Navbar({
 									<SelectTrigger className="w-[200px]">
 										<SelectValue placeholder="Select an agent">
 											{selectedAgent && (
-												<div className="flex items-center space-x-2">
-													<div
-														className={`h-2 w-2 rounded-full ${getStatusColor(
-															getAgentStatus(selectedAgent),
-														)}`}
-													/>
+												<div className="flex items-center space-x-2 justify-between">
+													<Bot className="h-4 w-4 text-muted-foreground" />
 													<span>{selectedAgent.name}</span>
+													<div
+														className={cn(
+															"h-2 w-2 rounded-full",
+															getStatusColor(getAgentStatus(selectedAgent)),
+														)}
+													/>
 												</div>
 											)}
 										</SelectValue>
@@ -105,21 +107,12 @@ export function Navbar({
 											>
 												<div className="flex items-center space-x-2">
 													<div
-														className={`h-2 w-2 rounded-full ${getStatusColor(
-															getAgentStatus(agent),
-														)}`}
+														className={cn(
+															"h-2 w-2 rounded-full",
+															getStatusColor(getAgentStatus(agent)),
+														)}
 													/>
 													<span>{agent.name}</span>
-													<Badge
-														variant={
-															getAgentStatus(agent) === "running"
-																? "default"
-																: "secondary"
-														}
-														className="ml-auto text-xs"
-													>
-														{getAgentStatus(agent)}
-													</Badge>
 												</div>
 											</SelectItem>
 										))}

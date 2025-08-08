@@ -9,6 +9,7 @@ import {
 	CardTitle,
 } from "@/components/ui/card";
 import { ScrollArea } from "@/components/ui/scroll-area";
+import { cn } from "@/lib/utils";
 import { Bot, Loader2, Play, Square } from "lucide-react";
 
 interface AgentsPanelProps {
@@ -107,9 +108,10 @@ function AgentItem({
 	return (
 		<button
 			type="button"
-			className={`w-full p-3 rounded-lg border cursor-pointer transition-colors text-left ${
-				isSelected ? "bg-primary/10 border-primary" : "hover:bg-muted"
-			}`}
+			className={cn(
+				"w-full p-3 rounded-lg border cursor-pointer transition-colors text-left",
+				isSelected ? "bg-primary/10 border-primary" : "hover:bg-muted",
+			)}
 			onClick={onSelect}
 		>
 			<div className="flex items-center justify-between">
@@ -167,5 +169,5 @@ function StatusIndicator({ status }: StatusIndicatorProps) {
 		}
 	};
 
-	return <div className={`w-2 h-2 rounded-full ${getStatusColor()}`} />;
+	return <div className={cn("w-2 h-2 rounded-full", getStatusColor())} />;
 }
