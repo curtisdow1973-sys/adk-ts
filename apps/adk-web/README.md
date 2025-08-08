@@ -1,36 +1,96 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+<div align="center">
 
-## Getting Started
+<img src="https://files.catbox.moe/vumztw.png" alt="ADK TypeScript Logo" width="80" />
 
-First, run the development server:
+<br/>
+
+# ADK Web
+
+**Visual interface for the ADK (Agent Development Kit) CLI**
+
+*Agent discovery • Interactive chat • Status monitoring*
+
+---
+
+</div>
+
+## ⭐ Overview
+
+ADK Web is a Next.js application that provides a visual, browser-based interface for the `@iqai/adk-cli` server. It helps you:
+
+- Browse and select discovered agents
+- Chat with agents in real-time
+- Monitor server connectivity and status
+
+This app is designed to be launched by the CLI via `adk web`, but it can also run locally for development.
+
+## 🚀 Usage with ADK CLI
+
+Install the CLI and start the web interface:
 
 ```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
+npm install -g @iqai/adk-cli
+
+# Start the CLI server and open the web UI
+adk web
+
+# Or point to a specific server
+adk web --port 8042
+adk web --web-port 3000   # local dev port for the UI
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+The web app connects to the CLI server using a query parameter:
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+- `apiUrl` (legacy): full URL to the API server
+- `port`: server port (defaults to `8042` when not provided)
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+Example direct URL: `http://localhost:3000/?port=8042`
 
-## Learn More
+## 🧩 Features
 
-To learn more about Next.js, take a look at the following resources:
+- Visual agent browser with selection
+- Chat panel with message history
+- Automatic agent auto-select on first load
+- Server connection status and retry
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+## 🛠️ Local Development
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+From the monorepo root:
 
-## Deploy on Vercel
+```bash
+pnpm install
+pnpm -w dev
+```
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+Or inside this app directory:
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+```bash
+pnpm dev
+```
+
+Open http://localhost:3000. To connect to a running CLI server, append `?port=8042` or `?apiUrl=http://localhost:8042`.
+
+## 🔌 How it works
+
+- The UI reads `apiUrl`/`port` from the URL (see `app/page.tsx`).
+- Requests are proxied through `app/api/proxy/route.ts` to the ADK CLI server.
+- Agent discovery and messaging use the CLI API:
+	- `GET /api/agents` – list agents
+	- `POST /api/agents/:relativePath/message` – send a message
+
+See `lib/api.ts` for the client used by the UI.
+
+## 📚 Related Packages
+
+- `@iqai/adk` – core library for building agents
+- `@iqai/adk-cli` – CLI that powers the server this app connects to
+
+Docs: https://adk.iqai.com
+
+## 🤝 Contributing
+
+Contributions welcome. Please read the root [CONTRIBUTION.md](../../CONTRIBUTION.md).
+
+## 📄 License
+
+MIT – see [LICENSE](../../LICENSE.md)
