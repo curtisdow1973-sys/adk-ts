@@ -63,9 +63,8 @@ class BasicLlmRequestProcessor extends BaseLlmRequestProcessor {
 			runConfig.enableAffectiveDialog;
 		llmRequest.liveConnectConfig.proactivity = runConfig.proactivity;
 
-		// Append tools to the request (matching Python implementation expectation)
-		const tools = await agent.canonicalTools();
-		llmRequest.appendTools(tools);
+		// Tools are added later in the flow by calling each tool's processLlmRequest.
+		// Avoid appending here to prevent duplicate function declarations in providers.
 
 		// This processor doesn't yield any events, just configures the request
 		// Empty async generator - no events to yield

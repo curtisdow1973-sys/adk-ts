@@ -1,12 +1,11 @@
-import { spawn } from "node:child_process";
 import {
 	existsSync,
+	mkdirSync,
 	readFileSync,
 	readdirSync,
 	statSync,
 	unlinkSync,
 } from "node:fs";
-import { tmpdir } from "node:os";
 import { dirname, join, relative } from "node:path";
 import { pathToFileURL } from "node:url";
 import { serve } from "@hono/node-server";
@@ -275,14 +274,9 @@ export class ADKServer {
 			const agentFileUrl = pathToFileURL(agentFilePath).href;
 
 			// Use dynamic import to load the agent
-			// For TypeScript files, we'll use tsx to execute them
-			let agentModule: any;
-			if (agentFilePath.endsWith(".ts")) {
-				// Use tsx to execute TypeScript files
-				agentModule = await this.importTypeScriptFile(agentFilePath);
-			} else {
-				agentModule = await import(agentFileUrl);
-			}
+			const agentModule: any = agentFilePath.endsWith(".ts")
+				? await this.importTypeScriptFile(agentFilePath)
+				: await import(agentFileUrl);
 
 			if (!agentModule.agent) {
 				throw new Error(`No 'agent' export found in ${agentFilePath}`);
@@ -301,9 +295,7 @@ export class ADKServer {
 
 			// Additional validation to ensure it looks like an LlmAgent
 			if (!agentModule.agent.model || !agentModule.agent.instruction) {
-				console.warn(
-					`Warning: Agent in ${agentFilePath} may not be a valid LlmAgent instance. Expected model and instruction properties.`,
-				);
+				// Soft warn without noisy logs; proceed to allow flexible agents
 			}
 
 			// Create a proper runner using AgentBuilder to wrap the existing agent
@@ -322,7 +314,15 @@ export class ADKServer {
 				Array.isArray(agentModule.agent.tools) &&
 				agentModule.agent.tools.length > 0
 			) {
-				agentBuilder.withTools(agentModule.agent.tools);
+				agentBuilder.withTools(...agentModule.agent.tools);
+				if (!this.quiet) {
+					const toolNames = agentModule.agent.tools
+						.map((t: any) => t?.name || "<unnamed>")
+						.join(", ");
+					console.log(
+						`🧩 Registered tools for agent "${agentModule.agent.name}": [${toolNames}]`,
+					);
+				}
 			}
 
 			const { runner, session } = await agentBuilder.build();
@@ -392,189 +392,83 @@ export class ADKServer {
 	 * Import a TypeScript file by compiling it on-demand
 	 */
 	private async importTypeScriptFile(filePath: string): Promise<any> {
-		return new Promise((resolve, reject) => {
-			// Create a temporary compiled version of the TypeScript file
-			const tempJsFile = join(tmpdir(), `agent-${Date.now()}.mjs`);
-
-			// Use tsx to compile and execute the TypeScript file directly
-			// Find the project root (where package.json or .env might be)
-			let projectRoot = dirname(filePath);
-			while (projectRoot !== "/" && projectRoot !== dirname(projectRoot)) {
-				if (
-					existsSync(join(projectRoot, "package.json")) ||
-					existsSync(join(projectRoot, ".env"))
-				) {
-					break;
-				}
-				projectRoot = dirname(projectRoot);
+		// Determine project root (for tsconfig and resolving deps)
+		let projectRoot = dirname(filePath);
+		while (projectRoot !== "/" && projectRoot !== dirname(projectRoot)) {
+			if (
+				existsSync(join(projectRoot, "package.json")) ||
+				existsSync(join(projectRoot, ".env"))
+			) {
+				break;
 			}
+			projectRoot = dirname(projectRoot);
+		}
 
-			// Load environment variables from the project's .env file if it exists
-			const envPath = join(projectRoot, ".env");
-			const envVars: Record<string, string> = {};
-			if (existsSync(envPath)) {
-				try {
-					const envContent = readFileSync(envPath, "utf8");
-					const envLines = envContent.split("\n");
-					for (const line of envLines) {
-						const trimmedLine = line.trim();
-						if (trimmedLine && !trimmedLine.startsWith("#")) {
-							const [key, ...valueParts] = trimmedLine.split("=");
-							if (key && valueParts.length > 0) {
-								const value = valueParts.join("=").replace(/^"(.*)"$/, "$1");
-								envVars[key.trim()] = value.trim();
-							}
+		// Transpile with esbuild and import (bundles local files, preserves tools)
+		try {
+			const { build } = await import("esbuild");
+			const cacheDir = join(projectRoot, ".adk-cache");
+			if (!existsSync(cacheDir)) {
+				mkdirSync(cacheDir, { recursive: true });
+			}
+			const outFile = join(cacheDir, `agent-${Date.now()}.mjs`);
+			// Externalize bare module imports (node_modules), bundle relative/local files
+			const plugin = {
+				name: "externalize-bare-imports",
+				setup(build: any) {
+					build.onResolve({ filter: /.*/ }, (args: any) => {
+						if (
+							args.path.startsWith(".") ||
+							args.path.startsWith("/") ||
+							args.path.startsWith("..")
+						) {
+							return; // use default resolve (to get bundled)
 						}
-					}
-				} catch (error) {
-					console.warn(
-						`⚠️ Warning: Could not load .env file: ${error instanceof Error ? error.message : String(error)}`,
-					);
-				}
-			}
-
-			const tsxProcess = spawn(
-				"npx",
-				[
-					"tsx",
-					"--eval",
-					`
-				import { pathToFileURL } from 'url';
-				import('${pathToFileURL(filePath).href}').then(module => {
-					// Check for named export first, then default export
-					let agent = module.agent;
-					if (!agent && module.default && module.default.agent) {
-						agent = module.default.agent;
-					}
-
-					if (agent) {
-						console.log('AGENT_FOUND');
-						console.log(JSON.stringify({
-							name: agent.name,
-							description: agent.description,
-							model: agent.model || 'unknown',
-							instruction: agent.instruction || '',
-							_isValid: true
-						}));
-					} else {
-						console.log('NO_AGENT_EXPORT');
-					}
-				}).catch(err => {
-					console.log('IMPORT_ERROR:', err.message);
-				});
-			`,
-				],
-				{
-					cwd: projectRoot, // Use project root instead of just the file directory
-					env: { ...process.env, ...envVars }, // Merge current env with project .env
-					stdio: ["pipe", "pipe", "pipe"],
-					timeout: 10000, // 10 second timeout
+						return { path: args.path, external: true };
+					});
 				},
-			);
-
-			let output = "";
-			let errorOutput = "";
-
-			tsxProcess.stdout.on("data", (data) => {
-				output += data.toString();
-			});
-
-			tsxProcess.stderr.on("data", (data) => {
-				errorOutput += data.toString();
-			});
-
-			const cleanup = () => {
-				try {
-					if (existsSync(tempJsFile)) {
-						unlinkSync(tempJsFile);
-					}
-				} catch {}
 			};
 
-			tsxProcess.on("close", (code) => {
-				cleanup();
-
-				if (code !== 0) {
-					reject(
-						new Error(`tsx process failed with code ${code}: ${errorOutput}`),
-					);
-					return;
-				}
-
-				try {
-					const lines = output.split("\n");
-					const agentFoundIndex = lines.findIndex((line) =>
-						line.includes("AGENT_FOUND"),
-					);
-
-					if (agentFoundIndex === -1) {
-						if (output.includes("NO_AGENT_EXPORT")) {
-							reject(new Error("No agent export found in TypeScript file"));
-						} else if (output.includes("IMPORT_ERROR:")) {
-							const errorLine = lines.find((line) =>
-								line.includes("IMPORT_ERROR:"),
-							);
-							reject(
-								new Error(
-									`Import error: ${errorLine?.replace("IMPORT_ERROR:", "").trim()}`,
-								),
-							);
-						} else {
-							reject(new Error("Unexpected output from tsx process"));
-						}
-						return;
-					}
-
-					// Get the JSON data from the next line
-					const jsonLine = lines[agentFoundIndex + 1];
-					if (!jsonLine) {
-						reject(new Error("No agent data found after AGENT_FOUND marker"));
-						return;
-					}
-
-					const agentData = JSON.parse(jsonLine);
-
-					// Create a mock agent object that matches our interface
-					const mockAgent = {
-						name: agentData.name,
-						description: agentData.description,
-						model: agentData.model,
-						instruction: agentData.instruction,
-						tools: [],
-						_isServerMock: true,
-					};
-
-					resolve({ agent: mockAgent });
-				} catch (parseError) {
-					reject(
-						new Error(
-							`Failed to parse tsx output: ${parseError}. Output: ${output}`,
-						),
-					);
-				}
+			const tsconfigPath = join(projectRoot, "tsconfig.json");
+			await build({
+				entryPoints: [filePath],
+				outfile: outFile,
+				bundle: true,
+				format: "esm",
+				platform: "node",
+				target: ["node22"],
+				sourcemap: false,
+				logLevel: "silent",
+				plugins: [plugin],
+				absWorkingDir: projectRoot,
+				// Use tsconfig if present for path aliases
+				...(existsSync(tsconfigPath) ? { tsconfig: tsconfigPath } : {}),
 			});
 
-			tsxProcess.on("error", (error) => {
-				cleanup();
-				reject(new Error(`Failed to start tsx process: ${error.message}`));
-			});
-
-			// Set a timeout to prevent hanging
-			setTimeout(() => {
-				tsxProcess.kill();
-				cleanup();
-				reject(new Error("tsx process timed out"));
-			}, 10000);
-		});
-	}
-
-	private checkTsxAvailable(): boolean {
-		try {
-			spawn("npx", ["tsx", "--version"], { stdio: "ignore" });
-			return true;
-		} catch {
-			return false;
+			const mod = await import(
+				`${pathToFileURL(outFile).href}?t=${Date.now()}`
+			);
+			let agentExport = (mod as any)?.agent;
+			if (!agentExport && (mod as any)?.default) {
+				agentExport = (mod as any).default.agent ?? (mod as any).default;
+			}
+			try {
+				unlinkSync(outFile);
+			} catch {}
+			if (agentExport) {
+				if (!this.quiet) {
+					console.log(`✅ TS agent imported via esbuild: ${filePath}`);
+				}
+				return { agent: agentExport };
+			}
+		} catch (e) {
+			throw new Error(
+				`Failed to import TS agent via esbuild: ${e instanceof Error ? e.message : String(e)}`,
+			);
 		}
+
+		// If we reached here, the file was transpiled but didn't export an agent
+		throw new Error("No 'agent' export found in TypeScript module");
 	}
 
 	public async start(): Promise<void> {

@@ -274,7 +274,7 @@ adk run
 
 - **Node.js** v22.0 or higher
 - **npm**, **yarn**, **pnpm**, or **bun** (for project creation)
-- **TypeScript** support (handled automatically via `tsx`)
+ - **TypeScript** support (handled automatically)
 
 ## 🤝 Contributing
 

@@ -179,8 +179,14 @@ export async function runAgent(
 		port?: string;
 		server?: boolean;
 		host?: string;
+		// verbose is intentionally not exposed on the command; it can be passed programmatically
+		// and also inferred from the ADK_VERBOSE environment variable.
+		verbose?: boolean;
 	} = {},
 ) {
+	const envVerbose = process.env.ADK_VERBOSE;
+	const isVerbose =
+		options.verbose ?? (envVerbose === "1" || envVerbose === "true");
 	// If server option is enabled, start ADK server only
 	if (options.server) {
 		const apiPort = 8042; // Use new default port
@@ -192,7 +198,7 @@ export async function runAgent(
 			port: apiPort,
 			dir: process.cwd(),
 			host,
-			quiet: false,
+			quiet: !isVerbose,
 		};
 
 		try {
@@ -233,7 +239,7 @@ export async function runAgent(
 				port: 8042, // Use new default port
 				dir: process.cwd(),
 				host: options.host || "localhost",
-				quiet: true,
+				quiet: !isVerbose,
 			};
 
 			await serveCommand(serveOptions);
