@@ -151,6 +151,6 @@
   --shadow-2xl: var(--shadow-2xl);
 }
 
-button:hover {
+button:not(:disabled):hover {
   cursor: pointer;
 }
