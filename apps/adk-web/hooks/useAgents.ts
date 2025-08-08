@@ -8,14 +8,6 @@ interface AgentApiResponse {
 	agents: Agent[];
 }
 
-interface RunningAgentsResponse {
-	running: Array<{
-		id: string;
-		status: "running" | "stopped" | "error";
-		startTime: string;
-	}>;
-}
-
 interface AgentMessage {
 	id: number;
 	type: "user" | "assistant" | "system" | "error";
@@ -85,8 +77,13 @@ export function useAgents(apiUrl: string) {
 	// Update messages when agent messages change
 	useEffect(() => {
 		if (agentMessages?.messages && selectedAgent) {
-			// Get all messages from the session service and replace current messages
-			const allMessages = agentMessages.messages.map(
+			// Filter out empty/whitespace-only messages (e.g., tool-call placeholders)
+			const nonEmpty = agentMessages.messages.filter(
+				(m) => typeof m.content === "string" && m.content.trim().length > 0,
+			);
+
+			// Map to UI message shape
+			const allMessages = nonEmpty.map(
 				(msg): Message => ({
 					id: msg.id,
 					type: msg.type === "error" ? "system" : msg.type,
