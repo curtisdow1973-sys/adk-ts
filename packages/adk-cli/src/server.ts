@@ -110,6 +110,12 @@ export class ADKServer {
 				}
 
 				// Convert session events to message format
+				// TODO(adk-web/tool-calls): Enhance this endpoint to better represent tool activity.
+				// - Option A: Do not persist or return assistant events with empty text (current web filters these client-side).
+				// - Option B: Keep raw history but add a query flag like `includeEmpty=false` to suppress blanks for clients that want clean text-only history.
+				// - Option C (preferred): Emit explicit tool events, e.g., { type: "tool", name, args, output, status, timestamps } derived from non-text parts.
+				//   This enables the web UI to render compact "Used tool: <name>" chips and show outputs, instead of blank assistant messages.
+				//   When implemented, maintain backward compatibility by keeping the current shape under a flag (e.g., `format=legacy`).
 				const messages = session.events.map((event, index) => ({
 					id: index + 1,
 					type: event.author === "user" ? "user" : "assistant",
