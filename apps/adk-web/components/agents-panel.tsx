@@ -1,6 +1,4 @@
 import type { Agent } from "@/app/(dashboard)/_schema";
-import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
 import {
 	Card,
 	CardContent,
@@ -10,28 +8,18 @@ import {
 } from "@/components/ui/card";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { cn } from "@/lib/utils";
-import { Bot, Loader2, Play, Square } from "lucide-react";
+import { Bot } from "lucide-react";
 
 interface AgentsPanelProps {
 	agents: Agent[];
 	selectedAgent: Agent | null;
-	agentStatus: Record<string, "running" | "stopped" | "error">;
 	onSelectAgent: (agent: Agent) => void;
-	onStartAgent: (agent: Agent) => void;
-	onStopAgent: (agent: Agent) => void;
-	isStartingAgent?: boolean;
-	isStoppingAgent?: boolean;
 }
 
 export function AgentsPanel({
 	agents,
 	selectedAgent,
-	agentStatus,
 	onSelectAgent,
-	onStartAgent,
-	onStopAgent,
-	isStartingAgent = false,
-	isStoppingAgent = false,
 }: AgentsPanelProps) {
 	return (
 		<Card className="lg:col-span-1">
@@ -52,18 +40,7 @@ export function AgentsPanel({
 									isSelected={
 										selectedAgent?.relativePath === agent.relativePath
 									}
-									status={agentStatus[agent.relativePath]}
-									isStartingAgent={isStartingAgent}
-									isStoppingAgent={isStoppingAgent}
 									onSelect={() => onSelectAgent(agent)}
-									onStart={(e) => {
-										e.stopPropagation();
-										onStartAgent(agent);
-									}}
-									onStop={(e) => {
-										e.stopPropagation();
-										onStopAgent(agent);
-									}}
 								/>
 							))}
 						</div>
@@ -87,24 +64,10 @@ function EmptyAgentsState() {
 interface AgentItemProps {
 	agent: Agent;
 	isSelected: boolean;
-	status?: "running" | "stopped" | "error";
-	isStartingAgent?: boolean;
-	isStoppingAgent?: boolean;
 	onSelect: () => void;
-	onStart: (e: React.MouseEvent) => void;
-	onStop: (e: React.MouseEvent) => void;
 }
 
-function AgentItem({
-	agent,
-	isSelected,
-	status,
-	isStartingAgent = false,
-	isStoppingAgent = false,
-	onSelect,
-	onStart,
-	onStop,
-}: AgentItemProps) {
+function AgentItem({ agent, isSelected, onSelect }: AgentItemProps) {
 	return (
 		<button
 			type="button"
@@ -117,36 +80,11 @@ function AgentItem({
 			<div className="flex items-center justify-between">
 				<div className="flex-1 min-w-0">
 					<div className="flex items-center gap-2">
-						<StatusIndicator status={status} />
 						<p className="font-medium truncate">{agent.name}</p>
 					</div>
 					<p className="text-sm text-muted-foreground truncate">
 						{agent.relativePath}
 					</p>
-				</div>
-				<div className="flex gap-1">
-					{status === "running" ? (
-						<Button
-							size="sm"
-							variant="outline"
-							onClick={onStop}
-							disabled={isStoppingAgent}
-						>
-							{isStoppingAgent ? (
-								<Loader2 className="h-3 w-3 animate-spin" />
-							) : (
-								<Square className="h-3 w-3" />
-							)}
-						</Button>
-					) : (
-						<Button size="sm" onClick={onStart} disabled={isStartingAgent}>
-							{isStartingAgent ? (
-								<Loader2 className="h-3 w-3 animate-spin" />
-							) : (
-								<Play className="h-3 w-3" />
-							)}
-						</Button>
-					)}
 				</div>
 			</div>
 		</button>

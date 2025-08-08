@@ -12,11 +12,7 @@ export interface Message {
 	timestamp: Date;
 }
 
-export type AgentStatus = "running" | "stopped";
-
-export interface AgentWithStatus extends Agent {
-	status: AgentStatus;
-}
+// Agent status tracking removed; agents are always available on-demand
 
 export interface ChatState {
 	messages: Message[];

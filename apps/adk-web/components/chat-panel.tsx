@@ -10,7 +10,6 @@ import { useEffect, useRef, useState } from "react";
 interface ChatPanelProps {
 	selectedAgent: Agent | null;
 	messages: Message[];
-	agentStatus: Record<string, "running" | "stopped" | "error">;
 	onSendMessage: (message: string) => void;
 	isSendingMessage?: boolean;
 }
@@ -18,7 +17,6 @@ interface ChatPanelProps {
 export function ChatPanel({
 	selectedAgent,
 	messages,
-	agentStatus,
 	onSendMessage,
 	isSendingMessage = false,
 }: ChatPanelProps) {

@@ -22,7 +22,6 @@ function HomeContent() {
 		agents,
 		selectedAgent,
 		messages,
-		agentStatus,
 		connected,
 		loading,
 		error,
@@ -69,7 +68,6 @@ function HomeContent() {
 				apiUrl={finalApiUrl}
 				agents={agents}
 				selectedAgent={selectedAgent}
-				agentStatus={agentStatus}
 				onSelectAgent={selectAgent}
 			/>
 
@@ -77,7 +75,6 @@ function HomeContent() {
 				<ChatPanel
 					selectedAgent={selectedAgent}
 					messages={messages}
-					agentStatus={agentStatus}
 					onSendMessage={sendMessage}
 					isSendingMessage={isSendingMessage}
 				/>

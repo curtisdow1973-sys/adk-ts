@@ -32,61 +32,6 @@ export function useAgents(apiUrl: string | null) {
 export function useAgentAction(apiUrl: string) {
 	const queryClient = useQueryClient();
 
-	const startAgent = useMutation({
-		mutationFn: async ({ agent }: { agent: Agent }) => {
-			const response = await fetch("/api/proxy", {
-				method: "POST",
-				headers: { "Content-Type": "application/json" },
-				body: JSON.stringify({
-					apiUrl,
-					path: `/api/agents/${encodeURIComponent(agent.relativePath)}/start`,
-					data: {},
-				}),
-			});
-
-			if (!response.ok) {
-				const errorData = await response.text();
-				throw new Error(
-					`Failed to start agent: ${response.status} - ${errorData}`,
-				);
-			}
-
-			return response.json();
-		},
-		onSuccess: () => {
-			// Invalidate and refetch agents
-			queryClient.invalidateQueries({ queryKey: ["agents", apiUrl] });
-			queryClient.invalidateQueries({ queryKey: ["running-agents", apiUrl] });
-		},
-	});
-
-	const stopAgent = useMutation({
-		mutationFn: async ({ agent }: { agent: Agent }) => {
-			const response = await fetch("/api/proxy", {
-				method: "POST",
-				headers: { "Content-Type": "application/json" },
-				body: JSON.stringify({
-					apiUrl,
-					path: `/api/agents/${encodeURIComponent(agent.relativePath)}/stop`,
-					data: {},
-				}),
-			});
-
-			if (!response.ok) {
-				const errorData = await response.text();
-				throw new Error(
-					`Failed to stop agent: ${response.status} - ${errorData}`,
-				);
-			}
-
-			return response.json();
-		},
-		onSuccess: () => {
-			queryClient.invalidateQueries({ queryKey: ["agents", apiUrl] });
-			queryClient.invalidateQueries({ queryKey: ["running-agents", apiUrl] });
-		},
-	});
-
 	const sendMessage = useMutation({
 		mutationFn: async ({
 			agent,
@@ -114,8 +59,6 @@ export function useAgentAction(apiUrl: string) {
 	});
 
 	return {
-		startAgent,
-		stopAgent,
 		sendMessage,
 	};
 }

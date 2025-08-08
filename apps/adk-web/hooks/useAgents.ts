@@ -31,9 +31,7 @@ export function useAgents(apiUrl: string) {
 	const queryClient = useQueryClient();
 	const [selectedAgent, setSelectedAgent] = useState<Agent | null>(null);
 	const [messages, setMessages] = useState<Message[]>([]);
-	const [agentStatus, setAgentStatus] = useState<
-		Record<string, "running" | "stopped" | "error">
-	>({});
+	// Agent status tracking removed
 	const [lastMessageId, setLastMessageId] = useState<number>(0);
 
 	// Fetch available agents
@@ -60,20 +58,7 @@ export function useAgents(apiUrl: string) {
 	});
 
 	// Fetch running agents status
-	const { data: runningAgents } = useQuery({
-		queryKey: ["running-agents", apiUrl],
-		queryFn: async (): Promise<RunningAgentsResponse> => {
-			if (!apiUrl) throw new Error("API URL is required");
-
-			const response = await fetch(`${apiUrl}/api/agents/running`);
-			if (!response.ok) {
-				throw new Error(`Failed to fetch running agents: ${response.status}`);
-			}
-			return response.json();
-		},
-		enabled: !!apiUrl,
-		staleTime: 30000, // Cache for 30 seconds
-	});
+	// Running status tracking removed
 
 	// Fetch messages for selected agent (no polling - only load once and on invalidation)
 	const { data: agentMessages } = useQuery({
@@ -95,15 +80,7 @@ export function useAgents(apiUrl: string) {
 	});
 
 	// Update agent status when running agents data changes
-	useEffect(() => {
-		if (runningAgents?.running) {
-			const statusMap: Record<string, "running" | "stopped" | "error"> = {};
-			runningAgents.running.forEach((agent) => {
-				statusMap[agent.id] = agent.status;
-			});
-			setAgentStatus(statusMap);
-		}
-	}, [runningAgents]);
+	// No agent status to update
 
 	// Update messages when agent messages change
 	useEffect(() => {
@@ -164,7 +141,7 @@ export function useAgents(apiUrl: string) {
 				queryKey: ["agent-messages", apiUrl, selectedAgent?.relativePath],
 			});
 			// Also refresh running agents status since auto-start may have occurred
-			queryClient.invalidateQueries({ queryKey: ["running-agents", apiUrl] });
+			// No running status to refresh
 		},
 		onError: (error) => {
 			console.error("Failed to send message:", error);
@@ -191,7 +168,7 @@ export function useAgents(apiUrl: string) {
 		agents,
 		selectedAgent,
 		messages,
-		agentStatus,
+		agentStatus: {},
 		connected: !!apiUrl, // Always "connected" if we have an API URL
 		loading,
 		error,

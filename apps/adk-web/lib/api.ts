@@ -27,7 +27,9 @@ export async function makeApiCall({ apiUrl, path, data = {} }: ApiCallParams) {
 	});
 
 	if (!response.ok) {
-		throw new Error(`API call failed: ${response.status} ${response.statusText}`);
+		throw new Error(
+			`API call failed: ${response.status} ${response.statusText}`,
+		);
 	}
 
 	return response;
@@ -47,20 +49,18 @@ export async function startAgent({
 	apiUrl,
 	agent,
 }: { apiUrl: string; agent: Agent }) {
-	return makeApiCall({
-		apiUrl,
-		path: `/api/agents/${encodeURIComponent(agent.relativePath)}/start`,
-	});
+	throw new Error(
+		"startAgent is no longer supported; agents auto-load on first message",
+	);
 }
 
 export async function stopAgent({
 	apiUrl,
 	agent,
 }: { apiUrl: string; agent: Agent }) {
-	return makeApiCall({
-		apiUrl,
-		path: `/api/agents/${encodeURIComponent(agent.relativePath)}/stop`,
-	});
+	throw new Error(
+		"stopAgent is no longer supported; agents are managed automatically",
+	);
 }
 
 export async function sendMessageToAgent({

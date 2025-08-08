@@ -20,7 +20,6 @@ interface Agent {
 	relativePath: string;
 	name: string;
 	absolutePath: string;
-	isRunning: boolean;
 	instance?: LlmAgent; // Store the loaded agent instance
 }
 
@@ -89,31 +88,7 @@ export class ADKServer {
 			return c.json({ agents: agentsList });
 		});
 
-		// Start agent
-		this.app.post("/api/agents/:id/start", async (c) => {
-			const agentPath = decodeURIComponent(c.req.param("id"));
-			await this.startAgent(agentPath);
-			return c.json({ success: true });
-		});
-
-		// Stop agent
-		this.app.post("/api/agents/:id/stop", async (c) => {
-			const agentPath = decodeURIComponent(c.req.param("id"));
-			await this.stopAgent(agentPath);
-			return c.json({ success: true });
-		});
-
-		// Get running agents status
-		this.app.get("/api/agents/running", (c) => {
-			const running = Array.from(this.loadedAgents.entries()).map(
-				([id, loadedAgent]) => ({
-					id,
-					status: "running" as const,
-					startTime: new Date().toISOString(),
-				}),
-			);
-			return c.json({ running });
-		});
+		// Removed explicit start/stop and running status endpoints; agents are auto-loaded on message
 
 		// Get agent messages
 		this.app.get("/api/agents/:id/messages", async (c) => {
@@ -226,7 +201,6 @@ export class ADKServer {
 						relativePath,
 						name: agentName,
 						absolutePath: dir,
-						isRunning: this.loadedAgents.has(relativePath),
 						instance: loadedAgent?.agent,
 					});
 				}
@@ -363,7 +337,6 @@ export class ADKServer {
 			};
 
 			this.loadedAgents.set(agentPath, loadedAgent);
-			agent.isRunning = true;
 			agent.instance = agentModule.agent;
 
 			// Update the agent name with the actual agent name
@@ -377,16 +350,10 @@ export class ADKServer {
 	}
 
 	private async stopAgent(agentPath: string): Promise<void> {
-		const loadedAgent = this.loadedAgents.get(agentPath);
-		if (!loadedAgent) {
-			return; // Not running
-		}
-
+		// Deprecated: explicit stop not needed; keep method no-op for backward compatibility
 		this.loadedAgents.delete(agentPath);
-
 		const agent = this.agents.get(agentPath);
 		if (agent) {
-			agent.isRunning = false;
 			agent.instance = undefined;
 		}
 	}

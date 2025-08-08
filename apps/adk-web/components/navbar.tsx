@@ -16,7 +16,6 @@ interface NavbarProps {
 	apiUrl: string;
 	agents: Agent[];
 	selectedAgent: Agent | null;
-	agentStatus: Record<string, "running" | "stopped" | "error">;
 	onSelectAgent: (agent: Agent) => void;
 }
 
@@ -24,24 +23,8 @@ export function Navbar({
 	apiUrl,
 	agents,
 	selectedAgent,
-	agentStatus,
 	onSelectAgent,
 }: NavbarProps) {
-	const getAgentStatus = (agent: Agent) => {
-		return agentStatus[agent.relativePath] || "stopped";
-	};
-
-	const getStatusColor = (status: "running" | "stopped" | "error") => {
-		switch (status) {
-			case "running":
-				return "bg-green-500";
-			case "error":
-				return "bg-red-500";
-			default:
-				return "bg-gray-500";
-		}
-	};
-
 	return (
 		<nav className="border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
 			<div className="container mx-auto px-6 py-3">
@@ -89,12 +72,6 @@ export function Navbar({
 												<div className="flex items-center space-x-2 justify-between">
 													<Bot className="h-4 w-4 text-muted-foreground" />
 													<span>{selectedAgent.name}</span>
-													<div
-														className={cn(
-															"h-2 w-2 rounded-full",
-															getStatusColor(getAgentStatus(selectedAgent)),
-														)}
-													/>
 												</div>
 											)}
 										</SelectValue>
@@ -106,12 +83,6 @@ export function Navbar({
 												value={agent.relativePath}
 											>
 												<div className="flex items-center space-x-2">
-													<div
-														className={cn(
-															"h-2 w-2 rounded-full",
-															getStatusColor(getAgentStatus(agent)),
-														)}
-													/>
 													<span>{agent.name}</span>
 												</div>
 											</SelectItem>

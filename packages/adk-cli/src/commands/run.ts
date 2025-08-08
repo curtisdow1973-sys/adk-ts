@@ -23,7 +23,6 @@ interface Agent {
 	relativePath: string;
 	name: string;
 	absolutePath: string;
-	isRunning: boolean;
 }
 
 class AgentChatClient {
@@ -83,7 +82,7 @@ class AgentChatClient {
 		const selectedAgent = await p.select({
 			message: "Choose an agent to chat with:",
 			options: agents.map((agent) => ({
-				label: `${agent.name} ${agent.isRunning ? chalk.green("(running)") : chalk.gray("(stopped)")}`,
+				label: agent.name,
 				value: agent,
 				hint: agent.relativePath,
 			})),
@@ -97,29 +96,7 @@ class AgentChatClient {
 		return selectedAgent;
 	}
 
-	async startAgent(agent: Agent): Promise<void> {
-		if (agent.isRunning) {
-			return;
-		}
-
-		try {
-			const response = await fetch(
-				`${this.apiUrl}/api/agents/${encodeURIComponent(agent.relativePath)}/start`,
-				{
-					method: "POST",
-				},
-			);
-
-			if (!response.ok) {
-				const errorText = await response.text();
-				throw new Error(`Failed to start agent: ${errorText}`);
-			}
-		} catch (error) {
-			throw new Error(
-				`Failed to start agent: ${error instanceof Error ? error.message : String(error)}`,
-			);
-		}
-	}
+	// No-op: agents are auto-loaded on message; keeping method removed
 
 	async sendMessage(message: string): Promise<void> {
 		if (!this.selectedAgent) {
@@ -290,7 +267,7 @@ export async function runAgent(
 			const choice = await p.select({
 				message: "Choose an agent to chat with:",
 				options: agents.map((agent) => ({
-					label: `${agent.name} ${agent.isRunning ? chalk.green("(running)") : chalk.gray("(stopped)")}`,
+					label: agent.name,
 					value: agent,
 					hint: agent.relativePath,
 				})),
@@ -304,9 +281,6 @@ export async function runAgent(
 		}
 
 		client.setSelectedAgent(selectedAgent);
-
-		// Start agent if not running
-		await client.startAgent(selectedAgent);
 
 		await client.startChat();
 
