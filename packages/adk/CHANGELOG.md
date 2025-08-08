@@ -1,5 +1,11 @@
 # @iqai/adk
 
+## 0.1.22
+
+### Patch Changes
+
+- c4e642a: downgraded info level logs to debug, removed legacy starter in create-adk-project and new adk cli initial version!
+
 ## 0.1.21
 
 ### Patch Changes
