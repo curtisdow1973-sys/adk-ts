@@ -1,5 +1,11 @@
 # create-adk-project
 
+## 1.0.4
+
+### Patch Changes
+
+- c4e642a: downgraded info level logs to debug, removed legacy starter in create-adk-project and new adk cli initial version!
+
 ## 1.0.3
 
 ### Patch Changes
