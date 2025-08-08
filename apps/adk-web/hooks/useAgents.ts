@@ -47,9 +47,7 @@ export function useAgents(apiUrl: string) {
 		queryFn: async (): Promise<Agent[]> => {
 			if (!apiUrl) throw new Error("API URL is required");
 
-			const response = await fetch(
-				`/api/proxy?apiUrl=${encodeURIComponent(apiUrl)}&path=/api/agents`,
-			);
+			const response = await fetch(`${apiUrl}/api/agents`);
 			if (!response.ok) {
 				throw new Error(`Failed to fetch agents: ${response.status}`);
 			}
@@ -67,9 +65,7 @@ export function useAgents(apiUrl: string) {
 		queryFn: async (): Promise<RunningAgentsResponse> => {
 			if (!apiUrl) throw new Error("API URL is required");
 
-			const response = await fetch(
-				`/api/proxy?apiUrl=${encodeURIComponent(apiUrl)}&path=/api/agents/running`,
-			);
+			const response = await fetch(`${apiUrl}/api/agents/running`);
 			if (!response.ok) {
 				throw new Error(`Failed to fetch running agents: ${response.status}`);
 			}
@@ -87,7 +83,7 @@ export function useAgents(apiUrl: string) {
 				throw new Error("API URL and agent required");
 
 			const response = await fetch(
-				`/api/proxy?apiUrl=${encodeURIComponent(apiUrl)}&path=/api/agents/${encodeURIComponent(selectedAgent.relativePath)}/messages`,
+				`${apiUrl}/api/agents/${encodeURIComponent(selectedAgent.relativePath)}/messages`,
 			);
 			if (!response.ok) {
 				throw new Error(`Failed to fetch agent messages: ${response.status}`);
@@ -144,15 +140,14 @@ export function useAgents(apiUrl: string) {
 			};
 			setMessages((prev) => [...prev, userMessage]);
 
-			const response = await fetch("/api/proxy", {
-				method: "POST",
-				headers: { "Content-Type": "application/json" },
-				body: JSON.stringify({
-					apiUrl,
-					path: `/api/agents/${encodeURIComponent(agent.relativePath)}/message`,
-					data: { message },
-				}),
-			});
+			const response = await fetch(
+				`${apiUrl}/api/agents/${encodeURIComponent(agent.relativePath)}/message`,
+				{
+					method: "POST",
+					headers: { "Content-Type": "application/json" },
+					body: JSON.stringify({ message }),
+				},
+			);
 			if (!response.ok) {
 				// Remove optimistic message on error
 				setMessages((prev) => prev.filter((m) => m.id !== userMessage.id));

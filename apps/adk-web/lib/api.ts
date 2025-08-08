@@ -20,27 +20,21 @@ export interface ApiCallParams {
 }
 
 export async function makeApiCall({ apiUrl, path, data = {} }: ApiCallParams) {
-	const response = await fetch("/api/proxy", {
+	const response = await fetch(`${apiUrl}${path}`, {
 		method: "POST",
 		headers: { "Content-Type": "application/json" },
-		body: JSON.stringify({
-			apiUrl,
-			path,
-			data,
-		}),
+		body: JSON.stringify(data),
 	});
 
 	if (!response.ok) {
-		throw new Error(`API call failed: ${response.statusText}`);
+		throw new Error(`API call failed: ${response.status} ${response.statusText}`);
 	}
 
 	return response;
 }
 
 export async function fetchAgents(apiUrl: string): Promise<Agent[]> {
-	const response = await fetch(
-		`/api/proxy?apiUrl=${encodeURIComponent(apiUrl)}&path=/api/agents`,
-	);
+	const response = await fetch(`${apiUrl}/api/agents`);
 
 	if (!response.ok) {
 		throw new Error("Failed to fetch agents");
