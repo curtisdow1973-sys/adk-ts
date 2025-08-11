@@ -5,6 +5,8 @@ First of all, thank you for taking the time to contribute! 🎉
 
 This guide will help you understand how to contribute to the ADK-TS project effectively. Whether you're reporting bugs, suggesting features, or contributing code, this document will provide you with the necessary steps and guidelines.
 
+<span id="table-of-contents"></span>
+
 ## 🗂️ Table of Contents
 
 - [Reporting Bugs](#reporting-bugs)
@@ -37,7 +39,7 @@ If you cannot find an open or closed issue addressing the problem, [open a new i
 
 Be sure to include a **clear title and description**, the **exact steps to reproduce the bug**, the **behavior you observed after following the steps**, and the **behavior you expected to see instead**. If possible, include a link to a **reproducible example** or a **code sample** that demonstrates the issue.
 
-[🔝 Back to top](#table-of-content)
+[🔝 Back to top](#table-of-contents)
 
 <span id="suggesting-enhancementsfeatures"></span>
 
@@ -51,7 +53,7 @@ If you find a **Closed** issue, go through the conversation thread to see if the
 
 A good Feature Request should have a **clear and descriptive title**, provide a **detailed description** of the request, and include reasons why the enhancement would be helpful to the project and the community.
 
-[🔝 Back to top](#table-of-content)
+[🔝 Back to top](#table-of-contents)
 
 <span id="understanding-the-project"></span>
 
@@ -92,7 +94,7 @@ ADK-TS uses a [monorepo](https://monorepo.tools/) structure organized as follows
   - `create-adk-project/` — CLI for scaffolding new projects
   - `tsconfig/` — Shared TypeScript configurations
 
-[🔝 Back to top](#table-of-content)
+[🔝 Back to top](#table-of-contents)
 
 <span id="contributing-to-the-project"></span>
 
@@ -254,3 +256,5 @@ This project is licensed under the MIT License - see the [LICENSE.md](LICENSE.md
 ## 🔒 Security
 
 If you discover a security vulnerability within this project, please report it by following our [Security Policy](SECURITY.md). We take security seriously and will respond promptly to any reports.
+
+[🔝 Back to top](#table-of-contents)
