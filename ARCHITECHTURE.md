@@ -1,8 +1,6 @@
-# ADK TypeScript Contributing Guide
+# ADK-TS Framework Architecture
 
-Welcome to the Agent Development Kit (ADK) TypeScript implementation! This guide will help you understand the framework architecture and contribute effectively to the project.
-
-## Framework Architecture Overview
+Welcome to the Agent Development Kit (ADK) TypeScript implementation! This guide will help you understand the framework architecture to contribute effectively to the project.
 
 ```mermaid
 graph TB
@@ -107,6 +105,7 @@ The hierarchical design allows for sophisticated agent architectures where a roo
 ```
 
 **Key Files:**
+
 - `packages/adk/src/agents/base-agent.ts` - Abstract base class for all agents
 - `packages/adk/src/agents/llm-agent.ts` - Default LLM-powered agent implementation
 
@@ -156,6 +155,7 @@ This modular design allows contributors to easily extend ADK's capabilities by a
 ```
 
 **Key Files:**
+
 - `packages/adk/src/flows/llm-flows/base-llm-flow.ts` - Core flow orchestration
 - `packages/adk/src/flows/llm-flows/single-flow.ts` - Single-agent flow
 - `packages/adk/src/flows/llm-flows/auto-flow.ts` - Multi-agent flow
@@ -234,6 +234,7 @@ This model-driven architecture ensures that data flows consistently through the 
 ```
 
 **Key Files:**
+
 - `packages/adk/src/models/llm-request.ts` - LLM input model
 - `packages/adk/src/models/llm-response.ts` - LLM output model
 - `packages/adk/src/agents/invocation-context.ts` - Execution context
@@ -278,6 +279,7 @@ The provider system also handles advanced features like token counting, cost tra
 ```
 
 **Key Files:**
+
 - `packages/adk/src/models/base-llm.ts` - Provider interface
 - `packages/adk/src/models/openai-llm.ts` - OpenAI implementation
 - `packages/adk/src/models/google-llm.ts` - Google implementation
@@ -314,6 +316,7 @@ This separation of concerns enables ADK to scale from simple single-conversation
 ```
 
 **Key Files:**
+
 - `packages/adk/src/runners.ts` - Agent execution orchestration
 - `packages/adk/src/sessions/base-session-service.ts` - Session interface
 - `packages/adk/src/sessions/in-memory-session-service.ts` - In-memory implementation
@@ -354,6 +357,7 @@ The extension system's modular design allows contributors to easily add new capa
 ```
 
 **Key Files:**
+
 - `packages/adk/src/tools/base/base-tool.ts` - Tool interface
 - `packages/adk/src/memory/base-memory-service.ts` - Memory interface
 - `packages/adk/src/planners/base-planner.ts` - Planning interface
@@ -395,6 +399,7 @@ This hierarchical design prevents accidental state mutations, enables fine-grain
 ```
 
 **Key Files:**
+
 - `packages/adk/src/agents/readonly-context.ts` - Base readonly context
 - `packages/adk/src/agents/callback-context.ts` - Mutable context for callbacks
 - `packages/adk/src/tools/tool-context.ts` - Tool execution context
@@ -427,6 +432,7 @@ This flexible design enables use cases from simple file generation to complex mu
 ```
 
 **Key Files:**
+
 - `packages/adk/src/artifacts/base-artifact-service.ts` - Artifact interface
 - `packages/adk/src/artifacts/in-memory-artifact-service.ts` - In-memory implementation
 - `packages/adk/src/artifacts/gcs-artifact-service.ts` - Google Cloud Storage implementation
@@ -435,7 +441,7 @@ This flexible design enables use cases from simple file generation to complex mu
 
 ### Prerequisites
 
-- Node.js 18+ 
+- Node.js 18+
 - pnpm package manager
 - TypeScript knowledge
 - Understanding of async/await and generators
@@ -443,22 +449,26 @@ This flexible design enables use cases from simple file generation to complex mu
 ### Installation
 
 1. **Clone the repository**
+
    ```bash
    git clone <repository-url>
    cd adk-ts
    ```
 
 2. **Install dependencies**
+
    ```bash
    pnpm install
    ```
 
 3. **Build the project**
+
    ```bash
    pnpm build
    ```
 
 4. **Run examples**
+
    ```bash
    # Set up environment variables
    export GOOGLE_API_KEY=your-google-api-key
@@ -487,30 +497,38 @@ LLM_MODEL=gemini-2.5-flash
 ## Contributing Workflow
 
 ### 1. Issue Creation
+
 - Check existing issues first
 - Create detailed issue descriptions
 - Use appropriate issue templates
 - Tag with relevant labels
 
 ### 2. Development Process
+
 1. **Fork and clone** the repository
 2. **Create a feature branch** from `main`
+
    ```bash
    git checkout -b feature/your-feature-name
    ```
+
 3. **Make your changes** following our conventions
 4. **Add tests** for new functionality
 5. **Run tests** and ensure they pass
+
    ```bash
    pnpm test
    ```
+
 6. **Update documentation** if needed
 7. **Commit with clear messages**
+
    ```bash
    git commit -m "feat: add new tool integration capability"
    ```
 
 ### 3. Pull Request Process
+
 1. **Push your branch** to your fork
 2. **Create a Pull Request** to `main`
 3. **Fill out the PR template** completely
@@ -1020,66 +1038,77 @@ async *safeGenerator(): AsyncGenerator<Event, void, unknown> {
 ## Common Contribution Areas
 
 ### 1. **LLM Provider Support**
+
 - Add new LLM providers (Anthropic, Cohere, Mistral, etc.)
 - Improve existing provider implementations
 - Add provider-specific features (function calling, streaming, etc.)
 - Enhance LLM Registry with better model discovery
 
 ### 2. **Tool Development**
+
 - Create new built-in tools for common use cases
 - Improve tool integration patterns and context passing
 - Add tool validation, error handling, and retry logic
 - Develop tool composition and chaining capabilities
 
 ### 3. **Memory & Session Services**
+
 - Implement new storage backends (PostgreSQL, Redis, etc.)
 - Add advanced search and retrieval capabilities
 - Optimize performance and caching strategies
 - Enhance session state management and scoping
 
 ### 4. **Flow Processors**
+
 - Add new preprocessing capabilities (content filtering, etc.)
 - Implement response postprocessing (formatting, validation)
 - Create specialized flows for different use cases
 - Enhance multi-agent coordination and transfer logic
 
 ### 5. **Artifact Management**
+
 - Add new storage backends (AWS S3, Azure Blob, etc.)
 - Implement artifact versioning and metadata
 - Add file type detection and validation
 - Develop artifact sharing and collaboration features
 
 ### 6. **Planning & Reasoning**
+
 - Create new planner implementations
 - Enhance existing planning strategies
 - Add multi-step reasoning capabilities
 - Develop plan execution and monitoring
 
 ### 7. **Context Management**
+
 - Improve context hierarchy and inheritance
 - Add context-aware tool selection
 - Enhance state management patterns
 - Develop context serialization and restoration
 
 ### 8. **Examples & Documentation**
+
 - Create comprehensive examples for different use cases
 - Improve existing documentation and API references
 - Add tutorials and guides for common patterns
 - Develop video tutorials and interactive demos
 
 ### 9. **Testing & Quality**
+
 - Increase test coverage across all components
 - Add integration tests for complex scenarios
 - Improve error handling and edge case coverage
 - Develop performance benchmarks and optimization
 
 ### 10. **Developer Experience**
+
 - Enhance CLI tools and scaffolding
 - Improve debugging and introspection capabilities
 - Add development tools and extensions
 - Create IDE integrations and language support
 
 ### 11. **Performance & Scalability**
+
 - Optimize memory usage and garbage collection
 - Improve streaming and concurrency handling
 - Add metrics collection and monitoring
@@ -1098,4 +1127,4 @@ By contributing to ADK, you agree that your contributions will be licensed under
 
 ---
 
-Thank you for contributing to ADK! Your efforts help make AI agent development more accessible and powerful for everyone. 
+Thank you for contributing to ADK! Your efforts help make AI agent development more accessible and powerful for everyone.

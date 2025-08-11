@@ -106,6 +106,8 @@ If you want to do more than report an issue or suggest an enhancement, you can c
 - making your changes
 - opening a pull request
 
+> Note: If you want to contribute to the core ADK-TS framework, please read about the [Framework Architecture](./ARCHITECTURE.md) first.
+
 <span id="cloning-the-repository-repo"></span>
 
 ### Cloning the Repository (repo)
@@ -150,6 +152,8 @@ Install the dependencies using pnpm. You need to have [pnpm](https://pnpm.io/) i
 ```bash
 pnpm install
 ```
+
+[🔝 Back to top](#table-of-contents)
 
 <span id="making-your-changes"></span>
 
@@ -231,6 +235,8 @@ After committing your changes, push your local commits to your remote repository
 git push origin your-branch-name
 ```
 
+[🔝 Back to top](#table-of-contents)
+
 <span id="opening-a-pull-request"></span>
 
 ### Opening a Pull Request (PR)
@@ -244,6 +250,8 @@ Go to the [ADK-TS repository](https://github.com/IQAIcom/adk-ts/tree/main) and c
 #### 2. Wait for review
 
 🎉 Congratulations! You've made your pull request! A maintainer will review and merge your code or request changes. If changes are requested, make them and push them to your branch. Your pull request will automatically track the changes on your branch and update.
+
+[🔝 Back to top](#table-of-contents)
 
 <span id="license"></span>
 
