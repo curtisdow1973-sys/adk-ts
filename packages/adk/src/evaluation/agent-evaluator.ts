@@ -1,5 +1,8 @@
+import * as fs from "node:fs/promises";
+import * as path from "node:path";
+import type { Content } from "@google/genai";
 import type { BaseAgent } from "../agents/base-agent";
-import type { IntermediateData, Invocation, EvalCase } from "./eval-case";
+import type { EvalCase, IntermediateData, Invocation } from "./eval-case";
 import {
 	type EvalMetric,
 	type EvalMetricResult,
@@ -9,9 +12,6 @@ import type { EvalCaseResult } from "./eval-result";
 import type { EvalSet } from "./eval-set";
 import { EvalStatus } from "./evaluator";
 import { LocalEvalService } from "./local-eval-service";
-import type { Content } from "@google/genai";
-import * as fs from "node:fs/promises";
-import * as path from "node:path";
 
 export const NUM_RUNS = 2;
 
