@@ -54,7 +54,21 @@ export class LocalEvalService extends BaseEvalService {
 	}): AsyncGenerator<Invocation[], void> {
 		for (const evalSet of request.evalCases) {
 			for (const evalCase of evalSet.evalCases) {
-				yield await this.runInference(evalCase);
+				// Generate expected invocations from provided finalResponse if present
+				const expected: Invocation[] = [];
+				for (const convo of evalCase.conversation) {
+					if (convo.finalResponse) {
+						expected.push({
+							invocationId: `${evalCase.evalId}-expected-${expected.length}`,
+							userContent: convo.userContent,
+							finalResponse: convo.finalResponse,
+							intermediateData: convo.intermediateData,
+							creationTimestamp: convo.creationTimestamp,
+						});
+					}
+				}
+				const actual = await this.runInference(evalCase);
+				yield [...expected, ...actual];
 			}
 		}
 	}
