@@ -1,5 +1,10 @@
 import { env } from "node:process";
-import { AgentBuilder, TelemetryService, createTool } from "@iqai/adk";
+import {
+	AgentBuilder,
+	createTool,
+	initializeTelemetry,
+	shutdownTelemetry,
+} from "@iqai/adk";
 import dedent from "dedent";
 import * as z from "zod";
 
@@ -32,7 +37,7 @@ const getWeatherTool = createTool({
 	},
 });
 
-function initializeTelemetry(): TelemetryService | null {
+function initalizeLangfuse() {
 	if (!env.LANGFUSE_PUBLIC_KEY || !env.LANGFUSE_SECRET_KEY) {
 		console.log(
 			"Set LANGFUSE_PUBLIC_KEY and LANGFUSE_SECRET_KEY to enable telemetry",
@@ -40,14 +45,13 @@ function initializeTelemetry(): TelemetryService | null {
 		return null;
 	}
 
-	const telemetryService = new TelemetryService();
 	const langfuseHost = env.LANGFUSE_HOST || "https://cloud.langfuse.com";
 
 	const authString = Buffer.from(
 		`${env.LANGFUSE_PUBLIC_KEY}:${env.LANGFUSE_SECRET_KEY}`,
 	).toString("base64");
 
-	telemetryService.initialize({
+	initializeTelemetry({
 		appName: "observability-example",
 		appVersion: "1.0.0",
 		otlpEndpoint: `${langfuseHost}/api/public/otel/v1/traces`,
@@ -55,15 +59,13 @@ function initializeTelemetry(): TelemetryService | null {
 			Authorization: `Basic ${authString}`,
 		},
 	});
-
-	return telemetryService;
 }
 
 async function main() {
 	console.log("Observability Example - Langfuse Telemetry");
 
 	// Initialize telemetry
-	const telemetryService = initializeTelemetry();
+	initalizeLangfuse();
 
 	// Create agent with telemetry tracking
 	const { runner } = await AgentBuilder.create("weather_agent")
@@ -86,11 +88,11 @@ async function main() {
 
 	console.log(`🌤️  Agent Response: ${response}`);
 
-	if (telemetryService) {
-		console.log(
-			"\n 💡 Check your Langfuse dashboard to see traces, tool usage, and metrics",
-		);
-	}
+	console.log(
+		"\n 💡 Check your Langfuse dashboard to see traces, tool usage, and metrics",
+	);
+
+	shutdownTelemetry();
 }
 
 main().catch(console.error);

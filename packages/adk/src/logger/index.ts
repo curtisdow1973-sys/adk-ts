@@ -28,7 +28,7 @@ export class Logger {
 
 	info(message: string, ...args: any[]) {
 		const time = new Date().toLocaleTimeString();
-		console.info(
+		console.debug(
 			this.colorize(`[${time}] ℹ️ [${this.name}] ${message}`),
 			...args,
 		);

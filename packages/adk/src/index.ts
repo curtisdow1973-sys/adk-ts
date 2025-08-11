@@ -17,6 +17,7 @@ export * from "./events";
 export * from "./code-executors";
 
 export * from "./planners";
+export * from "./evaluation";
 
 // Initialize providers - Automatically registers all LLMs
 import "./models/registry";
@@ -38,3 +39,4 @@ export * as Memory from "./memory";
 export * as Sessions from "./sessions";
 export * as Flows from "./flows";
 export * as Events from "./events";
+export * as Evaluation from "./evaluation";
