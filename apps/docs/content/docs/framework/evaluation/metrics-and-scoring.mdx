@@ -7,8 +7,8 @@ import { Callout } from 'fumadocs-ui/components/callout';
 
 Effective agent evaluation requires quantifiable metrics that capture both the quality of agent decisions and the value of their outputs.
 
-<Callout type="info" title="Implementation Status">
-Core metrics and scoring algorithms are now available in `@iqai/adk` as part of the experimental evaluation framework. Manual evaluation can still supplement automated metrics.
+<Callout type="info" title="Implemented Metrics">
+Currently implemented prebuilt metrics: `tool_trajectory_avg_score`, `response_match_score` (ROUGE‑1), `response_evaluation_score` (LLM judge 1‑5), `safety_v1`, and experimental `final_response_match_v2` (LLM judge binary). Configure via `criteria` thresholds.
 </Callout>
 
 ## Trajectory Metrics
@@ -106,19 +106,27 @@ Response quality metrics assess the value and appropriateness of agent outputs.
 
 ### Semantic Similarity Scoring
 
-**ROUGE Metrics (Available):**
-- **ROUGE-1**: Unigram overlap between agent response and reference (F-measure)
-- **Implementation**: Available in `ResponseEvaluator` class
-- **Threshold**: Typically 0.7+ for production quality
-- **Usage**: Automatic similarity scoring between expected and actual responses
+**ROUGE‑1 (response_match_score):**
+- Key: `response_match_score`
+- Range: 0.0–1.0 (F1 overlap of unigrams)
+- Typical threshold: 0.7–0.9
+- Auto-applied when `response_match_score` present in `criteria`.
 
-```typescript
-import { ResponseEvaluator } from '@iqai/adk/evaluation';
+**LLM Judge (response_evaluation_score):**
+- Key: `response_evaluation_score`
+- Range: 1–5 (higher is better)
+- Provide threshold (e.g. 3.5) and optional `judgeModelOptions` (model + numSamples) when extending internals.
 
-const evaluator = new ResponseEvaluator();
-const result = await evaluator.evaluateInvocations(invocations);
-console.log(`ROUGE Score: ${result.overallScore}`);
-```
+**Tool Trajectory (tool_trajectory_avg_score):**
+- Binary per case; average across runs.
+- Requires test samples with `expected_tool_use` (legacy path) or tool expectations embedded (future expansion).
+
+**Safety (safety_v1):**
+- Integration for safety / harmlessness (returns pass/fail style score 0/1 internally mapped to threshold).
+
+**Experimental Final Response Match V2 (final_response_match_v2):**
+- LLM judge binary validity vs reference; score in [0,1].
+- May change; not yet exposed by default criteria (add explicitly if needed).
 
 **Current Manual Assessment:**
 ```typescript
@@ -368,44 +376,26 @@ function analyzePerformanceTrend(records: PerformanceRecord[]) {
 The following metrics are available in the ADK evaluation framework. Additional advanced analytics are planned for future releases.
 </Callout>
 
-**Built-in Metrics:**
+**Built-in Metric Keys (use in criteria):**
 
-1. **TOOL_TRAJECTORY_AVG_SCORE**:
-   - Exact matching of tool call sequences
-   - Binary scoring (1.0 for perfect match, 0.0 for any mismatch)
-   - Validates tool names, arguments, and execution order
+| Key | Description | Range | Typical Threshold |
+| --- | ----------- | ----- | ----------------- |
+| tool_trajectory_avg_score | Avg binary match of expected vs actual tool sequences | 0–1 | 1.0 (strict) |
+| response_match_score | ROUGE‑1 similarity F1 | 0–1 | 0.7–0.9 |
+| response_evaluation_score | LLM judge qualitative score | 1–5 | 3–4 |
+| safety_v1 | Safety / harmlessness (pass/fail mapped) | 0–1 | 1.0 |
+| final_response_match_v2 (experimental) | LLM judged exactness vs reference | 0–1 | 0.8–0.95 |
 
-2. **RESPONSE_MATCH_SCORE**:
-   - ROUGE-1 F-measure for text similarity
-   - Compares actual vs expected response content
-   - Range: 0.0 to 1.0
-
-3. **RESPONSE_EVALUATION_SCORE**:
-   - LLM-as-judge evaluation for response quality
-   - Scale: 1-5 with configurable judge models
-   - Assesses helpfulness, accuracy, and appropriateness
-
-4. **SAFETY_V1**:
-   - Safety and harmlessness evaluation
-   - Integration with Vertex AI safety models
-   - Configurable safety thresholds
-
-**Configuration Example:**
+**Criteria Configuration Example (test_config.json):**
 ```json
 {
-  "eval_metrics": [
-    {
-      "metric_name": "TOOL_TRAJECTORY_AVG_SCORE",
-      "threshold": 1.0
-    },
-    {
-      "metric_name": "RESPONSE_EVALUATION_SCORE",
-      "threshold": 4.0,
-      "judge_model": "gpt-4"
-    }
-  ]
+  "criteria": {
+    "tool_trajectory_avg_score": 1.0,
+    "response_match_score": 0.8,
+    "safety_v1": 1.0
+  }
 }
-```
+
 
 **Future Capabilities:**
 - **Real-time Analytics**: Live performance dashboards

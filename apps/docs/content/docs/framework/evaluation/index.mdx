@@ -8,8 +8,8 @@ import { Callout } from 'fumadocs-ui/components/callout';
 
 Agent evaluation provides systematic approaches to testing and validating agent performance, moving beyond prototype to production-ready AI systems.
 
-<Callout type="info" title="Experimental Framework">
-The comprehensive evaluation framework is now available in `@iqai/adk` as an experimental feature. APIs may change as we gather feedback and refine the system.
+<Callout type="info" title="Status">
+Evaluation is available in `@iqai/adk` (public but still evolving). Surface may receive additive changes; core evaluator signatures are stable.
 </Callout>
 
 ## Overview
@@ -69,25 +69,64 @@ The evaluation framework includes these key components:
 
 ## Getting Started
 
-To begin using the evaluation framework:
+Workflow:
 
-1. **Create Test Cases**: Define evaluation scenarios in JSON format with expected outputs
-2. **Configure Metrics**: Set up evaluation criteria and thresholds in `test_config.json`
-3. **Run Evaluations**: Use `AgentEvaluator.evaluate()` to assess agent performance
-4. **Analyze Results**: Review detailed evaluation results with per-metric scoring
-
-```typescript
-import { AgentEvaluator } from '@iqai/adk/evaluation';
-
-// Evaluate agent against test files
-const results = await AgentEvaluator.evaluate({
-  agent,
-  testFilePaths: ['./tests/basic.test.json'],
-  testConfigFilePath: './test_config.json'
-});
-
-console.log(`Overall Score: ${results.overallScore}`);
+1. **Author Dataset**: Provide either:
+   - Legacy array format: `[{ "query": "...", "reference": "..." }]` (auto-migrated at runtime – deprecated warning emitted), or
+   - New EvalSet schema (preferred):
+```json
+{
+  "evalSetId": "calc-v1",
+  "name": "Simple arithmetic",
+  "creationTimestamp": 0,
+  "evalCases": [
+    {
+      "evalId": "case-1",
+      "conversation": [
+        {
+          "creationTimestamp": 0,
+          "userContent": { "role": "user", "parts": [{ "text": "What is 2 + 2?" }] },
+          "finalResponse": { "role": "model", "parts": [{ "text": "4" }] }
+        }
+      ]
+    }
+  ]
+}
 ```
+2. **Configure Criteria** in `test_config.json` (sibling to each `*.test.json`):
+```json
+{ "criteria": { "response_match_score": 0.8 } }
+```
+3. **Run Evaluation** – signature: `await AgentEvaluator.evaluate(agent, pathOrFile, numRuns?)`.
+   - Throws an Error if any metric fails threshold (no return value).
+4. **Iterate** – tighten thresholds / expand cases as agent improves.
+
+Minimal usage example:
+```typescript
+import { AgentBuilder, AgentEvaluator } from '@iqai/adk';
+
+const { agent } = await AgentBuilder.create('eval_agent')
+  .withModel('gemini-2.5-flash')
+  .withInstruction('Answer briefly and accurately.')
+  .build();
+
+await AgentEvaluator.evaluate(agent, './evaluation/tests');
+// If it does not throw, all criteria passed.
+```
+
+Programmatic (advanced) usage using an already loaded EvalSet:
+```typescript
+// If you parsed an EvalSet JSON yourself
+// import type { Evaluation } from '@iqai/adk';
+// await AgentEvaluator.evaluateEvalSet(agent, evalSet, { response_match_score: 0.8 });
+```
+
+Default criteria if `test_config.json` absent:
+```json
+{ "tool_trajectory_avg_score": 1.0, "response_match_score": 0.8 }
+```
+
+Each metric key must be one of: `tool_trajectory_avg_score`, `response_evaluation_score`, `response_match_score`, `safety_v1`.
 
 ## Related Topics
 
