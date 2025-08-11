@@ -1,0 +1,4 @@
+[
+	{ "query": "What is 2 + 2?", "reference": "4" },
+	{ "query": "Capital of France?", "reference": "Paris" }
+]
