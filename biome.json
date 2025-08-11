@@ -13,7 +13,9 @@
 			"dist/**",
 			"*.lock",
 			"*.log",
-			"docs/**"
+			".next",
+			"docs/**",
+			"packages/adk/src/cli/browser/**"
 		]
 	},
 	"formatter": {
