@@ -114,7 +114,9 @@ async function setupAdvancedTestFiles() {
 			{
 				eval_id: "tool_001",
 				user_content: {
-					parts: [{ text: "Calculate 25 multiplied by 4 using the calculator" }],
+					parts: [
+						{ text: "Calculate 25 multiplied by 4 using the calculator" },
+					],
 				},
 				expected_tool_use: [
 					{
@@ -149,7 +151,11 @@ async function setupAdvancedTestFiles() {
 					},
 				],
 				expected_response: {
-					parts: [{ text: "I've remembered that physics fact about the speed of light." }],
+					parts: [
+						{
+							text: "I've remembered that physics fact about the speed of light.",
+						},
+					],
 				},
 			},
 		],
@@ -187,7 +193,9 @@ async function setupAdvancedTestFiles() {
 					{
 						role: "model",
 						content: {
-							parts: [{ text: "Let me calculate that for you using the calculator." }],
+							parts: [
+								{ text: "Let me calculate that for you using the calculator." },
+							],
 						},
 					},
 				],
@@ -357,7 +365,9 @@ async function runAdvancedEvaluation() {
 
 		console.log("📊 Response Matching Results:");
 		console.log(`   Overall Score: ${responseResults.overallScore.toFixed(3)}`);
-		console.log(`   Success Rate: ${((responseResults.passedTests / responseResults.totalTests) * 100).toFixed(1)}%\n`);
+		console.log(
+			`   Success Rate: ${((responseResults.passedTests / responseResults.totalTests) * 100).toFixed(1)}%\n`,
+		);
 
 		// 2. Tool Trajectory Evaluation
 		console.log("🔧 Running Tool Trajectory Evaluation...");
@@ -371,7 +381,9 @@ async function runAdvancedEvaluation() {
 
 		console.log("📊 Tool Trajectory Results:");
 		console.log(`   Overall Score: ${toolResults.overallScore.toFixed(3)}`);
-		console.log(`   Success Rate: ${((toolResults.passedTests / toolResults.totalTests) * 100).toFixed(1)}%\n`);
+		console.log(
+			`   Success Rate: ${((toolResults.passedTests / toolResults.totalTests) * 100).toFixed(1)}%\n`,
+		);
 
 		// 3. Multi-turn Conversation Evaluation
 		console.log("💬 Running Conversation Flow Evaluation...");
@@ -385,7 +397,9 @@ async function runAdvancedEvaluation() {
 
 		console.log("📊 Conversation Results:");
 		console.log(`   Overall Score: ${convResults.overallScore.toFixed(3)}`);
-		console.log(`   Success Rate: ${((convResults.passedTests / convResults.totalTests) * 100).toFixed(1)}%\n`);
+		console.log(
+			`   Success Rate: ${((convResults.passedTests / convResults.totalTests) * 100).toFixed(1)}%\n`,
+		);
 
 		// 4. Safety Evaluation
 		console.log("🛡️ Running Safety Evaluation...");
@@ -399,7 +413,9 @@ async function runAdvancedEvaluation() {
 
 		console.log("📊 Safety Results:");
 		console.log(`   Overall Score: ${safetyResults.overallScore.toFixed(3)}`);
-		console.log(`   Success Rate: ${((safetyResults.passedTests / safetyResults.totalTests) * 100).toFixed(1)}%\n`);
+		console.log(
+			`   Success Rate: ${((safetyResults.passedTests / safetyResults.totalTests) * 100).toFixed(1)}%\n`,
+		);
 
 		// 5. Comprehensive Evaluation (All Tests)
 		console.log("🎯 Running Comprehensive Evaluation...");
@@ -416,17 +432,26 @@ async function runAdvancedEvaluation() {
 		console.log(`Overall Score: ${allResults.overallScore.toFixed(3)}`);
 		console.log(`Total Tests: ${allResults.totalTests}`);
 		console.log(`Passed Tests: ${allResults.passedTests}`);
-		console.log(`Failed Tests: ${allResults.totalTests - allResults.passedTests}`);
-		console.log(`Success Rate: ${((allResults.passedTests / allResults.totalTests) * 100).toFixed(1)}%\n`);
+		console.log(
+			`Failed Tests: ${allResults.totalTests - allResults.passedTests}`,
+		);
+		console.log(
+			`Success Rate: ${((allResults.passedTests / allResults.totalTests) * 100).toFixed(1)}%\n`,
+		);
 
 		// Detailed metric breakdown
 		console.log("📈 Detailed Metric Analysis:");
 		console.log("=============================");
-		const metricSummary = new Map<string, { total: number; passed: number; totalScore: number }>();
+		const metricSummary = new Map<
+			string,
+			{ total: number; passed: number; totalScore: number }
+		>();
 
 		for (const testResult of allResults.testResults) {
 			console.log(`\n🧪 Test: ${testResult.testName}`);
-			console.log(`   Status: ${testResult.passed ? "✅ PASSED" : "❌ FAILED"}`);
+			console.log(
+				`   Status: ${testResult.passed ? "✅ PASSED" : "❌ FAILED"}`,
+			);
 
 			if (testResult.metricScores) {
 				for (const [metric, score] of Object.entries(testResult.metricScores)) {
@@ -462,9 +487,15 @@ async function runAdvancedEvaluation() {
 
 		console.log("\n✨ Advanced Evaluation Complete!");
 		console.log("\n💡 Key Takeaways:");
-		console.log("   • RESPONSE_MATCH_SCORE: Tests semantic similarity using ROUGE-1");
-		console.log("   • RESPONSE_EVALUATION_SCORE: Uses LLM-as-judge for quality assessment");
-		console.log("   • TOOL_TRAJECTORY_AVG_SCORE: Validates correct tool usage patterns");
+		console.log(
+			"   • RESPONSE_MATCH_SCORE: Tests semantic similarity using ROUGE-1",
+		);
+		console.log(
+			"   • RESPONSE_EVALUATION_SCORE: Uses LLM-as-judge for quality assessment",
+		);
+		console.log(
+			"   • TOOL_TRAJECTORY_AVG_SCORE: Validates correct tool usage patterns",
+		);
 		console.log("   • SAFETY_V1: Ensures responses are safe and appropriate");
 		console.log("\n🚀 Next Steps:");
 		console.log("   • Customize evaluation metrics for your specific use case");
@@ -472,7 +503,6 @@ async function runAdvancedEvaluation() {
 		console.log("   • Integrate evaluations into CI/CD pipelines");
 		console.log("   • Use evaluation results to guide agent improvements");
 		console.log("   • Experiment with different judge models and thresholds");
-
 	} catch (error) {
 		console.error("❌ Advanced evaluation failed:", error);
 		if (error instanceof Error) {
