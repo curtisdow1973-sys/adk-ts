@@ -82,7 +82,7 @@ export class AgentEvaluator {
 		evalSet: EvalSet,
 		criteria: Record<string, number>,
 		numRuns: number = NUM_RUNS,
-		printDetailedResults = true,
+		printDetailedResults = false,
 	): Promise<void> {
 		const evalMetrics = Object.entries(criteria).map(
 			([metricName, threshold]) => ({

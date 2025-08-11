@@ -14,7 +14,7 @@ export async function main() {
 	// Minimal logging: start + final status only
 	console.log("🧪 Running evaluation...");
 
-	const { agent } = await AgentBuilder.create("demo-agent")
+	const { agent } = await AgentBuilder.create("demo_agent")
 		.withModel("gemini-2.5-flash")
 		.withInstruction("Answer briefly and accurately.")
 		.build();

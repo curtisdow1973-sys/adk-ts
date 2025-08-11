@@ -1,4 +1,3 @@
-import { experimental } from "../utils/experimental-decorator";
 import type { Invocation } from "./eval-case";
 import {
 	type EvalMetric,
@@ -12,7 +11,7 @@ import {
 	type PerInvocationResult,
 } from "./evaluator";
 import { LlmAsJudge } from "./llm-as-judge";
-import { getEvalStatus, Label, getTextFromContent } from "./llm-as-judge-utils";
+import { Label, getEvalStatus, getTextFromContent } from "./llm-as-judge-utils";
 
 const FINAL_RESPONSE_MATCH_V2_PROMPT = `You are an expert rater for an AI agent. The AI agent is going to call an API to answer the user query and generate API tool use code based for the choice of the API and API arguments. The ideal model response should be a function call that fulfills user query, or a natural language response hedges or asks users for further clarification if a function call does not apply.
 The primary focus of this rating task is to check correctness of the model responses.
@@ -70,7 +69,6 @@ function parseCritique(response: string): Label {
 	return Label.NOT_FOUND;
 }
 
-@experimental
 export class FinalResponseMatchV2Evaluator extends Evaluator {
 	constructor(
 		evalMetric: EvalMetric,

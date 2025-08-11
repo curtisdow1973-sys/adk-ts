@@ -3,13 +3,11 @@ import type { EvaluateConfig } from "./eval-metrics";
 import { DEFAULT_METRIC_EVALUATOR_REGISTRY } from "./metric-evaluator-registry";
 import type { BaseAgent } from "@adk/agents";
 import { AgentBuilder } from "@adk/agents";
-import { experimental } from "@adk/utils/experimental-decorator";
 import type { EvalResult } from "./eval-result";
 import { EvalStatus } from "./evaluator";
 import type { Invocation, EvalCase } from "./eval-case";
 import type { EvalSet } from "./eval-set";
 
-@experimental
 export class LocalEvalService extends BaseEvalService {
 	private runner: any;
 
@@ -26,7 +24,7 @@ export class LocalEvalService extends BaseEvalService {
 			this.runner = this.agent;
 		} else {
 			try {
-				const { runner } = await AgentBuilder.create("eval-agent")
+				const { runner } = await AgentBuilder.create("eval_agent")
 					.withModel("gemini-2.5-flash")
 					.withDescription("Agent for evaluation purposes")
 					.build();
