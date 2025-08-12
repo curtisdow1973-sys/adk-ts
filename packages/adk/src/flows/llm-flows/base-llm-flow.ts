@@ -127,9 +127,36 @@ export abstract class BaseLlmFlow {
 		}
 
 		// Process canonical tools
-		const tools = await agent.canonicalTools(
+		let tools = await agent.canonicalTools(
 			new ReadonlyContext(invocationContext),
 		);
+
+		// Debug: capture raw tool declarations prior to any dedup (only if DEBUG_TOOLS env var set)
+		if (process.env.ADK_DEBUG_TOOLS) {
+			try {
+				const rawNames = tools.map((t: any) => t?.name).join(", ");
+				this.logger.debug(`🧪 (debug) Raw canonical tools: ${rawNames}`);
+			} catch {}
+		}
+
+		// Deduplicate tools by name to avoid duplicate function declarations in provider requests
+		if (tools.length > 1) {
+			const seen = new Set<string>();
+			const filtered: any[] = [];
+			for (const t of tools) {
+				const name = (t as any)?.name;
+				if (!name) continue;
+				if (seen.has(name)) {
+					if (process.env.ADK_DEBUG_TOOLS) {
+						this.logger.debug(`🧪 (debug) Dropping duplicate tool '${name}' at preprocessing stage`);
+					}
+					continue;
+				}
+				seen.add(name);
+				filtered.push(t);
+			}
+			tools = filtered;
+		}
 
 		for (const tool of tools) {
 			const toolContext = new ToolContext(invocationContext);
@@ -381,7 +408,59 @@ export abstract class BaseLlmFlow {
 			invocationContext.runConfig.streamingMode === StreamingMode.SSE;
 
 		// Log LLM request in a clean table format
-		const tools = llmRequest.config?.tools || [];
+		let tools: any[] = llmRequest.config?.tools || [];
+		if (process.env.ADK_DEBUG_TOOLS) {
+			try {
+				this.logger.debug(
+					`🧪 (debug) Pre-dedup request tools objects: ${JSON.stringify(tools.map(t => ({ keys: Object.keys(t||{}), fns: t?.functionDeclarations?.map((fd:any)=>fd.name) })) )}`,
+				);
+			} catch {}
+		}
+
+		// Secondary defensive deduplication: some providers (e.g., Google) error on duplicate function declarations
+		// even if upstream preprocessing attempted to filter. Here we collapse duplicate functionDeclarations by name.
+		if (tools.length) {
+			const deduped: any[] = [];
+			const seenFn = new Set<string>();
+			for (const t of tools as any[]) {
+				const anyTool = t as any;
+				if (anyTool && Array.isArray(anyTool.functionDeclarations)) {
+					const newFds: any[] = [];
+					for (const fd of anyTool.functionDeclarations) {
+						if (fd?.name) {
+							if (seenFn.has(fd.name)) continue;
+							seenFn.add(fd.name);
+						}
+						newFds.push(fd);
+					}
+					if (newFds.length) {
+						deduped.push({ ...anyTool, functionDeclarations: newFds });
+					}
+				} else if (anyTool?.name) {
+					if (seenFn.has(anyTool.name)) continue;
+					seenFn.add(anyTool.name);
+					deduped.push(anyTool);
+				} else {
+					deduped.push(anyTool); // Unknown shape; keep as is
+				}
+			}
+			if (deduped.length !== tools.length) {
+				this.logger.debug(
+					`🔁 Deduplicated tool/function declarations: ${tools.length} -> ${deduped.length}`,
+				);
+				if (process.env.ADK_DEBUG_TOOLS) {
+					try {
+						this.logger.debug(
+							`🧪 (debug) Post-dedup function set: ${deduped
+								.map(d => (d.functionDeclarations||[]).map((fd:any)=>fd.name).join(","))
+								.filter(Boolean)
+								.join(" | ")}`,
+						);
+					} catch {}
+				}
+			}
+			llmRequest.config.tools = tools = deduped;
+		}
 
 		const toolNames = tools
 			.map((tool: any) => {

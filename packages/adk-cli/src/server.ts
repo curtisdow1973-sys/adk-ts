@@ -295,31 +295,14 @@ export class ADKServer {
 			}
 			// Soft validation of optional fields (model/instruction not strictly required for all custom agents)
 
-			// Create a proper runner using AgentBuilder to wrap the existing agent
+			// Build runner/session while preserving the exact exported agent (including subAgents, tools, callbacks, etc.)
+			// We use withAgent() so we don't accidentally drop configuration like subAgents which was happening before
 			const agentBuilder = AgentBuilder.create(exportedAgent.name)
-				.withModel((exportedAgent as any).model)
-				.withDescription((exportedAgent as any).description || "")
-				.withInstruction((exportedAgent as any).instruction || "")
+				.withAgent(exportedAgent as any)
 				.withSessionService(this.sessionService, {
 					userId: `user_${agentPath}`,
 					appName: "adk-server",
 				});
-
-			// Only add tools if they exist and are valid
-			if (
-				Array.isArray((exportedAgent as any).tools) &&
-				(exportedAgent as any).tools.length > 0
-			) {
-				agentBuilder.withTools(...(exportedAgent as any).tools);
-				if (!this.quiet) {
-					const toolNames = (exportedAgent as any).tools
-						.map((t: any) => t?.name || "<unnamed>")
-						.join(", ");
-					console.log(
-						`🧩 Registered tools for agent "${exportedAgent.name}": [${toolNames}]`,
-					);
-				}
-			}
 
 			const { runner, session } = await agentBuilder.build();
 
