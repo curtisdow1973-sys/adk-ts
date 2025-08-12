@@ -387,7 +387,8 @@ export class ADKServer {
 	 */
 	private async importTypeScriptFile(filePath: string): Promise<any> {
 		// Determine project root (for tsconfig and resolving deps)
-		let projectRoot = dirname(filePath);
+		const startDir = dirname(filePath);
+		let projectRoot = startDir;
 		while (projectRoot !== "/" && projectRoot !== dirname(projectRoot)) {
 			if (
 				existsSync(join(projectRoot, "package.json")) ||
@@ -396,6 +397,10 @@ export class ADKServer {
 				break;
 			}
 			projectRoot = dirname(projectRoot);
+		}
+		// If we reached root without finding markers, use the original start directory
+		if (projectRoot === "/") {
+			projectRoot = startDir;
 		}
 
 		// Transpile with esbuild and import (bundles local files, preserves tools)
@@ -495,7 +500,7 @@ export class ADKServer {
 	public async stop(): Promise<void> {
 		return new Promise((resolve) => {
 			// Stop all running agents
-			for (const [agentPath] of this.loadedAgents) {
+			for (const [agentPath] of this.loadedAgents.entries()) {
 				this.stopAgent(agentPath);
 			}
 
@@ -564,15 +569,35 @@ export class ADKServer {
 					candidate = value;
 					break;
 				}
+				// Handle static container object: export const container = { agent: <LlmAgent> }
+				if (
+					value &&
+					typeof value === "object" &&
+					(value as any).agent &&
+					isLikelyAgentInstance((value as any).agent)
+				) {
+					candidate = (value as any).agent;
+					break;
+				}
 				if (
 					typeof value === "function" &&
-					(keyLower.includes("agent") ||
-						value.name.toLowerCase().includes("agent"))
+					(/(agent|build|create)/i.test(keyLower) ||
+						(value.name &&
+							/(agent|build|create)/i.test(value.name.toLowerCase())))
 				) {
 					try {
 						const maybe = await invokeMaybe(value);
 						if (isLikelyAgentInstance(maybe)) {
 							candidate = maybe;
+							break;
+						}
+						if (
+							maybe &&
+							typeof maybe === "object" &&
+							maybe.agent &&
+							isLikelyAgentInstance(maybe.agent)
+						) {
+							candidate = maybe.agent;
 							break;
 						}
 					} catch (e) {
@@ -592,15 +617,14 @@ export class ADKServer {
 				);
 			}
 		}
-		// Await promise-like (already handled in invokeMaybe, but keep for safety)
-		if (candidate && typeof candidate === "object" && "then" in candidate) {
-			try {
-				candidate = await candidate;
-			} catch (e) {
-				throw new Error(
-					`Failed awaiting exported agent promise: ${e instanceof Error ? e.message : String(e)}`,
-				);
-			}
+		// Handle built structure { agent, runner, session }
+		if (
+			candidate &&
+			typeof candidate === "object" &&
+			candidate.agent &&
+			isLikelyAgentInstance(candidate.agent)
+		) {
+			candidate = candidate.agent;
 		}
 		// Unwrap { agent: ... } pattern if present
 		if (candidate?.agent && isLikelyAgentInstance(candidate.agent)) {
