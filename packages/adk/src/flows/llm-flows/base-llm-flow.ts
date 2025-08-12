@@ -132,12 +132,6 @@ export abstract class BaseLlmFlow {
 		);
 
 		// Debug: capture raw tool declarations prior to any dedup (only if DEBUG_TOOLS env var set)
-		if (process.env.ADK_DEBUG_TOOLS) {
-			try {
-				const rawNames = tools.map((t: any) => t?.name).join(", ");
-				this.logger.debug(`🧪 (debug) Raw canonical tools: ${rawNames}`);
-			} catch {}
-		}
 
 		// Deduplicate tools by name to avoid duplicate function declarations in provider requests
 		if (tools.length > 1) {
@@ -147,9 +141,6 @@ export abstract class BaseLlmFlow {
 				const name = (t as any)?.name;
 				if (!name) continue;
 				if (seen.has(name)) {
-					if (process.env.ADK_DEBUG_TOOLS) {
-						this.logger.debug(`🧪 (debug) Dropping duplicate tool '${name}' at preprocessing stage`);
-					}
 					continue;
 				}
 				seen.add(name);
@@ -409,13 +400,6 @@ export abstract class BaseLlmFlow {
 
 		// Log LLM request in a clean table format
 		let tools: any[] = llmRequest.config?.tools || [];
-		if (process.env.ADK_DEBUG_TOOLS) {
-			try {
-				this.logger.debug(
-					`🧪 (debug) Pre-dedup request tools objects: ${JSON.stringify(tools.map(t => ({ keys: Object.keys(t||{}), fns: t?.functionDeclarations?.map((fd:any)=>fd.name) })) )}`,
-				);
-			} catch {}
-		}
 
 		// Secondary defensive deduplication: some providers (e.g., Google) error on duplicate function declarations
 		// even if upstream preprocessing attempted to filter. Here we collapse duplicate functionDeclarations by name.
@@ -448,16 +432,6 @@ export abstract class BaseLlmFlow {
 				this.logger.debug(
 					`🔁 Deduplicated tool/function declarations: ${tools.length} -> ${deduped.length}`,
 				);
-				if (process.env.ADK_DEBUG_TOOLS) {
-					try {
-						this.logger.debug(
-							`🧪 (debug) Post-dedup function set: ${deduped
-								.map(d => (d.functionDeclarations||[]).map((fd:any)=>fd.name).join(","))
-								.filter(Boolean)
-								.join(" | ")}`,
-						);
-					} catch {}
-				}
 			}
 			llmRequest.config.tools = tools = deduped;
 		}
