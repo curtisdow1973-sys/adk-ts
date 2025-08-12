@@ -12,6 +12,7 @@ import { serve } from "@hono/node-server";
 import type { LlmAgent } from "@iqai/adk";
 import { AgentBuilder, InMemorySessionService } from "@iqai/adk";
 import type { EnhancedRunner } from "@iqai/adk";
+import type { BuiltAgent } from "@iqai/adk";
 import { Hono } from "hono";
 import { cors } from "hono/cors";
 
@@ -229,124 +230,88 @@ export class ADKServer {
 		}
 
 		try {
-			// Load the agent module dynamically
-			// Try both .js and .ts files, prioritizing .js if it exists
+			// Load the agent module dynamically (js preferred, else ts)
 			let agentFilePath = join(agent.absolutePath, "agent.js");
 			if (!existsSync(agentFilePath)) {
 				agentFilePath = join(agent.absolutePath, "agent.ts");
 			}
-
 			if (!existsSync(agentFilePath)) {
 				throw new Error(
 					`No agent.js or agent.ts file found in ${agent.absolutePath}`,
 				);
 			}
 
-			// Load environment variables from the project directory before importing
-			let projectRoot = dirname(agentFilePath);
-			while (projectRoot !== "/" && projectRoot !== dirname(projectRoot)) {
-				if (
-					existsSync(join(projectRoot, "package.json")) ||
-					existsSync(join(projectRoot, ".env"))
-				) {
-					break;
-				}
-				projectRoot = dirname(projectRoot);
-			}
-
-			const envPath = join(projectRoot, ".env");
-			if (existsSync(envPath)) {
-				try {
-					const envContent = readFileSync(envPath, "utf8");
-					const envLines = envContent.split("\n");
-					for (const line of envLines) {
-						const trimmedLine = line.trim();
-						if (trimmedLine && !trimmedLine.startsWith("#")) {
-							const [key, ...valueParts] = trimmedLine.split("=");
-							if (key && valueParts.length > 0) {
-								const value = valueParts.join("=").replace(/^"(.*)"$/, "$1");
-								// Set environment variables in current process
-								process.env[key.trim()] = value.trim();
-							}
-						}
-					}
-				} catch (error) {
-					console.warn(
-						`⚠️ Warning: Could not load .env file: ${error instanceof Error ? error.message : String(error)}`,
-					);
-				}
-			}
+			this.loadEnvForFile(agentFilePath);
 
 			const agentFileUrl = pathToFileURL(agentFilePath).href;
-
-			// Use dynamic import to load the agent
-			const agentModule: any = agentFilePath.endsWith(".ts")
+			const mod: any = agentFilePath.endsWith(".ts")
 				? await this.importTypeScriptFile(agentFilePath)
 				: await import(agentFileUrl);
 
-			if (!agentModule.agent) {
-				throw new Error(`No 'agent' export found in ${agentFilePath}`);
-			}
+			// Detect & resolve the single export (enforces one exported symbol)
+			const resolved = await this.detectExportedAgent(mod, agentFilePath);
 
-			// Validate that the exported agent is an LlmAgent instance
-			if (
-				!agentModule.agent ||
-				typeof agentModule.agent !== "object" ||
-				!agentModule.agent.name
-			) {
-				throw new Error(
-					`Invalid agent export in ${agentFilePath}. Expected an LlmAgent instance with a name property.`,
-				);
-			}
+			let finalAgent: LlmAgent;
+			let runner: EnhancedRunner;
+			let sessionId: string;
+			let userId: string;
+			let appName: string;
 
-			// Additional validation to ensure it looks like an LlmAgent
-			if (!agentModule.agent.model || !agentModule.agent.instruction) {
-				// Soft warn without noisy logs; proceed to allow flexible agents
-			}
-
-			// Create a proper runner using AgentBuilder to wrap the existing agent
-			const agentBuilder = AgentBuilder.create(agentModule.agent.name)
-				.withModel(agentModule.agent.model)
-				.withDescription(agentModule.agent.description || "")
-				.withInstruction(agentModule.agent.instruction || "")
-				.withSessionService(this.sessionService, {
-					userId: `user_${agentPath}`,
-					appName: "adk-server",
-				});
-
-			// Only add tools if they exist and are valid
-			if (
-				agentModule.agent.tools &&
-				Array.isArray(agentModule.agent.tools) &&
-				agentModule.agent.tools.length > 0
-			) {
-				agentBuilder.withTools(...agentModule.agent.tools);
+			if (resolved.type === "built") {
+				const built = resolved.builtAgent as BuiltAgent;
+				finalAgent = built.agent as LlmAgent;
+				runner = built.runner as EnhancedRunner;
+				sessionId = built.session.id;
+				userId = built.session.userId;
+				appName = built.session.appName;
 				if (!this.quiet) {
-					const toolNames = agentModule.agent.tools
-						.map((t: any) => t?.name || "<unnamed>")
-						.join(", ");
 					console.log(
-						`🧩 Registered tools for agent "${agentModule.agent.name}": [${toolNames}]`,
+						`🔁 Reusing provided BuiltAgent (session ${sessionId}) from ${agentFilePath}`,
+					);
+				}
+			} else {
+				finalAgent = resolved.agent as LlmAgent;
+				// Wrap raw LlmAgent with builder & create new session
+				const builder = AgentBuilder.create(finalAgent.name)
+					.withModel((finalAgent as any).model)
+					.withDescription((finalAgent as any).description || "")
+					.withInstruction((finalAgent as any).instruction || "")
+					.withSessionService(this.sessionService, {
+						userId: `user_${agentPath}`,
+						appName: "adk-server",
+					});
+				if (
+					Array.isArray((finalAgent as any).tools) &&
+					(finalAgent as any).tools.length
+				) {
+					builder.withTools(...(finalAgent as any).tools);
+					if (!this.quiet) {
+						console.log(`🧩 Registered tools for agent "${finalAgent.name}"`);
+					}
+				}
+				const built = await builder.build();
+				runner = built.runner;
+				sessionId = built.session.id;
+				userId = `user_${agentPath}`;
+				appName = "adk-server";
+				if (!this.quiet) {
+					console.log(
+						`🛠️ Wrapped exported LlmAgent with new session ${sessionId}`,
 					);
 				}
 			}
 
-			const { runner, session } = await agentBuilder.build();
-
-			// Store the loaded agent with its runner
+			// Store
 			const loadedAgent: LoadedAgent = {
-				agent: agentModule.agent,
-				runner: runner,
-				sessionId: session.id,
-				userId: `user_${agentPath}`,
-				appName: "adk-server",
+				agent: finalAgent,
+				runner,
+				sessionId,
+				userId,
+				appName,
 			};
-
 			this.loadedAgents.set(agentPath, loadedAgent);
-			agent.instance = agentModule.agent;
-
-			// Update the agent name with the actual agent name
-			agent.name = agentModule.agent.name;
+			agent.instance = finalAgent;
+			agent.name = finalAgent.name;
 		} catch (error) {
 			console.error(`❌ Failed to load agent "${agent.name}":`, error);
 			throw new Error(
@@ -525,5 +490,125 @@ export class ADKServer {
 		} catch {
 			return null;
 		}
+	}
+
+	// ---- New helper logic for agent export detection ----
+
+	private loadEnvForFile(agentFilePath: string) {
+		let projectRoot = dirname(agentFilePath);
+		while (projectRoot !== "/" && projectRoot !== dirname(projectRoot)) {
+			if (
+				existsSync(join(projectRoot, "package.json")) ||
+				existsSync(join(projectRoot, ".env"))
+			) {
+				break;
+			}
+			projectRoot = dirname(projectRoot);
+		}
+		const envPath = join(projectRoot, ".env");
+		if (existsSync(envPath)) {
+			try {
+				const envContent = readFileSync(envPath, "utf8");
+				for (const line of envContent.split("\n")) {
+					const trimmed = line.trim();
+					if (!trimmed || trimmed.startsWith("#")) continue;
+					const [k, ...rest] = trimmed.split("=");
+					if (k && rest.length) {
+						const v = rest.join("=").replace(/^"(.*)"$/, "$1");
+						process.env[k.trim()] = v.trim();
+					}
+				}
+			} catch (e) {
+				if (!this.quiet) {
+					console.warn(
+						`⚠️ Failed loading .env for ${agentFilePath}: ${e instanceof Error ? e.message : String(e)}`,
+					);
+				}
+			}
+		}
+	}
+
+	private async detectExportedAgent(
+		moduleNamespace: any,
+		filePath: string,
+	): Promise<
+		| { type: "built"; builtAgent: BuiltAgent }
+		| { type: "agent"; agent: LlmAgent }
+	> {
+		// Copy reference (avoid param reassignment)
+		const mod = moduleNamespace;
+		// Normalize module when only 'agent' present
+		if (mod?.agent && Object.keys(mod).length === 1) {
+			// Treat as if exported directly
+		}
+		const exportKeys = Object.keys(mod || {}).filter((k) => k !== "__esModule");
+		let candidate: any;
+		if (exportKeys.length === 0 && mod?.default) {
+			candidate = mod.default;
+		} else if (exportKeys.length === 1) {
+			candidate = mod[exportKeys[0]];
+		} else if (exportKeys.length > 1) {
+			throw new Error(
+				`agent.ts must export exactly one symbol (found: ${exportKeys.join(", ")}). Please export only a BuiltAgent, an LlmAgent, or a function returning one.`,
+			);
+		} else {
+			candidate = mod.default;
+		}
+
+		// If candidate is function, call it (supports async)
+		if (typeof candidate === "function") {
+			candidate = candidate();
+		}
+		// Await promise-like
+		if (candidate && typeof candidate === "object" && "then" in candidate) {
+			candidate = await candidate;
+		}
+
+		// BuiltAgent shape detection
+		if (this.isBuiltAgent(candidate)) {
+			return { type: "built", builtAgent: candidate };
+		}
+
+		// If it contains nested .agent (common pattern returning { agent, runner, session })
+		if (candidate?.agent && this.isBuiltAgent(candidate)) {
+			return { type: "built", builtAgent: candidate };
+		}
+
+		// Maybe exported object with .agent only (unwrap)
+		if (candidate?.agent && this.isLlmAgent(candidate.agent)) {
+			candidate = candidate.agent;
+		}
+
+		if (this.isLlmAgent(candidate)) {
+			return { type: "agent", agent: candidate };
+		}
+
+		throw new Error(
+			`Export in ${filePath} is not a BuiltAgent or LlmAgent (after resolving functions/promises).`,
+		);
+	}
+
+	private isBuiltAgent(obj: any): obj is BuiltAgent {
+		return (
+			!!obj &&
+			typeof obj === "object" &&
+			"agent" in obj &&
+			"runner" in obj &&
+			"session" in obj &&
+			obj.session &&
+			typeof obj.session.id === "string" &&
+			obj.runner &&
+			typeof obj.runner.ask === "function"
+		);
+	}
+
+	private isLlmAgent(obj: any): obj is LlmAgent {
+		return (
+			!!obj &&
+			typeof obj === "object" &&
+			typeof obj.name === "string" &&
+			// Allow flexible models/instructions
+			("model" in obj || "instruction" in obj)
+		);
 	}
 }
