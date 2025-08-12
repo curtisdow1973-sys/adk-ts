@@ -733,9 +733,12 @@ export class AgentBuilder {
 		if (this.warnedMethods.has(method)) return;
 		this.warnedMethods.add(method);
 		if (process.env.NODE_ENV !== "production") {
-			console.warn(
-				`AgentBuilder: attempted to call ${method} after withAgent(); ignoring. (Wrap the agent first OR configure before withAgent).`,
-			);
+			const msg = `AgentBuilder: attempted to call ${method} after withAgent(); ignoring. (Wrap the agent first OR configure before withAgent).`;
+			if (this.logger && typeof this.logger.warn === "function") {
+				this.logger.warn(msg);
+			} else {
+				console.warn(msg);
+			}
 		}
 	}
 }
