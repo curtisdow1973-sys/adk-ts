@@ -1,3 +1,4 @@
+import { Logger } from "@adk/logger/index.js";
 import type { LlmRequest } from "@adk/models";
 import type { Content, Part } from "@google/genai";
 import { type LanguageModel, generateId } from "ai";
@@ -177,6 +178,7 @@ export class AgentBuilder {
 	private existingAgent?: BaseAgent; // If provided, reuse directly
 	private definitionLocked = false; // Lock further definition mutation after withAgent
 	private warnedMethods: Set<string> = new Set();
+	private logger = new Logger({ name: "AgentBuilder" });
 
 	/**
 	 * Private constructor - use static create() method
