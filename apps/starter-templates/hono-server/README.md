@@ -29,12 +29,34 @@ A web server template using the [Hono](https://hono.dev/) framework that exposes
 
 ## Quick Start
 
-1. **Clone and setup**
-   ```bash
-   git clone <your-repo>
-   cd adk-hono-server
-   pnpm install
-   ```
+
+The easiest way to create a new Hono server project using this template is with the ADK CLI:
+
+```bash
+npm install -g @iqai/adk-cli # if you haven't already
+adk new --template hono-server my-hono-server
+cd my-hono-server
+pnpm install
+```
+
+You can also use this template directly by copying the files, but using the CLI is recommended for best results.
+
+### Running the Server
+
+**Default (Production/Development) Route**
+
+To run your Hono server in production or for standard development, use:
+```bash
+pnpm dev
+```
+
+**Fast Iteration & Agent Setup (ADK CLI)**
+
+For rapid prototyping, interactive testing, or initial agent setup, use the ADK CLI:
+```bash
+adk run   # Interactive CLI chat with your agents
+adk web   # Web interface for easy testing and demonstration
+```
 
 2. **Environment setup**
    ```bash

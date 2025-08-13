@@ -32,31 +32,34 @@ A minimal starter template for building Model Context Protocol (MCP) servers usi
 
 ## Getting Started
 
-1. **Create a new repository from this template:**
-   Click [here](https://github.com/new?template_name=mcp-server-starter&template_owner=IQAIcom) to generate a new repository from this template.
 
-2. **Navigate to your new project:**
+The easiest way to create a new MCP server project using this template is with the ADK CLI:
 
-    ```bash
-    cd /path/to/your-new-mcp-server
-    ```
+```bash
+npm install -g @iqai/adk-cli # if you haven't already
+adk new --template mcp-starter my-mcp-server
+cd my-mcp-server
+pnpm install
+```
 
-3. **Initialize Git Repository (if not already):**
+You can also use this template directly by copying the files, but using the CLI is recommended for best results.
 
-    ```bash
-    git init
-    git branch -M main # Or your preferred default branch name
-    ```
+### Running the Server
 
-4. **Customize `package.json`:**
-    * Update `name`, `version`, `description`, `author`, `repository`, etc.
-    * Update the `bin` entry if you change the command name.
+**Default (Production/Development) Route**
 
-5. **Install dependencies:**
+To run your MCP server in production or for standard development, use:
+```bash
+pnpm dev
+```
 
-    ```bash
-    pnpm install
-    ```
+**Fast Iteration & Agent Setup (ADK CLI)**
+
+For rapid prototyping, interactive testing, or initial agent setup, use the ADK CLI:
+```bash
+adk run   # Interactive CLI chat with your agents
+adk web   # Web interface for easy testing and demonstration
+```
 
 6. **Configure environment variables:**
    For the weather service example, you'll need an OpenWeather API key:

@@ -38,12 +38,34 @@ Before you begin, you'll need:
 
 ## Quick Start
 
-1. **Clone and setup**
-   ```bash
-   git clone <your-repo>
-   cd adk-discord-bot
-   pnpm install
-   ```
+
+The easiest way to create a new Discord bot project using this template is with the ADK CLI:
+
+```bash
+npm install -g @iqai/adk-cli # if you haven't already
+adk new --template discord-bot my-discord-bot
+cd my-discord-bot
+pnpm install
+```
+
+You can also use this template directly by copying the files, but using the CLI is recommended for best results.
+
+### Running the Bot
+
+**Default (Production/Development) Route**
+
+To run your Discord bot in production or for standard development, use:
+```bash
+pnpm dev
+```
+
+**Fast Iteration & Agent Setup (ADK CLI)**
+
+For rapid prototyping, interactive testing, or initial agent setup, use the ADK CLI:
+```bash
+adk run   # Interactive CLI chat with your agents
+adk web   # Web interface for easy testing and demonstration
+```
 
 2. **Environment setup**
    ```bash

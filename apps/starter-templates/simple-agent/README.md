@@ -6,9 +6,10 @@
 <br/>
 
 
-# 🤖 ADK Agent Starter
 
-**A starter template to start building your own agent with `@iqai/adk` library.**
+# ADK Simple Agent Starter
+
+**A starter template to build your own agent with the `@iqai/adk` library.**
 
 _Minimal • Extensible • TypeScript_
 
@@ -16,42 +17,37 @@ _Minimal • Extensible • TypeScript_
 
 </div>
 
-This is a starter template to start building your own agent with `@iqai/adk` library. 
+This is the recommended starter template for building your own agent with the ADK TypeScript framework.
 
 ## 🚀 Get Started
-Start by cloning the repository or clicking on use as template button on github ui. 
+
+
+The easiest way to create a new project using this template is with the ADK CLI:
 
 ```bash
-git clone https://github.com/IQAICOM/adk-agent-starter.git
-```
-
-📦 Install the dependencies
-
-```bash
+npm install -g @iqai/adk-cli # if you haven't already
+adk new --template simple-agent my-agent-project
+cd my-agent-project
 pnpm install
 ```
 
-▶️ Run the agent
+You can also use this template directly by copying the files, but using the CLI is recommended for best results.
 
-**Option 1: Traditional Development**
+### Running the Agent
+
+**Default (Production/Development) Route**
+
+To run your agent in production or for standard development, use:
 ```bash
 pnpm dev
 ```
 
-**Option 2: ADK CLI (Recommended for Interactive Testing)**
+**Fast Iteration & Agent Setup (ADK CLI)**
 
-First, install the ADK CLI globally:
+For rapid prototyping, interactive testing, or initial agent setup, use the ADK CLI:
 ```bash
-npm install -g @iqai/adk-cli
-```
-
-Then use either:
-```bash
-# Interactive CLI chat with your agents
-adk run
-
-# Web interface for easy testing and demonstration
-adk web
+adk run   # Interactive CLI chat with your agents
+adk web   # Web interface for easy testing and demonstration
 ```
 
 ## 📁 Folder Structure
