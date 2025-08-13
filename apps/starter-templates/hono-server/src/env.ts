@@ -11,7 +11,7 @@ config();
  * - GOOGLE_API_KEY: Required API key for Google/Gemini model access
  */
 export const envSchema = z.object({
-	DEBUG: z.string().default("false"),
+	ADK_DEBUG: z.coerce.boolean().default(false),
 	GOOGLE_API_KEY: z.string(),
 });
 

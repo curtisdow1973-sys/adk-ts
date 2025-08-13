@@ -12,7 +12,7 @@ config();
  * - DISCORD_TOKEN: Required Discord bot token for API authentication
  */
 export const envSchema = z.object({
-	DEBUG: z.string().default("false"),
+	ADK_DEBUG: z.coerce.boolean().default(false),
 	GOOGLE_API_KEY: z.string(),
 	DISCORD_TOKEN: z.string(),
 });

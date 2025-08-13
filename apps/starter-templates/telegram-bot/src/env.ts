@@ -12,7 +12,7 @@ config();
  * - TELEGRAM_BOT_TOKEN: Required Telegram bot token for API authentication
  */
 export const envSchema = z.object({
-	DEBUG: z.string().default("false"),
+	ADK_DEBUG: z.coerce.boolean().default(false),
 	GOOGLE_API_KEY: z.string(),
 	TELEGRAM_BOT_TOKEN: z.string(),
 });
