@@ -1,6 +1,5 @@
-import { env } from "node:process";
-import { AgentBuilder } from "@iqai/adk";
 import type { Context } from "hono";
+import { getRootAgent } from "../agents/agent";
 
 export const askHandler = async (c: Context) => {
 	try {
@@ -13,10 +12,9 @@ export const askHandler = async (c: Context) => {
 
 		console.log(`📝 Question received: ${question}`);
 
-		// Create agent and get response
-		const response = await AgentBuilder.withModel(
-			env.LLM_MODEL || "gemini-2.5-flash",
-		).ask(question);
+		// answer with our root agent
+		const { runner } = await getRootAgent();
+		const response = runner.ask(question);
 
 		console.log(`🤖 Response generated: ${response}`);
 
