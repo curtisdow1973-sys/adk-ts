@@ -19,8 +19,9 @@ A Telegram bot starter template powered by ADK (AI Development Kit) that enables
 
 ## Prerequisites
 
-> **Note**
-> You'll need the following before you begin. For details on how to obtain these, see [Configure Your Bot](#3-configure-your-bot).
+
+> [!note]
+> **You'll need the following before you begin.** For details on how to obtain these, see [Configure Your Bot](#3-configure-your-bot).
 
 - **Telegram Bot Token**: Create a bot via [@BotFather](https://t.me/botfather) on Telegram
 - **AI API Key**: Get an API key for your chosen AI model (e.g., Google AI Studio for Gemini)
@@ -62,10 +63,17 @@ adk web   # Web interface for easy testing and demonstration
    # Edit .env with your tokens and API keys
    ```
 
-3. **Configure your bot**
-   - Get a bot token from [@BotFather](https://t.me/botfather)
-   - Add the token to your `.env` file
-   - Customize the bot personality in `src/index.ts`
+
+3. **Configure Your Bot**
+
+To set up your Telegram bot:
+
+1. Start a chat with [@BotFather](https://t.me/botfather) on Telegram.
+2. Send `/newbot` and follow the instructions to create a new bot.
+3. Choose a name and a username for your bot (the username must end in 'bot').
+4. Copy the token provided by BotFather.
+5. Add the token to your `.env` file as `TELEGRAM_BOT_TOKEN`.
+6. (Optional) Adjust other environment variables as needed.
 
 4. **Development**
    
@@ -118,15 +126,6 @@ ADK_DEBUG=false
 This template uses the Model Context Protocol (MCP) to connect your agent to Telegram. The MCP server listens for new messages and events, and uses "sampling" to request LLM completions from your agent. This enables your bot to respond to messages and perform actions in Telegram, supporting true agentic, bi-directional communication.
 
 For more details, see the [MCP Telegram documentation](https://adk.iqai.com/docs/mcp-servers/telegram).
-
-## Creating Your Telegram Bot
-
-1. **Start a chat with [@BotFather](https://t.me/botfather)**
-2. **Send `/newbot`** and follow the instructions
-3. **Choose a name** for your bot (e.g., "My AI Assistant")
-4. **Choose a username** for your bot (must end in 'bot', e.g., "myaiassistant_bot")
-5. **Copy the token** provided by BotFather
-6. **Add the token** to your `.env` file
 
 
 

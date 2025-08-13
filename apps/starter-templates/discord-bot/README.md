@@ -26,8 +26,9 @@ A Discord bot starter template powered by ADK (AI Development Kit) that enables 
 
 ## Prerequisites
 
-> **Note**
-> You'll need the following before you begin. For details on how to obtain these, see [Configure Your Bot](#3-configure-your-bot).
+
+> [!note]
+> **You'll need the following before you begin.** For details on how to obtain these, see [Configure Your Bot](#3-configure-your-bot).
 
 - **Discord Bot Token**: Create a bot via Discord Developer Portal
 - **AI API Key**: Get an API key for your chosen AI model (e.g., Google AI Studio for Gemini)
@@ -59,11 +60,18 @@ Or, if using this template directly, just run:
 pnpm install
 ```
 
+
 ### 3. Configure Your Bot
 
-- Create a Discord application and bot in the [Discord Developer Portal](https://discord.com/developers/applications)
-- Add the bot token to your `.env` file
-- Invite the bot to your server
+To set up your Discord bot:
+
+1. Go to the [Discord Developer Portal](https://discord.com/developers/applications).
+2. Click "New Application" and give your application a name (e.g., "My AI Assistant").
+3. Go to the "Bot" section in the left sidebar and click "Add Bot".
+4. Copy the token under the "Token" section and add it to your `.env` file as `DISCORD_TOKEN`.
+5. (Optional) Adjust other environment variables as needed.
+6. Go to the "OAuth2" > "URL Generator" in the Developer Portal, select the "bot" scope, and choose permissions (Send Messages, Read Message History, Use Slash Commands, Add Reactions, etc.).
+7. Copy the generated URL, open it in your browser, select your server, and authorize the bot.
 
 ### 4. Running the Bot
 
@@ -109,37 +117,6 @@ ADK_DEBUG=false
 This template uses the Model Context Protocol (MCP) to connect your agent to Discord. The MCP server listens for new messages and events, and uses "sampling" to request LLM completions from your agent. This enables your bot to respond to messages and perform actions in Discord, supporting true agentic, bi-directional communication.
 
 For more details, see the [MCP Discord documentation](https://adk.iqai.com/docs/mcp-servers/discord).
-
-## Creating Your Discord Bot
-
-### 1. Create Discord Application
-
-1. **Go to [Discord Developer Portal](https://discord.com/developers/applications)**
-2. **Click "New Application"**
-3. **Give your application a name** (e.g., "My AI Assistant")
-4. **Go to the "Bot" section** in the left sidebar
-5. **Click "Add Bot"**
-6. **Copy the token** under "Token" section
-7. **Add the token** to your `.env` file
-
-### 2. Bot Permissions
-
-In the Discord Developer Portal, under "Bot" section:
-
-### 3. Invite Bot to Server
-
-1. **Go to "OAuth2" > "URL Generator"** in Discord Developer Portal
-2. **Select "bot" scope**
-3. **Select permissions:**
-   - Send Messages
-   - Read Message History
-   - Use Slash Commands (optional)
-   - Add Reactions (optional)
-4. **Copy the generated URL** and open it in browser
-5. **Select your server** and authorize the bot
-
-
-
 
 
 ## Database
