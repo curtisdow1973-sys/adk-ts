@@ -483,7 +483,7 @@ export class ADKServer {
 	public async stop(): Promise<void> {
 		return new Promise((resolve) => {
 			// Stop all running agents
-			for (const [agentPath] of this.loadedAgents.entries()) {
+			for (const [agentPath] of Array.from(this.loadedAgents.entries())) {
 				this.stopAgent(agentPath);
 			}
 
