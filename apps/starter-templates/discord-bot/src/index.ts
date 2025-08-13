@@ -16,7 +16,6 @@ async function main() {
 	console.log("🤖 Initializing Discord bot agent...");
 
 	try {
-		// Create the AI agent with custom persona
 		const { runner } = await getRootAgent();
 
 		// Create sampling handler for the Discord MCP
