@@ -13,7 +13,7 @@ async function main() {
 
 	const { runner } = await getRootAgent();
 
-	for (const question in questions) {
+	for (const question of questions) {
 		console.log(`📝 Question: ${question}`);
 		const response = await runner.ask(question);
 		console.log(`🤖 Response: ${response}`);
