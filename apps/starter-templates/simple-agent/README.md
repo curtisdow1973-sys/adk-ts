@@ -96,18 +96,10 @@ This starter includes:
 4. **Update environment** variables in `src/env.ts`
 
 ## 📚 Links
-- [ADK Library](https://github.com/IQAICOM/adk-ts)
-
-## 🤝 Contributing
-1. Fork the repository
-2. Create your feature branch (`git checkout -b feature/amazing-feature`)
-3. Commit your changes (`git commit -m 'Add some amazing feature'`)
-4. Push to the branch (`git push origin feature/amazing-feature`)
-5. Open a Pull Request
-
-## 📄 License
-MIT License - see the [LICENSE](LICENSE) file for details.
+- [ADK Documentation](https://adk.iqai.com)
+- [ADK GitHub Repository](https://github.com/IQAIcom/adk-ts)
 
 ## 🆘 Support
 If you encounter any issues or have questions:
-- 📝 [Create an issue](https://github.com/IQAICOM/adk-agent-starter/issues)
+- 📝 [Create an issue](https://github.com/IQAIcom/adk-ts/issues)
+- 💬 [Start a discussion](https://github.com/IQAIcom/adk-ts/discussions)
