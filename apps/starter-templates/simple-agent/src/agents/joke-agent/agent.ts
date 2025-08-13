@@ -5,6 +5,7 @@ export const getJokeAgent = () => {
 	const jokeAgent = new LlmAgent({
 		name: "joke_agent",
 		description: "provides a random joke",
+		model: "gemini-2.5-flash",
 		tools: [jokeTool],
 	});
 
