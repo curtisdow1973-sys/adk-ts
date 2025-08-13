@@ -8,7 +8,12 @@ import {
 import { Event } from "@adk/events";
 import { Logger } from "@adk/logger";
 import { LogFormatter } from "@adk/logger/log-formatter";
-import { type BaseLlm, LlmRequest, type LlmResponse, type FunctionDeclaration } from "@adk/models";
+import {
+	type BaseLlm,
+	LlmRequest,
+	type LlmResponse,
+	type FunctionDeclaration,
+} from "@adk/models";
 import { traceLlmCall } from "@adk/telemetry";
 import { ToolContext } from "@adk/tools";
 import * as functions from "./functions";
@@ -422,15 +427,17 @@ export abstract class BaseLlmFlow {
 			for (const t of tools) {
 				const tool = t as Tool;
 				if (tool && Array.isArray(tool.functionDeclarations)) {
-					const newFds = tool.functionDeclarations.filter((fd: FunctionDeclaration) => {
-						if (fd?.name) {
-							if (seenFn.has(fd.name)) {
-								return false; // Discard duplicate
+					const newFds = tool.functionDeclarations.filter(
+						(fd: FunctionDeclaration) => {
+							if (fd?.name) {
+								if (seenFn.has(fd.name)) {
+									return false; // Discard duplicate
+								}
+								seenFn.add(fd.name);
 							}
-							seenFn.add(fd.name);
-						}
-						return true; // Keep unique or unnamed function
-					});
+							return true; // Keep unique or unnamed function
+						},
+					);
 					if (newFds.length) {
 						deduped.push({ ...tool, functionDeclarations: newFds });
 					}
