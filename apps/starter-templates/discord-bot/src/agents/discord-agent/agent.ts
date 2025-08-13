@@ -1,4 +1,5 @@
 import { LlmAgent, type SamplingHandler } from "@iqai/adk";
+import { env } from "../../env";
 import { getDiscordMcpTools } from "./tool";
 
 /**
@@ -17,7 +18,7 @@ export const getDiscordAgent = async (samplingHandler: SamplingHandler) => {
 		name: "discord_agent",
 		description:
 			"An agent capable of interacting with Discord. It can send messages, add reactions to messages, retrieve group and channel information, and perform various Discord management tasks.",
-		model: "gemini-2.5-flash",
+		model: env.LLM_MODEL,
 		tools: discordMcpTools,
 	});
 	return discordAgent;

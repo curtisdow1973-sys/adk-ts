@@ -1,4 +1,5 @@
 import { LlmAgent } from "@iqai/adk";
+import { env } from "../../env";
 import { jokeTool } from "./tools";
 
 /**
@@ -14,7 +15,7 @@ export const getJokeAgent = () => {
 	const jokeAgent = new LlmAgent({
 		name: "joke_agent",
 		description: "provides a random joke",
-		model: "gemini-2.5-flash",
+		model: env.LLM_MODEL,
 		tools: [jokeTool],
 	});
 

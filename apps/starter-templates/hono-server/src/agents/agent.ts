@@ -1,4 +1,5 @@
 import { AgentBuilder } from "@iqai/adk";
+import { env } from "../env";
 import { getJokeAgent } from "./joke-agent/agent";
 import { getWeatherAgent } from "./weather-agent/agent";
 
@@ -22,7 +23,7 @@ export const getRootAgent = () => {
 		.withInstruction(
 			"Use the joke sub-agent for humor requests and the weather sub-agent for weather-related queries. Route user requests to the appropriate sub-agent.",
 		)
-		.withModel("gemini-2.5-flash")
+		.withModel(env.LLM_MODEL)
 		.withSubAgents([jokeAgent, weatherAgent])
 		.build();
 };
