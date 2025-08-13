@@ -3,11 +3,6 @@ import { getRootAgent } from "./agents/agent";
 
 dotenv.config();
 
-/**
- * Simple Agent Example
- *
- * The simplest way to create and use an AI agent with AgentBuilder.
- */
 async function main() {
 	const questions = ["how is weather in london?", "tell me a random joke"];
 
