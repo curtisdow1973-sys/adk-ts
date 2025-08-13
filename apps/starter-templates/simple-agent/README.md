@@ -1,4 +1,20 @@
+
+<div align="center">
+
+<img src="https://files.catbox.moe/vumztw.png" alt="ADK TypeScript Logo" width="100" />
+
+<br/>
+
+
 # 🤖 ADK Agent Starter
+
+**A starter template to start building your own agent with `@iqai/adk` library.**
+
+_Minimal • Extensible • TypeScript_
+
+---
+
+</div>
 
 This is a starter template to start building your own agent with `@iqai/adk` library. 
 
@@ -17,24 +33,42 @@ pnpm install
 
 ▶️ Run the agent
 
+**Option 1: Traditional Development**
 ```bash
 pnpm dev
 ```
 
+**Option 2: ADK CLI (Recommended for Interactive Testing)**
+
+First, install the ADK CLI globally:
+```bash
+npm install -g @iqai/adk-cli
+```
+
+Then use either:
+```bash
+# Interactive CLI chat with your agents
+adk run
+
+# Web interface for easy testing and demonstration
+adk web
+```
+
 ## 📁 Folder Structure
-The main agent code lives in `index.ts` where the subagents live inside the `agents` folder. The agents can have tools which reside in the `tools` folder.
+The main agent code lives in `index.ts` where the subagents live inside the `agents` folder. The `agents/agent.ts` file is compatible with the ADK CLI for easy testing.
 
 ```
 ├── src/
 │   ├── agents/
-│   │   └── financial-agent/
-│   │       ├── index.ts
-│   │       └── tools/
-│   │           └── currency-converter-tool.ts
-│   ├── services/
-│   │   └── wallet.ts
-│   ├── env.ts
-│   └── index.ts
+│   │   ├── agent.ts          # Root agent (ADK CLI compatible)
+│   │   ├── joke-agent/       # Joke-telling sub-agent
+│   │   │   ├── agent.ts
+│   │   │   └── tools.ts
+│   │   └── weather-agent/    # Weather information sub-agent
+│   │       ├── agent.ts
+│   │       └── tools.ts
+│   ├── env.ts                # Environment variable validation
+│   └── index.ts              # Main execution entry point
 ```
 
 ## ⚙️ Environment Setup
@@ -46,8 +80,18 @@ cp .env.example .env
 
 ## 🧰 Dev Tools
 This starter includes:
--  **GitHub Actions**: CI/CD pipeline
+- **GitHub Actions**: CI/CD pipeline
 - 📦 **PNPM**: Fast package manager
+- 🤖 **ADK CLI**: Interactive testing with `adk run` and `adk web`
+
+## 🧪 Testing Your Agent
+
+**Traditional Testing**: Run `pnpm dev` to execute the sample questions.
+
+**Interactive Testing with ADK CLI**:
+1. Install: `npm install -g @iqai/adk-cli`
+2. Run: `adk run` for CLI chat or `adk web` for web interface
+3. Perfect for development, testing, and demonstrating your agent's capabilities
 
 ## 🏗️ Building Your Agent
 1. **Create new agents** in the `src/agents/` directory

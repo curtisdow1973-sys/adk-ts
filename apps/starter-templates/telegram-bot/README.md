@@ -1,4 +1,20 @@
-# ADK Telegram Bot
+
+<div align="center">
+
+<img src="https://files.catbox.moe/vumztw.png" alt="ADK TypeScript Logo" width="100" />
+
+<br/>
+
+
+# ADK Telegram Bot Starter
+
+**A starter template powered by ADK (AI Development Kit) that enables you to create intelligent, conversational bots for Telegram.**
+
+_Persistent Memory • Telegram Integration • TypeScript_
+
+---
+
+</div>
 
 A Telegram bot starter template powered by ADK (AI Development Kit) that enables you to create intelligent, conversational bots for Telegram. This template provides a solid foundation for building AI-powered Telegram bots with persistent conversation memory.
 
@@ -40,8 +56,26 @@ Before you begin, you'll need:
    - Customize the bot personality in `src/index.ts`
 
 4. **Development**
+   
+   **Option 1: Traditional Development**
    ```bash
    pnpm dev
+   ```
+   
+   **Option 2: ADK CLI (Recommended for Testing)**
+   
+   First, install the ADK CLI globally:
+   ```bash
+   npm install -g @iqai/adk-cli
+   ```
+   
+   Then use either:
+   ```bash
+   # Interactive CLI chat with your agents
+   adk run
+   
+   # Web interface for easy testing
+   adk web
    ```
 
 5. **Production**
@@ -134,17 +168,29 @@ The bot uses SQLite for persistent storage:
 
 ### Commands
 
+**Traditional Development:**
 - `pnpm dev` - Start development with hot reload
 - `pnpm build` - Build for production
 - `pnpm start` - Start production build
 - `pnpm lint` - Check code formatting
 - `pnpm lint:fix` - Fix formatting issues
 
+**ADK CLI Commands:**
+- `adk run` - Interactive CLI chat with your agents
+- `adk web` - Web interface for testing agents
+- Requires: `npm install -g @iqai/adk-cli`
+
 ### File Structure
 
 ```
 src/
+├── agents/           # Agent definitions (compatible with ADK CLI)
+│   ├── agent.ts      # Root agent configuration
+│   ├── telegram-agent/ # Telegram-specific agent and tools
+│   ├── joke-agent/   # Joke-telling agent
+│   └── weather-agent/# Weather information agent
 ├── index.ts          # Main bot initialization and configuration
+├── env.ts            # Environment variable validation
 └── data/             # SQLite database storage (auto-created)
     └── telegram_bot.db
 ```
@@ -176,11 +222,18 @@ docker run --env-file .env telegram-bot
 
 ## Testing Your Bot
 
+### Option 1: Telegram Integration Testing
 1. **Start the bot** with `pnpm dev`
 2. **Find your bot** on Telegram using the username you chose
 3. **Send a message** like "Hello!" 
 4. **Check the logs** to see the bot processing messages
 5. **Verify responses** are working correctly
+
+### Option 2: Local Testing with ADK CLI
+1. **Install ADK CLI**: `npm install -g @iqai/adk-cli`
+2. **Test via CLI**: `adk run` - Interactive command-line chat
+3. **Test via Web**: `adk web` - Opens web interface in your browser
+4. **Perfect for**: Quick testing, development, and demonstrating your agents
 
 ## Troubleshooting
 

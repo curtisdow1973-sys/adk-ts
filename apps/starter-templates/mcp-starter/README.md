@@ -1,4 +1,20 @@
+
+<div align="center">
+
+<img src="https://files.catbox.moe/vumztw.png" alt="ADK TypeScript Logo" width="100" />
+
+<br/>
+
+
 # MCP Server Starter Template
+
+**A minimal starter template for building Model Context Protocol (MCP) servers using TypeScript and FastMCP.**
+
+_MCP • FastMCP • TypeScript_
+
+---
+
+</div>
 
 A minimal starter template for building Model Context Protocol (MCP) servers using TypeScript and FastMCP.
 
@@ -147,6 +163,28 @@ This template is ready for release management using [Changesets](https://github.
 * `pnpm run build`: Compiles TypeScript to JavaScript in `dist/` and makes the output executable.
 * `pnpm run dev`: Runs the server in development mode using `tsx` (hot-reloading for TypeScript).
 * `pnpm run start`: Runs the built server (from `dist/`) using Node.
+
+## Testing Your MCP Server
+
+**Option 1: Direct MCP Server Usage**
+Use the server directly with MCP clients or integrate it into other applications.
+
+**Option 2: With ADK CLI (For Client-Side Testing)**
+While this template creates an MCP *server*, you can create a simple client to test it:
+
+1. Install the ADK CLI globally:
+   ```bash
+   npm install -g @iqai/adk-cli
+   ```
+
+2. Create a simple agent that uses your MCP server (in a separate test directory):
+   ```bash
+   # In a test directory, create an agents/agent.ts file that connects to your MCP server
+   adk run  # Test the integration
+   adk web  # Web interface for testing
+   ```
+
+This approach is useful for testing how your MCP server tools work within the ADK ecosystem.
 
 ## Using the Server
 

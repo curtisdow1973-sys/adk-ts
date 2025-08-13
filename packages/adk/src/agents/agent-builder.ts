@@ -1,3 +1,4 @@
+import { Logger } from "@adk/logger/index.js";
 import type { LlmRequest } from "@adk/models";
 import type { Content, Part } from "@google/genai";
 import { type LanguageModel, generateId } from "ai";
@@ -174,6 +175,10 @@ export class AgentBuilder {
 	private artifactService?: BaseArtifactService;
 	private agentType: AgentType = "llm";
 	private existingSession?: Session;
+	private existingAgent?: BaseAgent; // If provided, reuse directly
+	private definitionLocked = false; // Lock further definition mutation after withAgent
+	private warnedMethods: Set<string> = new Set();
+	private logger = new Logger({ name: "AgentBuilder" });
 
 	/**
 	 * Private constructor - use static create() method
@@ -206,6 +211,7 @@ export class AgentBuilder {
 	 * @returns This builder instance for chaining
 	 */
 	withModel(model: string | BaseLlm | LanguageModel): this {
+		this.warnIfLocked("withModel");
 		this.config.model = model;
 		return this;
 	}
@@ -216,6 +222,7 @@ export class AgentBuilder {
 	 * @returns This builder instance for chaining
 	 */
 	withDescription(description: string): this {
+		this.warnIfLocked("withDescription");
 		this.config.description = description;
 		return this;
 	}
@@ -226,11 +233,13 @@ export class AgentBuilder {
 	 * @returns This builder instance for chaining
 	 */
 	withInstruction(instruction: string): this {
+		this.warnIfLocked("withInstruction");
 		this.config.instruction = instruction;
 		return this;
 	}
 
 	withInputSchema(schema: import("zod").ZodSchema): this {
+		this.warnIfLocked("withInputSchema");
 		this.config.inputSchema = schema;
 		return this;
 	}
@@ -238,6 +247,7 @@ export class AgentBuilder {
 	withOutputSchema<T>(
 		schema: import("zod").ZodType<T>,
 	): AgentBuilderWithSchema<T> {
+		this.warnIfLocked("withOutputSchema");
 		this.config.outputSchema = schema;
 		return this as unknown as AgentBuilderWithSchema<T>;
 	}
@@ -248,6 +258,7 @@ export class AgentBuilder {
 	 * @returns This builder instance for chaining
 	 */
 	withTools(...tools: BaseTool[]): this {
+		this.warnIfLocked("withTools");
 		this.config.tools = [...(this.config.tools || []), ...tools];
 		return this;
 	}
@@ -258,6 +269,7 @@ export class AgentBuilder {
 	 * @returns This builder instance for chaining
 	 */
 	withPlanner(planner: BasePlanner): this {
+		this.warnIfLocked("withPlanner");
 		this.config.planner = planner;
 		return this;
 	}
@@ -268,6 +280,7 @@ export class AgentBuilder {
 	 * @returns This builder instance for chaining
 	 */
 	withCodeExecutor(codeExecutor: BaseCodeExecutor): this {
+		this.warnIfLocked("withCodeExecutor");
 		this.config.codeExecutor = codeExecutor;
 		return this;
 	}
@@ -278,6 +291,7 @@ export class AgentBuilder {
 	 * @returns This builder instance for chaining
 	 */
 	withOutputKey(outputKey: string): this {
+		this.warnIfLocked("withOutputKey");
 		this.config.outputKey = outputKey;
 		return this;
 	}
@@ -288,6 +302,7 @@ export class AgentBuilder {
 	 * @returns This builder instance for chaining
 	 */
 	withSubAgents(subAgents: BaseAgent[]): this {
+		this.warnIfLocked("withSubAgents");
 		this.config.subAgents = subAgents;
 		return this;
 	}
@@ -298,6 +313,7 @@ export class AgentBuilder {
 	 * @returns This builder instance for chaining
 	 */
 	withBeforeAgentCallback(callback: BeforeAgentCallback): this {
+		this.warnIfLocked("withBeforeAgentCallback");
 		this.config.beforeAgentCallback = callback;
 		return this;
 	}
@@ -308,7 +324,22 @@ export class AgentBuilder {
 	 * @returns This builder instance for chaining
 	 */
 	withAfterAgentCallback(callback: AfterAgentCallback): this {
+		this.warnIfLocked("withAfterAgentCallback");
 		this.config.afterAgentCallback = callback;
+		return this;
+	}
+
+	/**
+	 * Provide an already constructed agent instance. Further definition-mutating calls
+	 * (model/tools/instruction/etc.) will be ignored with a dev warning.
+	 */
+	withAgent(agent: BaseAgent): this {
+		this.existingAgent = agent;
+		this.definitionLocked = true;
+		// Sync name if default
+		if (this.config.name === "default_agent" && agent.name) {
+			this.config.name = agent.name;
+		}
 		return this;
 	}
 
@@ -318,6 +349,7 @@ export class AgentBuilder {
 	 * @returns This builder instance for chaining
 	 */
 	asSequential(subAgents: BaseAgent[]): this {
+		this.warnIfLocked("asSequential");
 		this.agentType = "sequential";
 		this.config.subAgents = subAgents;
 		return this;
@@ -329,6 +361,7 @@ export class AgentBuilder {
 	 * @returns This builder instance for chaining
 	 */
 	asParallel(subAgents: BaseAgent[]): this {
+		this.warnIfLocked("asParallel");
 		this.agentType = "parallel";
 		this.config.subAgents = subAgents;
 		return this;
@@ -341,6 +374,7 @@ export class AgentBuilder {
 	 * @returns This builder instance for chaining
 	 */
 	asLoop(subAgents: BaseAgent[], maxIterations = 3): this {
+		this.warnIfLocked("asLoop");
 		this.agentType = "loop";
 		this.config.subAgents = subAgents;
 		this.config.maxIterations = maxIterations;
@@ -354,6 +388,7 @@ export class AgentBuilder {
 	 * @returns This builder instance for chaining
 	 */
 	asLangGraph(nodes: LangGraphNode[], rootNode: string): this {
+		this.warnIfLocked("asLangGraph");
 		this.agentType = "langgraph";
 		this.config.nodes = nodes;
 		this.config.rootNode = rootNode;
@@ -507,6 +542,7 @@ export class AgentBuilder {
 	 * @returns Created agent instance
 	 */
 	private createAgent(): BaseAgent {
+		if (this.existingAgent) return this.existingAgent;
 		switch (this.agentType) {
 			case "llm": {
 				if (!this.config.model) {
@@ -689,5 +725,22 @@ export class AgentBuilder {
 				return baseRunner.runAsync(params);
 			},
 		};
+	}
+
+	/**
+	 * Warn (once per method) if the definition has been locked by withAgent().
+	 */
+	private warnIfLocked(method: string): void {
+		if (!this.definitionLocked) return;
+		if (this.warnedMethods.has(method)) return;
+		this.warnedMethods.add(method);
+		if (process.env.NODE_ENV !== "production") {
+			const msg = `AgentBuilder: attempted to call ${method} after withAgent(); ignoring. (Wrap the agent first OR configure before withAgent).`;
+			if (this.logger && typeof this.logger.warn === "function") {
+				this.logger.warn(msg);
+			} else {
+				console.warn(msg);
+			}
+		}
 	}
 }
