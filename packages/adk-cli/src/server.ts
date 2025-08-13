@@ -483,7 +483,7 @@ export class ADKServer {
 	public async stop(): Promise<void> {
 		return new Promise((resolve) => {
 			// Stop all running agents
-			for (const [agentPath] of Array.from(this.loadedAgents.entries())) {
+			for (const [agentPath] of this.loadedAgents.entries()) {
 				this.stopAgent(agentPath);
 			}
 
@@ -516,107 +516,11 @@ export class ADKServer {
 	}
 
 	// Minimal resolution logic for agent exports: supports
-	/**
-	 * Helper to probe named exports for agent candidates
-	 */
-	private async probeNamedExports(
-		mod: { [key: string]: unknown },
-		utils: {
-			invokeMaybe: (fn: any) => Promise<any>;
-			isLikelyAgentInstance: (obj: any) => boolean;
-			isPrimitive: (v: any) => boolean;
-		},
-	): Promise<unknown> {
-		const { invokeMaybe, isLikelyAgentInstance, isPrimitive } = utils;
-		const candidate = mod;
-
-		for (const [key, value] of Object.entries(mod)) {
-			if (key === "default") continue;
-			const keyLower = key.toLowerCase();
-			if (isPrimitive(value)) continue; // skip obvious non-candidates
-
-			// Direct agent instance
-			if (isLikelyAgentInstance(value)) {
-				return value;
-			}
-
-			// Static container object: export const container = { agent: <LlmAgent> }
-			if (
-				value &&
-				typeof value === "object" &&
-				(value as any).agent &&
-				isLikelyAgentInstance((value as any).agent)
-			) {
-				return (value as any).agent;
-			}
-
-			// Function that might create an agent
-			if (
-				typeof value === "function" &&
-				(/(agent|build|create)/i.test(keyLower) ||
-					(value.name &&
-						/(agent|build|create)/i.test(value.name.toLowerCase())))
-			) {
-				const agentFromFunction = await this.tryInvokeAgentFunction(
-					value,
-					key,
-					utils,
-				);
-				if (agentFromFunction) {
-					return agentFromFunction;
-				}
-			}
-		}
-
-		return candidate;
-	}
-
-	/**
-	 * Helper to safely invoke a potential agent factory function
-	 */
-	private async tryInvokeAgentFunction(
-		value: any,
-		key: string,
-		utils: {
-			invokeMaybe: (fn: any) => Promise<any>;
-			isLikelyAgentInstance: (obj: any) => boolean;
-		},
-	): Promise<unknown | null> {
-		const { invokeMaybe, isLikelyAgentInstance } = utils;
-
-		try {
-			const maybe = await invokeMaybe(value);
-			if (isLikelyAgentInstance(maybe)) {
-				return maybe;
-			}
-			if (
-				maybe &&
-				typeof maybe === "object" &&
-				maybe.agent &&
-				isLikelyAgentInstance(maybe.agent)
-			) {
-				return maybe.agent;
-			}
-		} catch (e) {
-			// Log error for debugging but continue trying other exports
-			console.debug(
-				`Failed to invoke export "${key}" as agent candidate:`,
-				e instanceof Error ? e.message : e,
-			);
-		}
-
-		return null;
-	}
-
 	// 1) export const agent = new LlmAgent(...)
 	// 2) export function agent() { return new LlmAgent(...) }
 	// 3) export async function agent() { return new LlmAgent(...) }
 	// 4) default export (object or function) returning or containing .agent
-	private async resolveAgentExport(mod: {
-		agent?: unknown;
-		default?: any;
-		[key: string]: unknown;
-	}): Promise<{ agent: LlmAgent }> {
+	private async resolveAgentExport(mod: any): Promise<{ agent: LlmAgent }> {
 		let candidate = mod?.agent ?? mod?.default?.agent ?? mod?.default ?? mod;
 
 		const isLikelyAgentInstance = (obj: any) =>
@@ -638,11 +542,52 @@ export class ADKServer {
 			(!isLikelyAgentInstance(candidate) && isPrimitive(candidate)) ||
 			(!isLikelyAgentInstance(candidate) && candidate && candidate === mod)
 		) {
-			candidate = await this.probeNamedExports(mod, {
-				invokeMaybe,
-				isLikelyAgentInstance,
-				isPrimitive,
-			});
+			candidate = mod; // ensure we iterate full namespace
+			for (const [key, value] of Object.entries(mod)) {
+				if (key === "default") continue;
+				// Prefer keys containing 'agent'
+				const keyLower = key.toLowerCase();
+				if (isPrimitive(value)) continue; // skip obvious non-candidates
+				if (isLikelyAgentInstance(value)) {
+					candidate = value;
+					break;
+				}
+				// Handle static container object: export const container = { agent: <LlmAgent> }
+				if (
+					value &&
+					typeof value === "object" &&
+					(value as any).agent &&
+					isLikelyAgentInstance((value as any).agent)
+				) {
+					candidate = (value as any).agent;
+					break;
+				}
+				if (
+					typeof value === "function" &&
+					(/(agent|build|create)/i.test(keyLower) ||
+						(value.name &&
+							/(agent|build|create)/i.test(value.name.toLowerCase())))
+				) {
+					try {
+						const maybe = await invokeMaybe(value);
+						if (isLikelyAgentInstance(maybe)) {
+							candidate = maybe;
+							break;
+						}
+						if (
+							maybe &&
+							typeof maybe === "object" &&
+							maybe.agent &&
+							isLikelyAgentInstance(maybe.agent)
+						) {
+							candidate = maybe.agent;
+							break;
+						}
+					} catch (e) {
+						// Swallow and continue trying other exports
+					}
+				}
+			}
 		}
 
 		// If candidate is a function (sync or async), invoke it
