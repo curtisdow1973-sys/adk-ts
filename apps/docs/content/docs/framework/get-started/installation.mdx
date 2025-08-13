@@ -19,25 +19,19 @@ import { Callout } from 'fumadocs-ui/components/callout';
 
 The fastest way to get started is using our CLI tool to create a new project:
 
-<Tabs items={['npm', 'yarn', 'pnpm']}>
-  <Tab value="npm">
-    ```bash
-    npx create-adk-project
-    ```
-  </Tab>
 
-  <Tab value="yarn">
-    ```bash
-    yarn create adk-project
-    ```
-  </Tab>
+To create a new project, use the ADK CLI:
 
-  <Tab value="pnpm">
-    ```bash
-    pnpm create adk-project
-    ```
-  </Tab>
-</Tabs>
+```bash
+npx @adk/cli new
+```
+
+Or, after global install:
+
+```bash
+npm install -g @adk/cli
+adk new
+```
 
 This will:
 - Create a new project with the ADK Agent Starter template
@@ -242,7 +236,7 @@ If you encounter issues:
 
 Now that you have ADK TypeScript installed, you're ready to:
 
-- **New to ADK?** Use `npx create-adk-project` for a complete starter template
+- **New to ADK?** Run `npx @adk/cli new` (or install globally and use `adk new`) for a complete starter template
 - [Create your first agent](/docs/framework/get-started/quickstart) - Build a simple agent in minutes
 - <a href="https://github.com/IQAIcom/adk-ts/tree/main/apps/examples" target="_blank" rel="noopener noreferrer">Explore examples</a> - See real working code
 - [Learn about agents](/docs/framework/agents) - Understand the core concepts

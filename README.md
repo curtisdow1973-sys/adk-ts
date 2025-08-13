@@ -42,7 +42,8 @@ You can get started in two ways:
 - **Create a new project with our CLI:**
 
   ```bash
-  npx create-adk-project
+  npm install -g @adk/cli
+  adk
   ```
 
 - **Add ADK-TS to an existing project:**
