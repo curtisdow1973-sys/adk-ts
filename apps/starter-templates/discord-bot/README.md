@@ -42,8 +42,26 @@ Before you begin, you'll need:
    - Customize the bot personality in `src/index.ts`
 
 4. **Development**
+   
+   **Option 1: Traditional Development**
    ```bash
    pnpm dev
+   ```
+   
+   **Option 2: ADK CLI (Recommended for Testing)**
+   
+   First, install the ADK CLI globally:
+   ```bash
+   npm install -g @iqai/adk-cli
+   ```
+   
+   Then use either:
+   ```bash
+   # Interactive CLI chat with your agents
+   adk run
+   
+   # Web interface for easy testing
+   adk web
    ```
 
 5. **Production**
@@ -158,17 +176,29 @@ The bot uses SQLite for persistent storage:
 
 ### Commands
 
+**Traditional Development:**
 - `pnpm dev` - Start development with hot reload
 - `pnpm build` - Build for production
 - `pnpm start` - Start production build
 - `pnpm lint` - Check code formatting
 - `pnpm lint:fix` - Fix formatting issues
 
+**ADK CLI Commands:**
+- `adk run` - Interactive CLI chat with your agents
+- `adk web` - Web interface for testing agents
+- Requires: `npm install -g @iqai/adk-cli`
+
 ### File Structure
 
 ```
 src/
+├── agents/           # Agent definitions (compatible with ADK CLI)
+│   ├── agent.ts      # Root agent configuration
+│   ├── discord-agent/# Discord-specific agent and tools
+│   ├── joke-agent/   # Joke-telling agent
+│   └── weather-agent/# Weather information agent
 ├── index.ts          # Main bot initialization and configuration
+├── env.ts            # Environment variable validation
 └── data/             # SQLite database storage (auto-created)
     └── discord_bot.db
 ```
@@ -200,11 +230,18 @@ docker run --env-file .env discord-bot
 
 ## Testing Your Bot
 
+### Option 1: Discord Integration Testing
 1. **Start the bot** with `pnpm dev`
 2. **Go to your Discord server** where you invited the bot
 3. **Mention the bot** with a message like "@yourbot Hello!"
 4. **Check the logs** to see the bot processing messages
 5. **Verify responses** are working correctly
+
+### Option 2: Local Testing with ADK CLI
+1. **Install ADK CLI**: `npm install -g @iqai/adk-cli`
+2. **Test via CLI**: `adk run` - Interactive command-line chat
+3. **Test via Web**: `adk web` - Opens web interface in your browser
+4. **Perfect for**: Quick testing, development, and demonstrating your agents
 
 ## Discord Features
 
