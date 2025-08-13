@@ -528,7 +528,7 @@ export class ADKServer {
 		},
 	): Promise<unknown> {
 		const { invokeMaybe, isLikelyAgentInstance, isPrimitive } = utils;
-		let candidate = mod;
+		const candidate = mod;
 
 		for (const [key, value] of Object.entries(mod)) {
 			if (key === "default") continue;
@@ -554,9 +554,14 @@ export class ADKServer {
 			if (
 				typeof value === "function" &&
 				(/(agent|build|create)/i.test(keyLower) ||
-					(value.name && /(agent|build|create)/i.test(value.name.toLowerCase())))
+					(value.name &&
+						/(agent|build|create)/i.test(value.name.toLowerCase())))
 			) {
-				const agentFromFunction = await this.tryInvokeAgentFunction(value, key, utils);
+				const agentFromFunction = await this.tryInvokeAgentFunction(
+					value,
+					key,
+					utils,
+				);
 				if (agentFromFunction) {
 					return agentFromFunction;
 				}
@@ -570,7 +575,7 @@ export class ADKServer {
 	 * Helper to safely invoke a potential agent factory function
 	 */
 	private async tryInvokeAgentFunction(
-		value: Function,
+		value: any,
 		key: string,
 		utils: {
 			invokeMaybe: (fn: any) => Promise<any>;
@@ -607,9 +612,11 @@ export class ADKServer {
 	// 2) export function agent() { return new LlmAgent(...) }
 	// 3) export async function agent() { return new LlmAgent(...) }
 	// 4) default export (object or function) returning or containing .agent
-	private async resolveAgentExport(
-		mod: { agent?: unknown; default?: unknown; [key: string]: unknown },
-	): Promise<{ agent: LlmAgent }> {
+	private async resolveAgentExport(mod: {
+		agent?: unknown;
+		default?: any;
+		[key: string]: unknown;
+	}): Promise<{ agent: LlmAgent }> {
 		let candidate = mod?.agent ?? mod?.default?.agent ?? mod?.default ?? mod;
 
 		const isLikelyAgentInstance = (obj: any) =>
