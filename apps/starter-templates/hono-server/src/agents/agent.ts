@@ -2,6 +2,15 @@ import { AgentBuilder } from "@iqai/adk";
 import { getJokeAgent } from "./joke-agent/agent";
 import { getWeatherAgent } from "./weather-agent/agent";
 
+/**
+ * Creates and configures the root agent for the Hono server.
+ *
+ * This agent serves as the main entry point for all requests coming through the REST API.
+ * It orchestrates sub-agents specialized in different domains (jokes and weather) and
+ * routes incoming user requests to the most appropriate sub-agent based on the content.
+ *
+ * @returns The fully constructed root agent instance ready to handle HTTP requests
+ */
 export const getRootAgent = () => {
 	const jokeAgent = getJokeAgent();
 	const weatherAgent = getWeatherAgent();

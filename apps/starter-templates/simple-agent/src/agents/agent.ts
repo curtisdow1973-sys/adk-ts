@@ -2,6 +2,16 @@ import { AgentBuilder } from "@iqai/adk";
 import { getJokeAgent } from "./joke-agent/agent";
 import { getWeatherAgent } from "./weather-agent/agent";
 
+/**
+ * Creates and configures the root agent for the simple agent demonstration.
+ *
+ * This agent serves as the main orchestrator that routes user requests to
+ * specialized sub-agents based on the request type. It demonstrates the
+ * basic ADK pattern of using a root agent to coordinate multiple specialized
+ * agents for different domains (jokes and weather).
+ *
+ * @returns The fully constructed root agent instance ready to process requests
+ */
 export const getRootAgent = () => {
 	const jokeAgent = getJokeAgent();
 	const weatherAgent = getWeatherAgent();

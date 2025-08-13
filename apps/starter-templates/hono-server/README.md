@@ -27,8 +27,27 @@ A web server template using the [Hono](https://hono.dev/) framework that exposes
    ```
 
 3. **Development**
+
+   **Option 1: Traditional Web Server**
    ```bash
    pnpm dev
+   ```
+   Server runs on http://localhost:3000
+   
+   **Option 2: ADK CLI (Recommended for Testing)**
+   
+   First, install the ADK CLI globally:
+   ```bash
+   npm install -g @iqai/adk-cli
+   ```
+   
+   Then use either:
+   ```bash
+   # Interactive CLI chat with your agents
+   adk run
+   
+   # Web interface for easy testing
+   adk web
    ```
 
 4. **Production build**
@@ -156,11 +175,27 @@ const response = await AgentBuilder
 
 ## Development
 
+**Traditional Web Server:**
 - `pnpm dev` - Start development server with hot reload
-- `pnpm build` - Build for production
+- `pnpm build` - Build for production  
 - `pnpm start` - Start production server
 - `pnpm lint` - Check code formatting
 - `pnpm lint:fix` - Fix code formatting issues
+
+**ADK CLI Commands:**
+- `adk run` - Interactive CLI chat with your agents
+- `adk web` - Web interface for testing agents
+- Requires: `npm install -g @iqai/adk-cli`
+
+## Testing Your Agents
+
+**Option 1: Test via REST API**
+Use the web server endpoints to interact with your agents through HTTP requests.
+
+**Option 2: Test via ADK CLI**
+- `adk run` - Command-line interface for quick agent testing
+- `adk web` - Browser-based interface for easy agent interaction
+- Perfect for development and demonstrating agent capabilities
 
 ## Deployment
 

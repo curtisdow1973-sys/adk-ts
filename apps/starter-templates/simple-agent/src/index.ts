@@ -3,6 +3,14 @@ import { getRootAgent } from "./agents/agent";
 
 dotenv.config();
 
+/**
+ * Main function demonstrating basic ADK agent usage.
+ *
+ * Creates a root agent with sub-agents for weather and jokes,
+ * then processes a series of sample questions to showcase
+ * the agent's capabilities in routing requests to appropriate
+ * specialized sub-agents.
+ */
 async function main() {
 	const questions = ["how is weather in london?", "tell me a random joke"];
 
