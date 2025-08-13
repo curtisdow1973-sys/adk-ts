@@ -1,4 +1,20 @@
-# ADK Telegram Bot
+
+<div align="center">
+
+<img src="https://files.catbox.moe/vumztw.png" alt="ADK TypeScript Logo" width="100" />
+
+<br/>
+
+
+# ADK Telegram Bot Starter
+
+**A starter template powered by ADK (AI Development Kit) that enables you to create intelligent, conversational bots for Telegram.**
+
+_Persistent Memory • Telegram Integration • TypeScript_
+
+---
+
+</div>
 
 A Telegram bot starter template powered by ADK (AI Development Kit) that enables you to create intelligent, conversational bots for Telegram. This template provides a solid foundation for building AI-powered Telegram bots with persistent conversation memory.
 

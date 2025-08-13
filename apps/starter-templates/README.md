@@ -1,3 +1,4 @@
+
 <div align="center">
 
 <img src="https://files.catbox.moe/vumztw.png" alt="ADK TypeScript Logo" width="100" />
@@ -8,7 +9,7 @@
 
 **Ready-to-use project templates for building AI agents with the Agent Development Kit (ADK) for TypeScript**
 
-*Quick Start • Multiple Frameworks • Production Ready*
+_Quick Start • Multiple Frameworks • Production Ready_
 
 ---
 

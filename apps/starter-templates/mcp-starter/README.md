@@ -1,4 +1,20 @@
+
+<div align="center">
+
+<img src="https://files.catbox.moe/vumztw.png" alt="ADK TypeScript Logo" width="100" />
+
+<br/>
+
+
 # MCP Server Starter Template
+
+**A minimal starter template for building Model Context Protocol (MCP) servers using TypeScript and FastMCP.**
+
+_MCP • FastMCP • TypeScript_
+
+---
+
+</div>
 
 A minimal starter template for building Model Context Protocol (MCP) servers using TypeScript and FastMCP.
 

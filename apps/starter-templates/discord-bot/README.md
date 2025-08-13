@@ -1,4 +1,20 @@
-# ADK Discord Bot
+
+<div align="center">
+
+<img src="https://files.catbox.moe/vumztw.png" alt="ADK TypeScript Logo" width="100" />
+
+<br/>
+
+
+# ADK Discord Bot Starter
+
+**A starter template powered by ADK (AI Development Kit) that enables you to create intelligent, conversational bots for Discord servers.**
+
+_Persistent Memory • Discord Integration • TypeScript_
+
+---
+
+</div>
 
 A Discord bot starter template powered by ADK (AI Development Kit) that enables you to create intelligent, conversational bots for Discord servers. This template provides a solid foundation for building AI-powered Discord bots with persistent conversation memory.
 

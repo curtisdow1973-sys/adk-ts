@@ -1,4 +1,20 @@
+
+<div align="center">
+
+<img src="https://files.catbox.moe/vumztw.png" alt="ADK TypeScript Logo" width="100" />
+
+<br/>
+
+
 # 🤖 ADK Agent Starter
+
+**A starter template to start building your own agent with `@iqai/adk` library.**
+
+_Minimal • Extensible • TypeScript_
+
+---
+
+</div>
 
 This is a starter template to start building your own agent with `@iqai/adk` library. 
 

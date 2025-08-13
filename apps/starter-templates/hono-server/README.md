@@ -1,4 +1,20 @@
-# ADK Hono Server
+
+<div align="center">
+
+<img src="https://files.catbox.moe/vumztw.png" alt="ADK TypeScript Logo" width="100" />
+
+<br/>
+
+
+# ADK Hono Server Starter
+
+**A starter template using the [Hono](https://hono.dev/) framework that exposes AI agent functionality via REST API.**
+
+_REST API • Hono • TypeScript_
+
+---
+
+</div>
 
 A web server template using the [Hono](https://hono.dev/) framework that exposes AI agent functionality via REST API. This template demonstrates how to integrate ADK agents into a web service.
 
