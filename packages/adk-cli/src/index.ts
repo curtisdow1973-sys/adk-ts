@@ -18,7 +18,6 @@ program
 	.option(
 		"-t, --template <template>",
 		"Template to use (simple-agent, discord-bot, telegram-bot, hono-server, mcp-starter)",
-		"simple-agent",
 	)
 	.action(async (projectName, options) => {
 		try {
