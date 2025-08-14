@@ -73,175 +73,108 @@ import { Tabs, Tab } from 'fumadocs-ui/components/tabs';
 
 ## Features
 
-- Provides tools for accessing Upbit market data and trading operations
-- Supports both public market data (no authentication required) and private trading tools
-- Uses Upbit's REST API for reliable and fast cryptocurrency exchange interactions
+- Access Upbit market data and trading operations
+- Public market data tools (no authentication required)
+- Private trading tools with API key authentication
+- Real-time ticker, orderbook, and trade data
 
 ## Available Tools
 
-The server exposes the following tools that MCP clients can utilize:
+### `GET_TICKER`
 
-### Public Tools (No Authentication Required)
+Get the latest ticker information for a specific market:
 
-#### `GET_TICKER`
-Get the latest ticker information for a specific market.
+- Parameters: `market` (string)
 
-- Parameters: `market` (string) - Market identifier (e.g., "KRW-BTC")
+### `GET_ORDERBOOK`
 
-#### `GET_ORDERBOOK`
-Get the current orderbook snapshot for a market.
+Get the current orderbook snapshot for a market:
 
-- Parameters: `market` (string) - Market identifier (e.g., "KRW-BTC")
+- Parameters: `market` (string)
 
-#### `GET_TRADES`
-Get recent trades for a market.
+### `GET_TRADES`
 
-- Parameters: `market` (string) - Market identifier (e.g., "KRW-BTC")
+Get recent trades for a market:
 
-### Private Tools (Requires Authentication)
+- Parameters: `market` (string)
 
-<Callout type="warning" title="Authentication Required">
-Private tools require valid Upbit API credentials and trading to be enabled.
-</Callout>
+### `GET_ACCOUNTS`
 
-#### `GET_ACCOUNTS`
-Get account information and balances.
+Get account information and balances:
 
-- Parameters: None
+- Requires: `UPBIT_ACCESS_KEY`, `UPBIT_SECRET_KEY`, `UPBIT_ENABLE_TRADING`
 
-#### `GET_ORDERS`
-Get order history with optional filtering.
+### `GET_ORDERS`
+
+Get order history with optional filtering:
 
 - Parameters: `market` (string, optional), `state` (string, optional), `page` (number, optional), `limit` (number, optional)
+- Requires: `UPBIT_ACCESS_KEY`, `UPBIT_SECRET_KEY`, `UPBIT_ENABLE_TRADING`
 
-#### `GET_ORDER`
-Get specific order details.
+### `GET_ORDER`
+
+Get specific order details:
 
 - Parameters: `uuid` (string, optional), `identifier` (string, optional)
+- Requires: `UPBIT_ACCESS_KEY`, `UPBIT_SECRET_KEY`, `UPBIT_ENABLE_TRADING`
 
-#### `CREATE_ORDER`
-Create a new trading order.
+### `CREATE_ORDER`
 
-- Parameters: `market` (string), `side` (string), `ord_type` (string), `volume` (string, optional), `price` (string, optional)
+Create a new trading order:
 
-#### `CANCEL_ORDER`
-Cancel an existing order.
+- Parameters: `tokenContract` (string), `side` (string), `ord_type` (string), `volume` (string, optional), `price` (string, optional)
+- Requires: `UPBIT_ACCESS_KEY`, `UPBIT_SECRET_KEY`, `UPBIT_ENABLE_TRADING`
 
-- Parameters: `uuid` (string) - Order UUID to cancel
+### `CANCEL_ORDER`
+
+Cancel an existing order:
+
+- Parameters: `uuid` (string)
+- Requires: `UPBIT_ACCESS_KEY`, `UPBIT_SECRET_KEY`, `UPBIT_ENABLE_TRADING`
 
 ## Environment Variables
 
-- `UPBIT_SERVER_URL` (optional): Upbit API server URL (defaults to https://api.upbit.com)
-- `UPBIT_ACCESS_KEY` (required for private tools): Your Upbit API access key
-- `UPBIT_SECRET_KEY` (required for private tools): Your Upbit API secret key
-- `UPBIT_ENABLE_TRADING` (required for private tools): Set to "true" to enable trading functionality
-
-## Getting Upbit API Keys
-
-<Callout type="info" title="API Setup Required">
-You'll need to create and configure Upbit API keys before using private trading tools.
+<Callout type="warn" title="Security">
+Private keys are used for trading operations. Handle with care.
 </Callout>
 
-1. Create an account on [Upbit](https://upbit.com) if you don't already have one
-2. Go to the [Upbit Developer Center](https://upbit.com/service_center/open_api_guide)
-3. Create a new API key
-4. Make sure to set appropriate permissions (read, trade, withdraw as needed)
-5. Store your API keys in your environment variables
+- `UPBIT_ACCESS_KEY`: Required for private trading operations
+- `UPBIT_SECRET_KEY`: Required for private trading operations
+- `UPBIT_ENABLE_TRADING`: Set to "true" to enable trading functionality
+- `UPBIT_SERVER_URL`: Optional API server URL (defaults to https://api.upbit.com)
 
 ## Usage Examples
 
-### GET_TICKER
+### Public Market Data
 
-Get the latest ticker for Bitcoin:
+- "Get ticker for KRW-BTC market"
+- "Show me the orderbook for KRW-ETH"
+- "What are the recent trades for KRW-ADA?"
 
-```json
-{
-  "tool_name": "GET_TICKER",
-  "arguments": {
-    "market": "KRW-BTC"
-  }
-}
-```
+### Private Trading Operations
 
-### GET_ORDERBOOK
+- "Show my Upbit account balances"
+- "Get my order history for KRW-BTC"
+- "Create a buy order for 0.001 BTC at 50,000,000 KRW"
+- "Cancel order with UUID abc123..."
 
-Get the current orderbook for Ethereum:
+## Response Format
 
-```json
-{
-  "tool_name": "GET_ORDERBOOK",
-  "arguments": {
-    "market": "KRW-ETH"
-  }
-}
-```
+Actions return **structured responses** including:
 
-### CREATE_ORDER
-
-Create a buy order for Bitcoin:
-
-```json
-{
-  "tool_name": "CREATE_ORDER",
-  "arguments": {
-    "market": "KRW-BTC",
-    "side": "bid",
-    "ord_type": "limit",
-    "price": "50000000",
-    "volume": "0.001"
-  }
-}
-```
-
-## Response Examples
-
-All tool outputs are returned as JSON strings for easy parsing and display.
-
-### GET_TICKER Response
-
-```json
-{
-  "success": true,
-  "result": "[{\"market\":\"KRW-BTC\",\"trade_date\":\"20241215\",\"trade_time\":\"123456\",\"trade_price\":50000000,\"trade_volume\":0.001,\"prev_closing_price\":49500000,\"change\":\"RISE\",\"change_price\":500000,\"high_price\":51000000,\"low_price\":49000000,\"acc_trade_price\":2500000000000,\"acc_trade_volume\":50.123}]"
-}
-```
+✔ **Market data with prices and volumes** 💹
+✔ **Account balances and positions** 💰
+✔ **Order status and transaction details** 📋
+✔ **Error messages when applicable** ⚠️
 
 ## Error Handling
 
-The tools will return an error message in the `result` field if an error occurs. Common errors include:
+<Callout type="warn" title="Error Scenarios">
+The server handles various error scenarios gracefully.
+</Callout>
 
-- **Missing API keys:** Ensure the required environment variables are set for private tools
-- **Invalid market:** Double-check the market identifier format (e.g., "KRW-BTC")
-- **Trading disabled:** Set `UPBIT_ENABLE_TRADING=true` to enable trading functionality
-- **API rate limits:** Upbit has rate limits that may affect frequent requests
-
-## Technical Details
-
-### Requirements
-
-- Node.js 18+
-- pnpm 8+
-
-### Installation
-
-```bash
-pnpm install
-```
-
-### Build & Run
-
-```bash
-pnpm run build
-pnpm run start
-```
-
-For testing with MCP Inspector:
-
-```bash
-pnpm run build
-npx @modelcontextprotocol/inspector node dist/index.js
-```
-
-### License
-
-MIT
+🚨 **Missing API credentials**
+💸 **Invalid market identifiers**
+🔄 **Trading disabled**
+🌐 **API rate limits**
+🛑 **Insufficient balances**
