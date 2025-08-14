@@ -47,10 +47,10 @@ echo ".env" > .gitignore
 Replace `your_google_api_key_here` with your actual API key from [Google AI Studio](https://aistudio.google.com/app/apikey).
 </Callout>
 
-Create `agent.ts`:
+Create `src/agents/agent.ts`:
 
 ```typescript
-// agent.ts
+// src/agents/agent.ts
 import { AgentBuilder } from "@iqai/adk";
 
 /**
@@ -105,8 +105,8 @@ npx @iqai/adk-cli web
 If you want to run the agent in a script, create `main.ts`:
 
 ```typescript
-// main.ts
-import { agent } from "./agent";
+// src/main.ts
+import { agent } from "./agents/agent";
 
 async function main() {
   const { runner } = await agent();
@@ -120,7 +120,7 @@ main().catch(console.error);
 Run it with:
 
 ```bash
-npx tsx main.ts
+npx tsx src/main.ts
 ```
 
 ---
