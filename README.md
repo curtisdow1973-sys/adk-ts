@@ -42,7 +42,7 @@ You can get started in two ways:
 - **Create a new project with our CLI:**
 
   ```bash
-  npm install -g @adk/cli
+  npm install -g @iqai/adk-cli
   adk
   ```
 

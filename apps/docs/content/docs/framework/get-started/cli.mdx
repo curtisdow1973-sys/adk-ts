@@ -46,6 +46,58 @@ adk new my-agent --template simple-agent
 
 ---
 
+
+## How Agent Discovery Works
+
+The ADK CLI and web UI will automatically discover all agents in your project that are exported in a supported format. This enables you to quickly iterate and chat with any agent, whether via the CLI or the web interface.
+
+
+
+### Supported Agent Exports
+
+Each `agent.ts` file should export one of the following:
+
+- An `LlmAgent` instance (default or named export)
+- A `BuiltAgent` object (the result of `await AgentBuilder.build()`, recommended for root/supervisor agents that need to be run directly)
+- A function (sync or async) returning an `LlmAgent` or `BuiltAgent`
+
+Example:
+```typescript
+// For sub-agents or workflow agents (most agents):
+import { LlmAgent } from "@iqai/adk";
+
+export default new LlmAgent({
+	name: "my_sub_agent",
+	model: "gemini-2.5-flash",
+	instruction: "You are a helpful assistant."
+});
+
+// For root/supervisor agents (the entry point for CLI/web UI):
+import { AgentBuilder } from "@iqai/adk";
+
+export async function agent() {
+	return await AgentBuilder
+		.create("my_root_agent")
+		.withModel("gemini-2.5-flash")
+		.withInstruction("You are a helpful supervisor agent.")
+		.build();
+}
+```
+
+> **Tip:** Use `AgentBuilder` and export the result of `.build()` (or a function returning it) for your root/supervisor agent that will be run directly by the CLI or web UI. For sub-agents or workflow components, export an `LlmAgent` or similar agent class directly.
+
+You can organize your agents in folders, e.g.:
+```
+agents/
+	main_agent/agent.ts
+	main_agent/sub_agents/sub_agent1/agent.ts
+	main_agent/sub_agents/sub_agent2/agent.ts
+```
+
+All such agents will be listed for selection in `adk run` and available in the web UI via `adk web`.
+
+---
+
 ## `adk run`
 
 Run agents with intelligent discovery and interactive chat interface.
@@ -118,6 +170,10 @@ adk run
 # 4. Launch the web interface (in another terminal)
 adk web --local
 ```
+
+<Callout type="info" title="Agent Export Requirements">
+For the CLI and web UI to recognize your agent, make sure to export an `LlmAgent`, `BuiltAgent`, or a function (sync/async) returning one of these from your `agent.ts` file. See the section above for details.
+</Callout>
 
 <Callout type="info" title="More Info">
 See the [full CLI README](https://github.com/IQAIcom/adk-ts/blob/main/packages/adk-cli/README.md) for advanced usage and troubleshooting.
