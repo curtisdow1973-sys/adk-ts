@@ -15,45 +15,30 @@ import { Callout } from 'fumadocs-ui/components/callout';
 - **TypeScript**: v5.3 or higher (optional but recommended)
 </Callout>
 
-## Quick Start with CLI
+## Recommended: CLI Installation
 
-The fastest way to get started is using our CLI tool to create a new project:
-
-
-To create a new project, use the ADK CLI:
+The fastest way to get started is using our CLI tool:
 
 ```bash
 npx @iqai/adk-cli new
 ```
 
-Or, after global install:
+Or install globally:
 
 ```bash
 npm install -g @iqai/adk-cli
 adk new
 ```
 
-This will:
-- Create a new project with the ADK Agent Starter template
-- Set up TypeScript configuration
-- Install all necessary dependencies
-- Provide example code to get you started
+This creates a complete project with examples, TypeScript configuration, and all dependencies.
 
-<Callout type="info" title="What's Included">
-The CLI creates a complete project with:
-- Pre-configured TypeScript setup
-- Example agent implementations
-- Environment configuration template
-- Development scripts and tooling
+<Callout type="info" title="Ready to Build?">
+After installation, head to the [Quickstart Guide](/docs/framework/get-started/quickstart) to create your first agent and learn the fundamentals.
 </Callout>
 
-## Manual Installation
+## Add to Existing Project
 
-If you prefer to add ADK to an existing project or want more control over the setup:
-
-<Steps>
-
-### Install the Package
+To add ADK to an existing TypeScript project:
 
 <Tabs items={['npm', 'yarn', 'pnpm']}>
   <Tab value="npm">
@@ -75,136 +60,25 @@ If you prefer to add ADK to an existing project or want more control over the se
   </Tab>
 </Tabs>
 
-### Set Up Environment Variables
+<Callout type="info" title="Complete Setup Guide">
+For step-by-step project setup instructions, environment configuration, and your first agent, see the [Quickstart Guide](/docs/framework/get-started/quickstart).
+</Callout>
 
-Create a `.env` file in your project root:
+### Quick Test
 
-```bash
-# Optional: specify your preferred LLM model
-LLM_MODEL=gemini-2.5-flash
-
-# Add any API keys if needed for specific tools
-# GOOGLE_API_KEY=your_google_api_key_here
-```
-
-### Verify Installation
-
-Create a simple test file to verify everything is working:
+Verify the installation works:
 
 ```typescript
 import { AgentBuilder } from "@iqai/adk";
 
-async function test() {
-  try {
-    const response = await AgentBuilder
-      .withModel("gemini-2.5-flash")
-      .ask("Hello! Can you confirm the installation is working?");
+const response = await AgentBuilder
+  .withModel("gemini-2.5-flash")
+  .ask("Hello! Installation working?");
 
-    console.log("✅ Installation successful!");
-    console.log("Response:", response);
-  } catch (error) {
-    console.error("❌ Installation issue:", error);
-  }
-}
-
-test();
+console.log("✅ Response:", response);
 ```
 
-### Run the Test
 
-<Tabs items={['tsx', 'ts-node', 'compile']}>
-  <Tab value="tsx">
-    ```bash
-    npx tsx test-install.ts
-    ```
-  </Tab>
-
-  <Tab value="ts-node">
-    ```bash
-    npx ts-node test-install.ts
-    ```
-  </Tab>
-
-  <Tab value="compile">
-    ```bash
-    npx tsc test-install.ts
-    node test-install.js
-    ```
-  </Tab>
-</Tabs>
-
-</Steps>
-
-## Project Setup
-
-For a new TypeScript project, you can set up a complete environment:
-
-<Steps>
-
-### Initialize Project
-
-```bash
-mkdir my-adk-project
-cd my-adk-project
-npm init -y
-```
-
-### Install Dependencies
-
-```bash
-# Core dependencies
-npm install @iqai/adk
-
-# Development dependencies
-npm install -D typescript tsx @types/node
-
-# Optional utilities (used in examples)
-npm install dedent uuid dotenv
-npm install -D @types/uuid
-```
-
-### Configure TypeScript
-
-```json
-{
-  "compilerOptions": {
-    "target": "ES2022",
-    "module": "NodeNext",
-    "moduleResolution": "NodeNext",
-    "strict": true,
-    "esModuleInterop": true,
-    "skipLibCheck": true,
-    "forceConsistentCasingInFileNames": true,
-    "declaration": true,
-    "outDir": "./dist"
-  },
-  "include": ["src/**/*"],
-  "exclude": ["node_modules", "dist"]
-}
-```
-
-### Create Project Structure
-
-```bash
-mkdir src
-touch src/index.ts
-touch .env
-```
-
-</Steps>
-
-## Dependencies Overview
-
-ADK TypeScript has minimal dependencies to keep your project lightweight:
-
-<Callout type="info" title="Core Dependencies">
-**Required**: The ADK package includes everything needed for basic agent functionality.
-
-**Optional**: Additional packages are only needed for specific features:
-- `uuid` - For session management
-- `dedent` - For clean template strings (used in examples)
-- `dotenv` - For environment variable management
-</Callout>
 
 ## Troubleshooting
 
@@ -228,15 +102,18 @@ npx tsc --version
 
 If you encounter issues:
 
-1. **Check the examples**: Our [examples](https://github.com/IQAICOM/adk-ts/tree/main/apps/examples/src) directory contains working setups
+1. **Check the examples**: Our [examples](https://github.com/IQAIcom/adk-ts/tree/main/apps/examples/src) directory contains working setups
 2. **Review error messages**: Most installation issues are dependency-related
 3. **Open an issue**: Report bugs or compatibility issues on GitHub
 
 ## Next Steps
 
-Now that you have ADK TypeScript installed, you're ready to:
+Now that ADK is installed:
 
-- **New to ADK?** Run `npx @iqai/adk-cli new` (or install globally and use `adk new`) for a complete starter template
-- [Create your first agent](/docs/framework/get-started/quickstart) - Build a simple agent in minutes
-- <a href="https://github.com/IQAIcom/adk-ts/tree/main/apps/examples" target="_blank" rel="noopener noreferrer">Explore examples</a> - See real working code
-- [Learn about agents](/docs/framework/agents) - Understand the core concepts
+1. **[Build your first agent](/docs/framework/get-started/quickstart)** - Complete project setup and create your first agent
+2. **[Explore examples](https://github.com/IQAIcom/adk-ts/tree/main/apps/examples)** - See real working implementations
+3. **[Learn core concepts](/docs/framework/agents)** - Understand agents, tools, and workflows
+
+<Callout type="info" title="Start Here">
+Head to the **[Quickstart Guide](/docs/framework/get-started/quickstart)** for your complete setup walkthrough and first agent!
+</Callout>
