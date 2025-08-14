@@ -6,9 +6,13 @@ description: Learn how to use the ADK CLI to create, run, and manage AI agent pr
 import { Callout } from 'fumadocs-ui/components/callout';
 import { Tabs, Tab } from 'fumadocs-ui/components/tabs';
 
-# ADK CLI Reference
+<Callout type="warn" title="Experimental Feature">
+The ADK CLI is currently experimental and under active development. Features and APIs may change in future releases.
+</Callout>
+
 
 The ADK CLI (`@iqai/adk-cli`) is a powerful toolkit for creating, running, and managing AI agent projects. It provides commands for project scaffolding, running agents, launching a web interface, and starting an API server.
+
 
 <Callout type="info" title="Installation">
 Install globally with:
@@ -87,11 +91,19 @@ export async function agent() {
 > **Tip:** Use `AgentBuilder` and export the result of `.build()` (or a function returning it) for your root/supervisor agent that will be run directly by the CLI or web UI. For sub-agents or workflow components, export an `LlmAgent` or similar agent class directly.
 
 You can organize your agents in folders, e.g.:
-```
+```shell
 agents/
-	main_agent/agent.ts
-	main_agent/sub_agents/sub_agent1/agent.ts
-	main_agent/sub_agents/sub_agent2/agent.ts
+├── main_agent/
+│   ├── agent.ts         # Exports your main/root agent (see below)
+│   ├── tools.ts         # (optional) Tools for this agent
+│   └── sub_agents/
+│       ├── sub_agent1/
+│       │   ├── agent.ts     # Exports a sub-agent
+│       │   └── tools.ts
+│       └── sub_agent2/
+│           ├── agent.ts
+│           └── tools/
+│               └── customTool.ts
 ```
 
 All such agents will be listed for selection in `adk run` and available in the web UI via `adk web`.
