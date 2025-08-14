@@ -1,0 +1,124 @@
+---
+title: ADK CLI Reference
+description: Learn how to use the ADK CLI to create, run, and manage AI agent projects.
+---
+
+import { Callout } from 'fumadocs-ui/components/callout';
+import { Tabs, Tab } from 'fumadocs-ui/components/tabs';
+
+# ADK CLI Reference
+
+The ADK CLI (`@iqai/adk-cli`) is a powerful toolkit for creating, running, and managing AI agent projects. It provides commands for project scaffolding, running agents, launching a web interface, and starting an API server.
+
+<Callout type="info" title="Installation">
+Install globally with:
+
+```bash
+npm install -g @iqai/adk-cli
+```
+</Callout>
+
+## Commands Overview
+
+- **`adk new`** – Create a new ADK project from templates
+- **`adk run`** – Run agents with interactive chat or server mode
+- **`adk web`** – Launch a web interface for agent testing and management
+- **`adk serve`** – Start a standalone API server for agent management
+
+---
+
+## `adk new`
+
+Create a new ADK project from professional templates.
+
+```bash
+adk new
+# or with a specific template
+adk new my-agent --template simple-agent
+```
+
+**Available Templates:**
+- `simple-agent` – Basic agent with chat
+- `discord-bot` – Discord bot integration
+- `telegram-bot` – Telegram bot integration
+- `hono-server` – RESTful web server
+- `mcp-starter` – Model Context Protocol server
+
+---
+
+## `adk run`
+
+Run agents with intelligent discovery and interactive chat interface.
+
+```bash
+adk run
+# Run a specific agent file
+adk run path/to/agent.ts
+# Server-only mode
+adk run --server
+```
+
+- Auto-discovers agents in the current directory
+- Interactive selector if multiple agents are found
+- Supports server mode for API-only usage
+
+---
+
+## `adk web`
+
+Launch a React-based web interface for visual agent testing and management.
+
+```bash
+adk web
+# Use a specific port
+adk web --port 8080
+# Scan a custom directory
+adk web --dir ./my-agents
+```
+
+- Visual agent browser and chat
+- Live status monitoring
+- Responsive design for desktop and mobile
+
+---
+
+## `adk serve`
+
+Start a standalone API server for agent management (no chat UI).
+
+```bash
+adk serve
+# Custom host and port
+adk serve --host 0.0.0.0 --port 9000
+# Scan a specific directory
+adk serve --dir ./production-agents
+```
+
+**API Endpoints:**
+- `GET /api/agents` – List all discovered agents
+- `POST /api/agents/:id/message` – Send message to agent
+- `GET /api/agents/:id/messages` – Get conversation history
+- `GET /health` – Health check
+
+---
+
+## Example Workflow
+
+```bash
+# 1. Create a new project
+adk new my-ai-assistant --template simple-agent
+cd my-ai-assistant
+
+# 2. Install dependencies
+npm install
+
+# 3. Start development
+adk run
+
+# 4. Launch the web interface (in another terminal)
+adk web --local
+```
+
+<Callout type="info" title="More Info">
+See the [full CLI README](https://github.com/IQAIcom/adk-ts/blob/main/packages/adk-cli/README.md) for advanced usage and troubleshooting.
+</Callout>
