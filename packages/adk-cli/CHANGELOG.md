@@ -1,5 +1,11 @@
 # @iqai/adk-cli
 
+## 0.2.1
+
+### Patch Changes
+
+- 8bf5d5d: Fixes template selection not working in adk new command
+
 ## 0.2.0
 
 ### Minor Changes
