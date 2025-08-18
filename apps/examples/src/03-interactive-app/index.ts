@@ -310,7 +310,8 @@ async function main() {
 		.withDescription(
 			"A smart todo list assistant with comprehensive task management",
 		)
-		.withInstruction(dedent`
+		.withInstruction(
+			dedent`
 			You are a friendly and efficient todo list assistant. Help users manage their tasks effectively.
 
 			Key capabilities:
@@ -329,7 +330,8 @@ async function main() {
 			- Use 1-based indexing when talking to users about todo IDs
 			- Be helpful with filtering and organization suggestions
 			- Celebrate productivity wins and provide gentle motivation
-		`)
+		`,
+		)
 		.withTools(
 			addTodoTool,
 			viewTodosTool,
@@ -344,8 +346,10 @@ async function main() {
 	// Start interactive session
 	intro("📝 Todo Assistant");
 
-	const initialStats = await runner.ask("Show me my current todos and stats");
-	console.log(`${initialStats}\n`);
+	const initialQuery = "Show me my current todos and stats";
+	console.log(`\n👤 User:  ${initialQuery}`);
+	const initialStats = await runner.ask(initialQuery);
+	console.log(`🤖 Agent: ${initialStats}\n`);
 
 	// Interactive loop
 	while (true) {
@@ -366,9 +370,9 @@ async function main() {
 		}
 
 		try {
-			console.log("\n🤖 Todo Assistant:");
+			console.log(`\n👤 User:  ${userInput}`);
 			const response = await runner.ask(userInput);
-			console.log(response);
+			console.log(`🤖 Agent: ${response}`);
 
 			const updatedSession = await sessionService.getSession(
 				session.appName,

@@ -60,8 +60,10 @@ async function demonstrateAiSdkIntegration() {
 		.withTools(weatherTool)
 		.build();
 
-	const response = await runner.ask("Get the weather for Tokyo");
-	console.log(`Response: ${response}\n`);
+	const weatherQuery = "Get the weather for Tokyo";
+	console.log(`👤 User:  ${weatherQuery}`);
+	const response = await runner.ask(weatherQuery);
+	console.log(`🤖 Agent: ${response}\n`);
 }
 
 async function demonstrateHttpIntegration() {
@@ -74,10 +76,11 @@ async function demonstrateHttpIntegration() {
 		.withTools(new HttpRequestTool())
 		.build();
 
-	const response = await runner.ask(
-		"Make a GET request to https://httpbin.org/json and show what you received.",
-	);
-	console.log(`Response: ${response}\n`);
+	const httpQuery =
+		"Make a GET request to https://httpbin.org/json and show what you received.";
+	console.log(`👤 User:  ${httpQuery}`);
+	const response = await runner.ask(httpQuery);
+	console.log(`🤖 Agent: ${response}\n`);
 }
 
 async function demonstrateFileSystemIntegration() {
@@ -92,10 +95,11 @@ async function demonstrateFileSystemIntegration() {
 		.withTools(new FileOperationsTool({ basePath: tempDir }))
 		.build();
 
-	const response = await runner.ask(
-		"Create a simple project: make a src directory, add index.html and styles.css files with basic content, then list the structure.",
-	);
-	console.log(`Response: ${response}\n`);
+	const fileQuery =
+		"Create a simple project: make a src directory, add index.html and styles.css files with basic content, then list the structure.";
+	console.log(`👤 User:  ${fileQuery}`);
+	const response = await runner.ask(fileQuery);
+	console.log(`🤖 Agent: ${response}\n`);
 }
 
 async function demonstrateCompositeIntegration() {
@@ -116,10 +120,11 @@ async function demonstrateCompositeIntegration() {
 		)
 		.build();
 
-	const response = await runner.ask(
-		"Get weather for London and Tokyo, fetch a UUID from httpbin.org/uuid, then save a weather report as both JSON and markdown files.",
-	);
-	console.log(`Response: ${response}\n`);
+	const compositeQuery =
+		"Get weather for London and Tokyo, fetch a UUID from httpbin.org/uuid, then save a weather report as both JSON and markdown files.";
+	console.log(`👤 User:  ${compositeQuery}`);
+	const response = await runner.ask(compositeQuery);
+	console.log(`🤖 Agent: ${response}\n`);
 }
 
 async function main() {

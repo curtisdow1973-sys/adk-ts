@@ -143,9 +143,10 @@ async function demonstrateOutputKeys() {
 	console.log("🍽️ Restaurant order processing:");
 	const orderRequest =
 		"I'd like to order something vegetarian, not too spicy, around $20. Maybe a salad or pasta?";
+	console.log(`👤 User:  ${orderRequest}`);
 
 	const finalOrder = await runner.ask(orderRequest);
-	console.log(finalOrder);
+	console.log(`🤖 Agent: ${finalOrder}`);
 }
 
 async function demonstrateSharedMemory() {
@@ -191,24 +192,28 @@ async function demonstrateSharedMemory() {
 	);
 
 	console.log("📚 Alice's favorite book:");
-	const aliceResponse1 = await alice.ask("What's your favorite book and why?");
-	console.log(`Alice: ${aliceResponse1}\n`);
+	const aliceQuery1 = "What's your favorite book and why?";
+	console.log(`👤 User:  ${aliceQuery1}`);
+	const aliceResponse1 = await alice.ask(aliceQuery1);
+	console.log(`🤖 Alice: ${aliceResponse1}\n`);
 
 	console.log("🎬 Bob's favorite movie:");
-	const bobResponse1 = await bob.ask("What's your favorite movie and why?");
-	console.log(`Bob: ${bobResponse1}\n`);
+	const bobQuery1 = "What's your favorite movie and why?";
+	console.log(`👤 User:  ${bobQuery1}`);
+	const bobResponse1 = await bob.ask(bobQuery1);
+	console.log(`🤖 Bob: ${bobResponse1}\n`);
 
 	console.log("🤝 Alice recalls Bob's movie:");
-	const aliceResponse2 = await alice.ask(
-		"What did Bob say was his favorite movie?",
-	);
-	console.log(`Alice: ${aliceResponse2}\n`);
+	const aliceQuery2 = "What did Bob say was his favorite movie?";
+	console.log(`👤 User:  ${aliceQuery2}`);
+	const aliceResponse2 = await alice.ask(aliceQuery2);
+	console.log(`🤖 Alice: ${aliceResponse2}\n`);
 
 	console.log("🤝 Bob recalls Alice's book:");
-	const bobResponse2 = await bob.ask(
-		"What did Alice say was her favorite book?",
-	);
-	console.log(`Bob: ${bobResponse2}\n`);
+	const bobQuery2 = "What did Alice say was her favorite book?";
+	console.log(`👤 User:  ${bobQuery2}`);
+	const bobResponse2 = await bob.ask(bobQuery2);
+	console.log(`🤖 Bob: ${bobResponse2}\n`);
 }
 
 async function demonstrateSubAgents() {
@@ -273,22 +278,28 @@ async function demonstrateSubAgents() {
 
 	// Test sub-agent delegation
 	console.log("😄 Testing joke delegation:");
-	const jokeResponse = await runner.ask("Tell me a programming joke");
-	console.log(`Response: ${jokeResponse}\n`);
+	const jokeQuery = "Tell me a programming joke";
+	console.log(`👤 User:  ${jokeQuery}`);
+	const jokeResponse = await runner.ask(jokeQuery);
+	console.log(`🤖 Agent: ${jokeResponse}\n`);
 
 	console.log("🧮 Testing math delegation:");
-	const mathResponse = await runner.ask("What's 127 multiplied by 43?");
-	console.log(`Response: ${mathResponse}\n`);
+	const mathQuery = "What's 127 multiplied by 43?";
+	console.log(`👤 User:  ${mathQuery}`);
+	const mathResponse = await runner.ask(mathQuery);
+	console.log(`🤖 Agent: ${mathResponse}\n`);
 
 	console.log("🌤️ Testing weather delegation:");
-	const weatherResponse = await runner.ask(
-		"What's the weather like in San Francisco?",
-	);
-	console.log(`Response: ${weatherResponse}\n`);
+	const weatherQuery = "What's the weather like in San Francisco?";
+	console.log(`👤 User:  ${weatherQuery}`);
+	const weatherResponse = await runner.ask(weatherQuery);
+	console.log(`🤖 Agent: ${weatherResponse}\n`);
 
 	console.log("💬 Testing general query (no delegation):");
-	const generalResponse = await runner.ask("What's the capital of Australia?");
-	console.log(`Response: ${generalResponse}\n`);
+	const generalQuery = "What's the capital of Australia?";
+	console.log(`👤 User:  ${generalQuery}`);
+	const generalResponse = await runner.ask(generalQuery);
+	console.log(`🤖 Agent: ${generalResponse}\n`);
 }
 
 async function demonstrateInteractiveMultiAgent() {
@@ -301,7 +312,8 @@ async function demonstrateInteractiveMultiAgent() {
 	const { runner } = await AgentBuilder.create("multi_agent_assistant")
 		.withModel(env.LLM_MODEL || "gemini-2.5-flash")
 		.withDescription("A multi-agent assistant with specialized capabilities")
-		.withInstruction(dedent`
+		.withInstruction(
+			dedent`
 			You coordinate a team of specialists:
 			- Math operations (with calculator tool)
 			- Weather information (with weather tool)
@@ -309,7 +321,8 @@ async function demonstrateInteractiveMultiAgent() {
 
 			Determine which specialist to use based on user requests.
 			Provide clear, helpful responses and explain your reasoning.
-		`)
+		`,
+		)
 		.withTools(calculatorTool, weatherTool)
 		.withSessionService(sessionService)
 		.build();
@@ -337,9 +350,9 @@ async function demonstrateInteractiveMultiAgent() {
 		}
 
 		try {
-			console.log("\n🤖 Multi-Agent Response:");
+			console.log(`\n👤 User:  ${userInput}`);
 			const response = await runner.ask(userInput);
-			console.log(response);
+			console.log(`🤖 Agent: ${response}`);
 			console.log("─".repeat(50));
 		} catch (error) {
 			console.error("❌ Error:", error);
@@ -350,8 +363,8 @@ async function demonstrateInteractiveMultiAgent() {
 async function main() {
 	console.log("🤝 Agent composition:");
 
-	await demonstrateOutputKeys();
-	await demonstrateSharedMemory();
+	// await demonstrateOutputKeys();
+	// await demonstrateSharedMemory();
 	await demonstrateSubAgents();
 	await demonstrateInteractiveMultiAgent();
 }

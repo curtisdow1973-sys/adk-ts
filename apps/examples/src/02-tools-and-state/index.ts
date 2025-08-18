@@ -89,7 +89,8 @@ async function demonstrateToolsAndState() {
 		.withDescription(
 			"A shopping cart assistant that manages items and calculates totals",
 		)
-		.withInstruction(dedent`
+		.withInstruction(
+			dedent`
 			You are a shopping cart assistant. Help users manage their cart.
 
 			Current cart state:
@@ -98,27 +99,35 @@ async function demonstrateToolsAndState() {
 
 			You can add items and view the cart. Always be helpful with pricing and quantities.
 			When asked about current cart without tools, reference the cart state above.
-		`)
+		`,
+		)
 		.withTools(addItemTool, viewCartTool)
 		.withSessionService(sessionService, { state: initialState })
 		.build();
 
 	// Test adding items
-	const item1 = await runner.ask("Add 2 apples to my cart at $1.50 each");
-	console.log(item1);
+	const prompt1 = "Add 2 apples to my cart at $1.50 each";
+	console.log(`\n👤 User:  ${prompt1}`);
+	const item1 = await runner.ask(prompt1);
+	console.log(`🤖 Agent: ${item1}`);
 
-	const item2 = await runner.ask("Add 1 banana for $0.75");
-	console.log(item2);
+	const prompt2 = "Add 1 banana for $0.75";
+	console.log(`\n👤 User:  ${prompt2}`);
+	const item2 = await runner.ask(prompt2);
+	console.log(`🤖 Agent: ${item2}`);
 
 	// Test state injection - ask about cart without using tools
-	const stateCheck = await runner.ask(
-		"How many items are in my cart and what are they? Use the state information from your instructions, don't call any tools.",
-	);
-	console.log(stateCheck);
+	const prompt3 =
+		"How many items are in my cart and what are they? Use the state information from your instructions, don't call any tools.";
+	console.log(`\n👤 User:  ${prompt3}`);
+	const stateCheck = await runner.ask(prompt3);
+	console.log(`🤖 Agent: ${stateCheck}`);
 
 	// Test viewing cart with tools
-	const cartView = await runner.ask("Show me my complete cart with total");
-	console.log(cartView);
+	const prompt4 = "Show me my complete cart with total";
+	console.log(`\n👤 User:  ${prompt4}`);
+	const cartView = await runner.ask(prompt4);
+	console.log(`🤖 Agent: ${cartView}`);
 }
 
 async function main() {

@@ -98,7 +98,9 @@ const makeDecisionTool = createTool({
 			success: true,
 			decision: newDecision,
 			totalDecisions: decisions.length,
-			message: `Decision made: ${decision} (confidence: ${(confidence * 100).toFixed(1)}%)`,
+			message: `Decision made: ${decision} (confidence: ${(
+				confidence * 100
+			).toFixed(1)}%)`,
 		};
 	},
 });
@@ -143,10 +145,11 @@ async function demonstrateBasicWorkflow() {
 		.withSubAgents([coordinator, researchAgent, analysisAgent])
 		.build();
 
-	const response = await runner.ask(
-		"Create a market analysis for electric vehicle charging stations. Break this into research and analysis stages, tracking progress through each step.",
-	);
-	console.log(`Response: ${response}\n`);
+	const marketQuery =
+		"Create a market analysis for electric vehicle charging stations. Break this into research and analysis stages, tracking progress through each step.";
+	console.log(`👤 User:  ${marketQuery}`);
+	const response = await runner.ask(marketQuery);
+	console.log(`🤖 Agent: ${response}\n`);
 }
 
 async function demonstrateLangGraphStyleWorkflow() {
@@ -227,10 +230,11 @@ async function demonstrateLangGraphStyleWorkflow() {
 		)
 		.build();
 
-	const response = await runner.ask(
-		"Create a customer onboarding system. Analyze complexity and route to appropriate processing.",
-	);
-	console.log(`Response: ${response}\n`);
+	const onboardingQuery =
+		"Create a customer onboarding system. Analyze complexity and route to appropriate processing.";
+	console.log(`👤 User:  ${onboardingQuery}`);
+	const response = await runner.ask(onboardingQuery);
+	console.log(`🤖 Agent: ${response}\n`);
 }
 
 async function demonstrateErrorRecoveryWorkflow() {
@@ -264,10 +268,11 @@ async function demonstrateErrorRecoveryWorkflow() {
 		.withSubAgents([errorRecoveryAgent, resilientWorker])
 		.build();
 
-	const response = await runner.ask(
-		"Simulate processing customer data with potential failures. Show retry logic, alternative approaches, and escalation patterns.",
-	);
-	console.log(`Response: ${response}\n`);
+	const recoveryQuery =
+		"Simulate processing customer data with potential failures. Show retry logic, alternative approaches, and escalation patterns.";
+	console.log(`👤 User:  ${recoveryQuery}`);
+	const response = await runner.ask(recoveryQuery);
+	console.log(`🤖 Agent: ${response}\n`);
 }
 
 async function main() {

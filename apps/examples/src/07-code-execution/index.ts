@@ -49,11 +49,13 @@ async function demonstrateBasicCodeExecution() {
 	const { runner } = await AgentBuilder.create("code_executor")
 		.withModel(env.LLM_MODEL || "gemini-2.5-flash")
 		.withDescription("Agent with code execution capabilities")
-		.withInstruction(dedent`
+		.withInstruction(
+			dedent`
 			You are a code execution assistant. Execute Python code to solve problems.
 			Write clean, well-commented code and explain your results.
 			Make sure to import any necessary libraries and handle potential errors.
-		`)
+		`,
+		)
 		.withCodeExecutor(new BuiltInCodeExecutor())
 		.withSessionService(sessionService, {
 			userId: USER_ID,
@@ -64,18 +66,18 @@ async function demonstrateBasicCodeExecution() {
 	console.log("🧮 Testing basic mathematical computation:");
 	const mathProblem =
 		"Calculate the sum of squares of all prime numbers less than 100";
-	console.log(`Problem: ${mathProblem}`);
+	console.log(`👤 User:  ${mathProblem}`);
 
 	const mathResult = await runner.ask(mathProblem);
-	console.log(`\nResult: ${mathResult}\n`);
+	console.log(`\n🤖 Agent: ${mathResult}\n`);
 
 	console.log("📊 Testing data manipulation:");
 	const dataTask =
 		"Generate a list of the first 10 Fibonacci numbers and calculate their average";
-	console.log(`Task: ${dataTask}`);
+	console.log(`👤 User:  ${dataTask}`);
 
 	const dataResult = await runner.ask(dataTask);
-	console.log(`\nResult: ${dataResult}\n`);
+	console.log(`\n🤖 Agent: ${dataResult}\n`);
 }
 
 async function demonstrateDataAnalysis() {
@@ -104,14 +106,16 @@ async function demonstrateDataAnalysis() {
 	const { runner } = await AgentBuilder.create("data_analyst")
 		.withModel(env.LLM_MODEL || "gemini-2.5-flash")
 		.withDescription("Data analysis specialist with code execution")
-		.withInstruction(dedent`
+		.withInstruction(
+			dedent`
 			You are a data analysis specialist. When given data tasks:
 			1. Write Python code to process and analyze data
 			2. Perform appropriate statistical analysis
 			3. Create visualizations when helpful
 			4. Provide clear insights and interpretations
 			5. Use libraries like pandas, numpy, matplotlib as needed
-		`)
+		`,
+		)
 		.withCodeExecutor(new BuiltInCodeExecutor())
 		.withSessionService(sessionService, {
 			userId: USER_ID,
@@ -128,10 +132,10 @@ async function demonstrateDataAnalysis() {
 		3. 95th percentile
 		4. Identify any outliers
 	`;
-	console.log(`Task: ${statsTask}`);
+	console.log(`👤 User:  ${statsTask}`);
 
 	const statsResult = await runner.ask(statsTask);
-	console.log(`\nResult: ${statsResult}\n`);
+	console.log(`\n🤖 Agent: ${statsResult}\n`);
 
 	console.log("🔍 Testing pattern analysis:");
 	const patternTask = dedent`
@@ -142,10 +146,10 @@ async function demonstrateDataAnalysis() {
 		3. Week-over-week growth trends
 		4. Create a simple forecast for next week
 	`;
-	console.log(`Task: ${patternTask}`);
+	console.log(`👤 User:  ${patternTask}`);
 
 	const patternResult = await runner.ask(patternTask);
-	console.log(`\nResult: ${patternResult}\n`);
+	console.log(`\n🤖 Agent: ${patternResult}\n`);
 }
 
 async function demonstrateAlgorithmImplementation() {
@@ -174,14 +178,16 @@ async function demonstrateAlgorithmImplementation() {
 	const { runner } = await AgentBuilder.create("algorithm_expert")
 		.withModel(env.LLM_MODEL || "gemini-2.5-flash")
 		.withDescription("Algorithm implementation specialist")
-		.withInstruction(dedent`
+		.withInstruction(
+			dedent`
 			You are an algorithm implementation specialist. For algorithm tasks:
 			1. Explain the algorithm's approach and complexity
 			2. Implement the algorithm in clean, well-commented Python code
 			3. Test the implementation with multiple test cases
 			4. Analyze the performance characteristics
 			5. Suggest optimizations when applicable
-		`)
+		`,
+		)
 		.withCodeExecutor(new BuiltInCodeExecutor())
 		.withSessionService(sessionService, {
 			userId: USER_ID,
@@ -199,10 +205,10 @@ async function demonstrateAlgorithmImplementation() {
 
 		Compare the performance and explain the results.
 	`;
-	console.log(`Task: ${sortTask}`);
+	console.log(`👤 User:  ${sortTask}`);
 
 	const sortResult = await runner.ask(sortTask);
-	console.log(`\nResult: ${sortResult}\n`);
+	console.log(`\n🤖 Agent: ${sortResult}\n`);
 
 	console.log("🌳 Testing graph algorithm:");
 	const graphTask = dedent`
@@ -215,10 +221,10 @@ async function demonstrateAlgorithmImplementation() {
 
 		Find the shortest path from A to E and explain the algorithm's steps.
 	`;
-	console.log(`Task: ${graphTask}`);
+	console.log(`👤 User:  ${graphTask}`);
 
 	const graphResult = await runner.ask(graphTask);
-	console.log(`\nResult: ${graphResult}\n`);
+	console.log(`\n🤖 Agent: ${graphResult}\n`);
 }
 
 async function demonstrateInteractiveCodeSession() {
@@ -231,7 +237,8 @@ async function demonstrateInteractiveCodeSession() {
 		.withDescription(
 			"An interactive coding assistant for collaborative problem solving",
 		)
-		.withInstruction(dedent`
+		.withInstruction(
+			dedent`
 			You are an interactive coding assistant that helps solve problems step by step.
 			You can write and execute Python code to:
 			- Solve mathematical problems
@@ -246,7 +253,8 @@ async function demonstrateInteractiveCodeSession() {
 			3. Test your solutions
 			4. Explain the results
 			5. Suggest improvements or next steps
-		`)
+		`,
+		)
 		.withCodeExecutor(new BuiltInCodeExecutor())
 		.build();
 
@@ -256,31 +264,37 @@ async function demonstrateInteractiveCodeSession() {
 		"Problem: Analyze the efficiency of different search algorithms\n",
 	);
 
-	const step1 = await runner.ask(dedent`
+	const step1Query = dedent`
 		Let's start by implementing linear search and binary search algorithms.
 		Create both functions and test them with a sorted list of 1000 numbers.
 		Measure the time taken for each to find a target number.
-	`);
+	`;
+	console.log(`👤 User:  ${step1Query}`);
+	const step1 = await runner.ask(step1Query);
 	console.log("Step 1 - Algorithm Implementation:");
-	console.log(`${step1}\n`);
+	console.log(`🤖 Agent: ${step1}\n`);
 
-	const step2 = await runner.ask(dedent`
+	const step2Query = dedent`
 		Now let's create a comprehensive performance comparison.
 		Test both algorithms with different list sizes (100, 1000, 10000 elements)
 		and create a performance chart showing how search time scales with list size.
-	`);
+	`;
+	console.log(`👤 User:  ${step2Query}`);
+	const step2 = await runner.ask(step2Query);
 	console.log("Step 2 - Performance Analysis:");
-	console.log(`${step2}\n`);
+	console.log(`🤖 Agent: ${step2}\n`);
 
-	const step3 = await runner.ask(dedent`
+	const step3Query = dedent`
 		Finally, analyze the theoretical vs actual performance:
 		1. Calculate the theoretical time complexities
 		2. Compare with our measured results
 		3. Explain any discrepancies
 		4. Discuss when to use each algorithm
-	`);
+	`;
+	console.log(`👤 User:  ${step3Query}`);
+	const step3 = await runner.ask(step3Query);
 	console.log("Step 3 - Theoretical Analysis:");
-	console.log(`${step3}\n`);
+	console.log(`🤖 Agent: ${step3}\n`);
 }
 
 async function demonstrateCodeSafetyPatterns() {

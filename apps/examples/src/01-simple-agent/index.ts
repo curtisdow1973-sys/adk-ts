@@ -28,17 +28,22 @@ async function main() {
 		fun_fact: z.string().describe("An interesting fact about the city"),
 	});
 
+	const userPrompt = "What is the capital of France?";
+	console.log(`\n👤 User:  ${userPrompt}`);
+
 	const response = await AgentBuilder.withModel(
 		env.LLM_MODEL || "gemini-2.5-flash",
 	)
 		.withOutputSchema(outputSchema)
-		.ask("What is the capital of France?");
+		.ask(userPrompt);
 
 	console.log(
 		dedent`
 		🌍 Country:    ${response.country}
 		📍 Capital:    ${response.capital}
-		👥 Population: ${response.population ? response.population.toLocaleString() : "N/A"}
+		👥 Population: ${
+			response.population ? response.population.toLocaleString() : "N/A"
+		}
 		🎉 Fun fact:   ${response.fun_fact}`,
 	);
 }

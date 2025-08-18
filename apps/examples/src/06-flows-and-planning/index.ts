@@ -27,10 +27,10 @@ async function demonstrateBasicFlow() {
 		.withTools(new FileOperationsTool())
 		.build();
 
-	const response = await runner.ask(
-		"Create demo.txt with ADK flow info, then read it back.",
-	);
-	console.log(response);
+	const query1 = "Create demo.txt with ADK-TS flow info, then read it back.";
+	console.log(`👤 User:  ${query1}`);
+	const response = await runner.ask(query1);
+	console.log(`🤖 Agent: ${response}`);
 }
 
 async function demonstrateBuiltInPlanner() {
@@ -43,10 +43,11 @@ async function demonstrateBuiltInPlanner() {
 		)
 		.build();
 
-	const response = await runner.ask(
-		"Plan a $300 birthday party for 20 people who love pizza and games.",
-	);
-	console.log(response);
+	const query2 =
+		"Plan a $300 birthday party for 20 people who love pizza and games.";
+	console.log(`👤 User:  ${query2}`);
+	const response = await runner.ask(query2);
+	console.log(`🤖 Agent: ${response}`);
 }
 
 async function demonstratePlanReActPlanner() {
@@ -58,22 +59,25 @@ async function demonstratePlanReActPlanner() {
 		.withPlanner(new PlanReActPlanner())
 		.build();
 
-	const response = await runner.ask(
-		"Create a Node.js project with README.md, package.json, main.js, and .gitignore",
-	);
-	console.log(response);
+	const query3 =
+		"Create a Node.js project with README.md, package.json, main.js, and .gitignore";
+	console.log(`👤 User:  ${query3}`);
+	const response = await runner.ask(query3);
+	console.log(`🤖 Agent: ${response}`);
 }
 
 async function comparePlanningApproaches() {
 	console.log("📊 Planning Comparison");
 
 	const problem = "Plan a healthy meal prep routine for a busy professional";
+	console.log(`👤 User:  ${problem}`);
 
 	// No planner
 	const { runner: baseline } = await AgentBuilder.create("baseline")
 		.withModel(env.LLM_MODEL || "gemini-2.5-flash")
 		.build();
-	console.log("\n🔸 No Planner:", await baseline.ask(problem));
+	console.log("\n🔸 No Planner:");
+	console.log(`🤖 Agent: ${await baseline.ask(problem)}`);
 
 	// With built-in planner
 	const { runner: builtin } = await AgentBuilder.create("builtin")
@@ -82,14 +86,16 @@ async function comparePlanningApproaches() {
 			new BuiltInPlanner({ thinkingConfig: { includeThinking: true } }),
 		)
 		.build();
-	console.log("\n🔸 Built-In:", await builtin.ask(problem));
+	console.log("\n🔸 Built-In:");
+	console.log(`🤖 Agent: ${await builtin.ask(problem)}`);
 
 	// With PlanReAct planner
 	const { runner: planreact } = await AgentBuilder.create("planreact")
 		.withModel(env.LLM_MODEL || "gemini-2.5-flash")
 		.withPlanner(new PlanReActPlanner())
 		.build();
-	console.log("\n🔸 PlanReAct:", await planreact.ask(problem));
+	console.log("\n🔸 PlanReAct:");
+	console.log(`🤖 Agent: ${await planreact.ask(problem)}`);
 }
 
 async function demonstrateAdvancedFlowPatterns() {
@@ -101,10 +107,11 @@ async function demonstrateAdvancedFlowPatterns() {
 		.withPlanner(new PlanReActPlanner())
 		.build();
 
-	const response = await runner.ask(
-		"Create API docs: specification, endpoints, getting started guide",
-	);
-	console.log(response);
+	const query4 =
+		"Create API docs: specification, endpoints, getting started guide";
+	console.log(`👤 User:  ${query4}`);
+	const response = await runner.ask(query4);
+	console.log(`🤖 Agent: ${response}`);
 }
 
 async function main() {
