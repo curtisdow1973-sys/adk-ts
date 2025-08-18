@@ -29,22 +29,6 @@ async function demonstrateBasicCodeExecution() {
 	console.log("📝 Part 1: Basic Code Execution");
 	console.log("═══════════════════════════════════\n");
 
-	// Create a basic code execution agent
-	const codeAgent = new LlmAgent({
-		name: "code_agent",
-		model: env.LLM_MODEL || "gemini-2.0-flash",
-		description: "A coder agent that can execute Python code",
-		instruction: dedent`
-			You are a coding assistant that can write and execute Python code.
-			When given mathematical problems or computational tasks, write Python code to solve them.
-			Always show your work with code and explain the results clearly.
-			Make sure to import any necessary libraries and handle potential errors.
-		`,
-		codeExecutor: new BuiltInCodeExecutor(),
-		disallowTransferToParent: true,
-		disallowTransferToPeers: true,
-	});
-
 	const sessionService = new InMemorySessionService();
 	const { runner } = await AgentBuilder.create("code_executor")
 		.withModel(env.LLM_MODEL || "gemini-2.5-flash")
@@ -83,24 +67,6 @@ async function demonstrateBasicCodeExecution() {
 async function demonstrateDataAnalysis() {
 	console.log("📝 Part 2: Data Analysis with Code");
 	console.log("═══════════════════════════════════\n");
-
-	const dataAnalyst = new LlmAgent({
-		name: "data_analyst",
-		model: env.LLM_MODEL || "gemini-2.0-flash",
-		description: "A data analysis specialist that can process and analyze data",
-		instruction: dedent`
-			You are a data analyst who can write Python code to analyze data.
-			When given data analysis tasks:
-			1. Generate or use provided sample data
-			2. Perform appropriate statistical analysis
-			3. Create visualizations when helpful
-			4. Provide clear insights and interpretations
-			5. Use libraries like pandas, numpy, matplotlib as needed
-		`,
-		codeExecutor: new BuiltInCodeExecutor(),
-		disallowTransferToParent: true,
-		disallowTransferToPeers: true,
-	});
 
 	const sessionService = new InMemorySessionService();
 	const { runner } = await AgentBuilder.create("data_analyst")
@@ -155,24 +121,6 @@ async function demonstrateDataAnalysis() {
 async function demonstrateAlgorithmImplementation() {
 	console.log("📝 Part 3: Algorithm Implementation");
 	console.log("═══════════════════════════════════\n");
-
-	const algorithmExpert = new LlmAgent({
-		name: "algorithm_expert",
-		model: env.LLM_MODEL || "gemini-2.0-flash",
-		description: "An algorithm specialist that implements and tests algorithms",
-		instruction: dedent`
-			You are an algorithm expert who can implement various algorithms and data structures.
-			When given algorithmic problems:
-			1. Explain the approach and time/space complexity
-			2. Implement the algorithm in clean, well-commented Python code
-			3. Test the implementation with multiple test cases
-			4. Analyze the performance characteristics
-			5. Suggest optimizations when applicable
-		`,
-		codeExecutor: new BuiltInCodeExecutor(),
-		disallowTransferToParent: true,
-		disallowTransferToPeers: true,
-	});
 
 	const sessionService = new InMemorySessionService();
 	const { runner } = await AgentBuilder.create("algorithm_expert")

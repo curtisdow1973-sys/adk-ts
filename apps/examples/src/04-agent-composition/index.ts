@@ -363,8 +363,8 @@ async function demonstrateInteractiveMultiAgent() {
 async function main() {
 	console.log("🤝 Agent composition:");
 
-	// await demonstrateOutputKeys();
-	// await demonstrateSharedMemory();
+	await demonstrateOutputKeys();
+	await demonstrateSharedMemory();
 	await demonstrateSubAgents();
 	await demonstrateInteractiveMultiAgent();
 }
