@@ -31,6 +31,11 @@ export interface AgentListResponse {
 
 export interface MessageRequest {
 	message: string;
+	attachments?: Array<{
+		name: string;
+		mimeType: string;
+		data: string; // base64-encoded content
+	}>;
 }
 
 export interface MessageResponse {
