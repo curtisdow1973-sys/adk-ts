@@ -115,21 +115,16 @@ export function useAgents(apiUrl: string) {
 			};
 			setMessages((prev) => [...prev, userMessage]);
 
-			// Create FormData for file uploads
-			const formData = new FormData();
-			formData.append("message", message);
-
-			if (attachments && attachments.length > 0) {
-				for (const file of attachments) {
-					formData.append("files", file);
-				}
-			}
+			const body = {
+				message,
+				attachments,
+			};
 
 			const response = await fetch(
 				`${apiUrl}/api/agents/${encodeURIComponent(agent.relativePath)}/message`,
 				{
 					method: "POST",
-					body: formData,
+					body: JSON.stringify(body),
 				},
 			);
 			if (!response.ok) {
