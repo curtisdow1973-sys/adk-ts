@@ -1,16 +1,38 @@
 import type { Agent, Message } from "@/app/(dashboard)/_schema";
-import { Avatar, AvatarFallback } from "@/components/ui/avatar";
+import {
+	Conversation,
+	ConversationContent,
+	ConversationScrollButton,
+} from "@/components/ai-elements/conversation";
+import {
+	Message as AIMessage,
+	MessageAvatar,
+	MessageContent,
+} from "@/components/ai-elements/message";
+import {
+	PromptInput,
+	PromptInputButton,
+	PromptInputSubmit,
+	PromptInputTextarea,
+	PromptInputToolbar,
+	PromptInputTools,
+} from "@/components/ai-elements/prompt-input";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { ScrollArea } from "@/components/ui/scroll-area";
 import { cn } from "@/lib/utils";
-import { Bot, Loader2, MessageSquare, Send, User } from "lucide-react";
+import {
+	Bot,
+	Camera,
+	FileUp,
+	MessageSquare,
+	Paperclip,
+	ScreenShare,
+} from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 
 interface ChatPanelProps {
 	selectedAgent: Agent | null;
 	messages: Message[];
-	onSendMessage: (message: string) => void;
+	onSendMessage: (message: string, attachments?: File[]) => void;
 	isSendingMessage?: boolean;
 }
 
@@ -21,23 +43,97 @@ export function ChatPanel({
 	isSendingMessage = false,
 }: ChatPanelProps) {
 	const [inputMessage, setInputMessage] = useState("");
-	const scrollAreaRef = useRef<HTMLDivElement>(null);
-	const messagesEndRef = useRef<HTMLDivElement>(null);
+	const [attachedFiles, setAttachedFiles] = useState<File[]>([]);
+	const [showAttachmentDropdown, setShowAttachmentDropdown] = useState(false);
+	const fileInputRef = useRef<HTMLInputElement>(null);
+	const photoInputRef = useRef<HTMLInputElement>(null);
+	const dropdownRef = useRef<HTMLDivElement>(null);
 
 	const handleSubmit = (e: React.FormEvent) => {
 		e.preventDefault();
 		if (!inputMessage.trim() || !selectedAgent) return;
 
-		onSendMessage(inputMessage);
+		onSendMessage(inputMessage, attachedFiles);
 		setInputMessage("");
+		setAttachedFiles([]);
 	};
 
-	// Auto-scroll to bottom when new messages arrive
+	// Close dropdown when clicking outside
 	useEffect(() => {
-		if (messages.length > 0) {
-			messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
+		const handleClickOutside = (event: MouseEvent) => {
+			if (
+				dropdownRef.current &&
+				!dropdownRef.current.contains(event.target as Node)
+			) {
+				setShowAttachmentDropdown(false);
+			}
+		};
+
+		document.addEventListener("mousedown", handleClickOutside);
+		return () => document.removeEventListener("mousedown", handleClickOutside);
+	}, []);
+
+	const handleFileAttach = () => {
+		setShowAttachmentDropdown(false);
+		fileInputRef.current?.click();
+	};
+
+	const handlePhotoAttach = () => {
+		setShowAttachmentDropdown(false);
+		photoInputRef.current?.click();
+	};
+
+	const handleScreenshot = async () => {
+		setShowAttachmentDropdown(false);
+		try {
+			// Use the browser's screen capture API
+			const stream = await navigator.mediaDevices.getDisplayMedia({
+				video: true,
+			});
+
+			// Create a video element to capture the frame
+			const video = document.createElement("video");
+			video.srcObject = stream;
+			video.play();
+
+			video.addEventListener("loadedmetadata", () => {
+				// Create canvas to capture the frame
+				const canvas = document.createElement("canvas");
+				canvas.width = video.videoWidth;
+				canvas.height = video.videoHeight;
+				const ctx = canvas.getContext("2d");
+
+				if (ctx) {
+					ctx.drawImage(video, 0, 0);
+
+					// Convert to blob and create file
+					canvas.toBlob((blob) => {
+						if (blob) {
+							const file = new File([blob], `screenshot-${Date.now()}.png`, {
+								type: "image/png",
+							});
+							setAttachedFiles((prev) => [...prev, file]);
+						}
+
+						// Stop the stream
+						stream.getTracks().forEach((track) => track.stop());
+					}, "image/png");
+				}
+			});
+		} catch (error) {
+			console.error("Failed to capture screenshot:", error);
 		}
-	}, [messages.length]);
+	};
+
+	const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+		const files = Array.from(e.target.files || []);
+		setAttachedFiles((prev) => [...prev, ...files]);
+		e.target.value = ""; // Reset input
+	};
+
+	const removeFile = (index: number) => {
+		setAttachedFiles((prev) => prev.filter((_, i) => i !== index));
+	};
 
 	if (!selectedAgent) {
 		return <EmptyChat />;
@@ -48,35 +144,123 @@ export function ChatPanel({
 			{/* Container with borders */}
 			<div className="flex-1 flex flex-col max-w-4xl mx-auto w-full border-l border-r border-border bg-background min-h-0">
 				{/* Input Area at Top */}
-				<div className="border-b bg-muted/30 p-4">
-					<form onSubmit={handleSubmit} className="flex gap-3">
-						<Input
+				<div className="p-4">
+					<PromptInput onSubmit={handleSubmit} className="overflow-visible">
+						<PromptInputTextarea
 							placeholder={`Message ${selectedAgent.name}...`}
 							value={inputMessage}
 							onChange={(e) => setInputMessage(e.target.value)}
-							className="flex-1 min-h-[44px] bg-background border-muted"
 							disabled={isSendingMessage}
+							minHeight={48}
+							maxHeight={164}
 						/>
-						<Button
-							type="submit"
-							disabled={!inputMessage.trim() || isSendingMessage}
-							size="icon"
-							className="min-w-[44px] h-[44px]"
-						>
-							{isSendingMessage ? (
-								<Loader2 className="h-4 w-4 animate-spin" />
-							) : (
-								<Send className="h-4 w-4" />
-							)}
-						</Button>
-					</form>
+
+						{/* Show attached files */}
+						{attachedFiles.length > 0 && (
+							<div className="px-3 py-2 border-t border-border">
+								<div className="flex flex-wrap gap-2">
+									{attachedFiles.map((file, index) => (
+										<div
+											key={`${file.name}-${file.size}-${index}`}
+											className="flex items-center gap-2 px-2 py-1 bg-secondary rounded-md text-sm"
+										>
+											<span className="text-secondary-foreground">
+												{file.name}
+											</span>
+											<Button
+												type="button"
+												variant="ghost"
+												size="icon"
+												className="h-4 w-4 text-muted-foreground hover:text-destructive"
+												onClick={() => removeFile(index)}
+											>
+												×
+											</Button>
+										</div>
+									))}
+								</div>
+							</div>
+						)}
+
+						<PromptInputToolbar>
+							<PromptInputTools>
+								<div className="relative" ref={dropdownRef}>
+									<PromptInputButton
+										onClick={() =>
+											setShowAttachmentDropdown(!showAttachmentDropdown)
+										}
+										className={cn(
+											"transition-colors",
+											showAttachmentDropdown &&
+												"bg-accent text-accent-foreground",
+										)}
+									>
+										<Paperclip className="size-4" />
+									</PromptInputButton>
+
+									{showAttachmentDropdown && (
+										<div className="absolute bottom-full left-0 mb-1 w-36 bg-card border border-border rounded-md shadow-lg z-50">
+											<div className="p-1">
+												<button
+													type="button"
+													onClick={handleFileAttach}
+													className="w-full flex items-center gap-2 px-2 py-1.5 text-sm text-card-foreground hover:bg-accent hover:text-accent-foreground transition-colors text-left rounded-sm"
+												>
+													<FileUp className="size-4" />
+													Upload File
+												</button>
+												<button
+													type="button"
+													onClick={handlePhotoAttach}
+													className="w-full flex items-center gap-2 px-2 py-1.5 text-sm text-card-foreground hover:bg-accent hover:text-accent-foreground transition-colors text-left rounded-sm"
+												>
+													<Camera className="size-4" />
+													Upload Photo
+												</button>
+												<button
+													type="button"
+													onClick={handleScreenshot}
+													className="w-full flex items-center gap-2 px-2 py-1.5 text-sm text-card-foreground hover:bg-accent hover:text-accent-foreground transition-colors text-left rounded-sm"
+												>
+													<ScreenShare className="size-4" />
+													Take Screenshot
+												</button>
+											</div>
+										</div>
+									)}
+								</div>
+							</PromptInputTools>
+							<PromptInputSubmit
+								disabled={!inputMessage.trim() || isSendingMessage}
+								status={isSendingMessage ? "submitted" : undefined}
+							/>
+						</PromptInputToolbar>
+					</PromptInput>
+
+					{/* Hidden file inputs */}
+					<input
+						ref={fileInputRef}
+						type="file"
+						multiple
+						className="hidden"
+						onChange={handleFileChange}
+						accept="*/*"
+					/>
+					<input
+						ref={photoInputRef}
+						type="file"
+						multiple
+						className="hidden"
+						onChange={handleFileChange}
+						accept="image/*"
+					/>
 				</div>
 
 				{/* Chat Messages Area */}
-				<ScrollArea className="flex-1 min-h-0" ref={scrollAreaRef}>
-					<div className="divide-y divide-border">
+				<Conversation className="flex-1 min-h-0">
+					<ConversationContent>
 						{messages.length === 0 ? (
-							<div className="flex flex-col items-center justify-center min-h-[400px] text-center text-muted-foreground p-8">
+							<div className="flex flex-col items-center justify-center min-h-[400px] text-center text-muted-foreground">
 								<MessageSquare className="h-12 w-12 mb-4 opacity-50" />
 								<h3 className="text-lg font-medium mb-2">
 									Start a conversation
@@ -87,73 +271,25 @@ export function ChatPanel({
 							</div>
 						) : (
 							messages.map((message) => (
-								<ChatMessage
+								<AIMessage
 									key={message.id}
-									message={message}
-									agentName={selectedAgent.name}
-								/>
+									from={message.type === "user" ? "user" : "assistant"}
+								>
+									<MessageAvatar
+										src={
+											message.type === "user"
+												? "/user-avatar.png"
+												: "/agent-avatar.png"
+										}
+										name={message.type === "user" ? "You" : selectedAgent.name}
+									/>
+									<MessageContent>{message.content}</MessageContent>
+								</AIMessage>
 							))
 						)}
-					</div>
-					<div ref={messagesEndRef} />
-				</ScrollArea>
-			</div>
-		</div>
-	);
-}
-
-interface ChatMessageProps {
-	message: Message;
-	agentName: string;
-}
-
-function ChatMessage({ message, agentName }: ChatMessageProps) {
-	const isUser = message.type === "user";
-	const isSystem = message.type === "system";
-
-	return (
-		<div
-			className={cn(
-				"w-full p-4 hover:bg-muted/20 transition-colors",
-				isUser ? "bg-primary/5" : isSystem ? "bg-yellow-50/50" : "bg-muted/10",
-			)}
-		>
-			<div className="flex gap-3 w-full">
-				{/* Avatar */}
-				<Avatar className="h-10 w-10 flex-shrink-0">
-					<AvatarFallback
-						className={cn(
-							"text-xs font-medium",
-							isUser
-								? "bg-primary text-primary-foreground"
-								: isSystem
-									? "bg-yellow-100 text-yellow-800"
-									: "bg-muted text-muted-foreground",
-						)}
-					>
-						{isUser ? (
-							<User className="h-4 w-4" />
-						) : (
-							<Bot className="h-4 w-4" />
-						)}
-					</AvatarFallback>
-				</Avatar>
-
-				{/* Message Content */}
-				<div className="flex-1 min-w-0">
-					<div className="flex items-center gap-2 mb-1">
-						<span className="font-medium text-sm">
-							{isUser ? "You" : isSystem ? "System" : agentName}
-						</span>
-						<span className="text-xs text-muted-foreground">
-							{/* You could add timestamp here if available */}
-							now
-						</span>
-					</div>
-					<div className="text-sm leading-relaxed text-foreground break-words">
-						{message.content}
-					</div>
-				</div>
+					</ConversationContent>
+					<ConversationScrollButton />
+				</Conversation>
 			</div>
 		</div>
 	);
@@ -167,12 +303,12 @@ function EmptyChat() {
 				<div className="text-center max-w-md p-8">
 					{/* Beautiful illustration placeholder */}
 					<div className="mb-8 relative">
-						<div className="w-24 h-24 mx-auto mb-4 rounded-full bg-gradient-to-br from-blue-100 to-purple-100 flex items-center justify-center">
-							<MessageSquare className="h-10 w-10 text-blue-600" />
+						<div className="w-24 h-24 mx-auto mb-4 rounded-full bg-gradient-to-br from-primary/20 to-accent/30 flex items-center justify-center">
+							<MessageSquare className="h-10 w-10 text-primary" />
 						</div>
-						<div className="absolute top-0 right-1/3 w-3 h-3 bg-blue-200 rounded-full animate-pulse" />
-						<div className="absolute top-4 left-1/4 w-2 h-2 bg-purple-200 rounded-full animate-pulse delay-500" />
-						<div className="absolute bottom-4 right-1/4 w-4 h-4 bg-indigo-200 rounded-full animate-pulse delay-1000" />
+						<div className="absolute top-0 right-1/3 w-3 h-3 bg-primary/40 rounded-full animate-pulse" />
+						<div className="absolute top-4 left-1/4 w-2 h-2 bg-accent/50 rounded-full animate-pulse delay-500" />
+						<div className="absolute bottom-4 right-1/4 w-4 h-4 bg-secondary/60 rounded-full animate-pulse delay-1000" />
 					</div>
 
 					<h3 className="text-xl font-semibold text-foreground mb-3">

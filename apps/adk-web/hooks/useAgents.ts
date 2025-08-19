@@ -104,7 +104,8 @@ export function useAgents(apiUrl: string) {
 		mutationFn: async ({
 			agent,
 			message,
-		}: { agent: Agent; message: string }) => {
+			attachments,
+		}: { agent: Agent; message: string; attachments?: File[] }) => {
 			// Add optimistic user message immediately
 			const userMessage: Message = {
 				id: Date.now(), // Temporary ID
@@ -114,12 +115,21 @@ export function useAgents(apiUrl: string) {
 			};
 			setMessages((prev) => [...prev, userMessage]);
 
+			// Create FormData for file uploads
+			const formData = new FormData();
+			formData.append("message", message);
+
+			if (attachments && attachments.length > 0) {
+				for (const file of attachments) {
+					formData.append("files", file);
+				}
+			}
+
 			const response = await fetch(
 				`${apiUrl}/api/agents/${encodeURIComponent(agent.relativePath)}/message`,
 				{
 					method: "POST",
-					headers: { "Content-Type": "application/json" },
-					body: JSON.stringify({ message }),
+					body: formData,
 				},
 			);
 			if (!response.ok) {
@@ -154,9 +164,13 @@ export function useAgents(apiUrl: string) {
 
 	// Action handlers
 	const sendMessage = useCallback(
-		(message: string) => {
+		(message: string, attachments?: File[]) => {
 			if (!selectedAgent) return;
-			sendMessageMutation.mutate({ agent: selectedAgent, message });
+			sendMessageMutation.mutate({
+				agent: selectedAgent,
+				message,
+				attachments,
+			});
 		},
 		[selectedAgent, sendMessageMutation],
 	);
