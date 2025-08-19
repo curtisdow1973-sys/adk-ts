@@ -115,9 +115,37 @@ export function useAgents(apiUrl: string) {
 			};
 			setMessages((prev) => [...prev, userMessage]);
 
+			// Encode attachments (if any) to base64
+			let encodedAttachments:
+				| Array<{ name: string; mimeType: string; data: string }>
+				| undefined;
+			if (attachments && attachments.length > 0) {
+				const fileToBase64 = (file: File) =>
+					new Promise<string>((resolve, reject) => {
+						const reader = new FileReader();
+						reader.onload = () => {
+							const result = reader.result as string;
+							const base64 = result.includes(",")
+								? result.split(",")[1]
+								: result;
+							resolve(base64);
+						};
+						reader.onerror = () => reject(reader.error);
+						reader.readAsDataURL(file);
+					});
+
+				encodedAttachments = await Promise.all(
+					attachments.map(async (file) => ({
+						name: file.name,
+						mimeType: file.type || "application/octet-stream",
+						data: await fileToBase64(file),
+					})),
+				);
+			}
+
 			const body = {
 				message,
-				attachments,
+				attachments: encodedAttachments,
 			};
 
 			const response = await fetch(
