@@ -1,5 +1,11 @@
 # @iqai/adk
 
+## 0.2.3
+
+### Patch Changes
+
+- 298edf1: `convertMcpToolToBaseTool` now takes in a optional toolHandler for more modularity
+
 ## 0.2.2
 
 ### Patch Changes
