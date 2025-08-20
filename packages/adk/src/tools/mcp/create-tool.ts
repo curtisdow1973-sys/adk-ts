@@ -1,6 +1,9 @@
 import { Logger } from "@adk/logger";
 import type { Client } from "@modelcontextprotocol/sdk/client/index.js";
-import type { Tool as McpTool } from "@modelcontextprotocol/sdk/types.js";
+import type {
+	CallToolResult,
+	Tool as McpTool,
+} from "@modelcontextprotocol/sdk/types.js";
 import type { FunctionDeclaration } from "../../models/function-declaration";
 import { BaseTool } from "../base/base-tool";
 import type { ToolContext } from "../tool-context";
@@ -19,12 +22,21 @@ interface McpToolMetadata {
 	[key: string]: any;
 }
 
+type ConvertMcpToolTooBaseToolParams = {
+	mcpTool: McpTool;
+	client?: Client;
+	toolHandler?: (name: string, args: unknown) => Promise<CallToolResult>;
+};
+
 export async function convertMcpToolToBaseTool(
-	mcpTool: McpTool,
-	client?: Client,
+	params: ConvertMcpToolTooBaseToolParams,
 ): Promise<BaseTool> {
 	try {
-		return new McpToolAdapter(mcpTool, client);
+		return new McpToolAdapter(
+			params.mcpTool,
+			params.client,
+			params.toolHandler,
+		);
 	} catch (error) {
 		if (!(error instanceof McpError)) {
 			throw new McpError(
@@ -44,10 +56,18 @@ class McpToolAdapter extends BaseTool {
 	private mcpTool: McpTool;
 	private client: Client | undefined;
 	private clientService: McpClientService | null = null;
+	private toolHandler?: (
+		name: string,
+		args: unknown,
+	) => Promise<CallToolResult>;
 
 	protected logger = new Logger({ name: "McpToolAdapter" });
 
-	constructor(mcpTool: McpTool, client?: Client) {
+	constructor(
+		mcpTool: McpTool,
+		client?: Client,
+		handler?: (name: string, args: unknown) => Promise<CallToolResult>,
+	) {
 		const metadata = (mcpTool.metadata || {}) as McpToolMetadata;
 
 		super({
@@ -59,6 +79,7 @@ class McpToolAdapter extends BaseTool {
 		});
 		this.mcpTool = mcpTool;
 		this.client = client;
+		this.toolHandler = handler;
 
 		if (
 			client &&
@@ -127,6 +148,10 @@ class McpToolAdapter extends BaseTool {
 					arguments: args,
 				});
 				return result;
+			}
+
+			if (this.toolHandler) {
+				return await this.toolHandler(this.name, args);
 			}
 
 			throw new McpError(

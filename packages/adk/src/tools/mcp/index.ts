@@ -158,10 +158,10 @@ export class McpToolset {
 			for (const mcpTool of toolsResponse.tools) {
 				if (this.isSelected(mcpTool, context)) {
 					try {
-						const tool: BaseTool = await convertMcpToolToBaseTool(
+						const tool: BaseTool = await convertMcpToolToBaseTool({
 							mcpTool,
 							client,
-						);
+						});
 						tools.push(tool);
 					} catch (toolError) {
 						console.error(
