@@ -1,5 +1,11 @@
 # @iqai/adk
 
+## 0.2.2
+
+### Patch Changes
+
+- 0485d51: export convertMcpToolToBaseTool to convert Tool -> BaseTool
+
 ## 0.2.1
 
 ### Patch Changes
