@@ -1,7 +1,7 @@
 /**
  * Tools module exports
  */
-
+export { McpClientService } from "./mcp/client";
 // Base tool classes
 export { BaseTool } from "./base/base-tool";
 export type { ToolConfig } from "./base/base-tool";
