@@ -199,7 +199,7 @@ export function ChatPanel({
 									</PromptInputButton>
 
 									{showAttachmentDropdown && (
-										<div className="absolute bottom-full left-0 mb-1 w-36 bg-card border border-border rounded-md shadow-lg z-50">
+										<div className="absolute top-full left-0 mt-3 w-36 bg-card border border-border rounded-md shadow-lg z-50">
 											<div className="p-1">
 												<button
 													type="button"
@@ -223,7 +223,7 @@ export function ChatPanel({
 													className="w-full flex items-center gap-2 px-2 py-1.5 text-sm text-card-foreground hover:bg-accent hover:text-accent-foreground transition-colors text-left rounded-sm"
 												>
 													<ScreenShare className="size-4" />
-													Take Screenshot
+													Screenshot
 												</button>
 											</div>
 										</div>
