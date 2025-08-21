@@ -1,5 +1,24 @@
 # @iqai/adk
 
+## 0.2.3
+
+### Patch Changes
+
+- 298edf1: `convertMcpToolToBaseTool` now takes in a optional toolHandler for more modularity
+
+## 0.2.2
+
+### Patch Changes
+
+- 0485d51: export convertMcpToolToBaseTool to convert Tool -> BaseTool
+
+## 0.2.1
+
+### Patch Changes
+
+- 765592d: export McpClientService
+- 14fdbf4: added mcp-upbit to servers file
+
 ## 0.2.0
 
 ### Minor Changes
