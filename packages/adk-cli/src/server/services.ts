@@ -8,7 +8,7 @@ import {
 } from "node:fs";
 import { dirname, join, relative } from "node:path";
 import { pathToFileURL } from "node:url";
-import type { InMemorySessionService, LlmAgent } from "@iqai/adk";
+import type { FullMessage, InMemorySessionService, LlmAgent } from "@iqai/adk";
 import { AgentBuilder } from "@iqai/adk";
 import type { Agent, LoadedAgent } from "./types.js";
 
@@ -469,6 +469,7 @@ export class AgentManager {
 	async sendMessageToAgent(
 		agentPath: string,
 		message: string,
+		attachments?: Array<{ name: string; mimeType: string; data: string }>,
 	): Promise<string> {
 		// Auto-start the agent if it's not already running
 		if (!this.loadedAgents.has(agentPath)) {
@@ -481,8 +482,25 @@ export class AgentManager {
 		}
 
 		try {
-			// Send message to the agent using the runner with session service
-			// The session service will automatically handle message persistence
+			// If attachments are present, construct a structured request compatible with the runner
+			if (attachments && attachments.length > 0) {
+				const request: FullMessage = {
+					parts: [
+						{ text: message },
+						...attachments.map((file) => ({
+							inlineData: {
+								mimeType: file.mimeType,
+								data: file.data,
+							},
+						})),
+					],
+				};
+
+				const response = await loadedAgent.runner.ask(request);
+				return response as string;
+			}
+
+			// No attachments: simple text
 			const response = await loadedAgent.runner.ask(message);
 			return response;
 		} catch (error) {
