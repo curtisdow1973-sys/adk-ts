@@ -1,26 +1,34 @@
-import * as dotenv from "dotenv";
-import { getRootAgent } from "./agents/agent";
+import { serve } from "@hono/node-server";
+import dotenv from "dotenv";
+import { Hono } from "hono";
+import { cors } from "hono/cors";
 
-dotenv.config();
-
-/**
- * Main function demonstrating basic ADK agent usage.
- *
- * Creates a root agent with sub-agents for weather and jokes,
- * then processes a series of sample questions to showcase
- * the agent's capabilities in routing requests to appropriate
- * specialized sub-agents.
- */
-async function main() {
-	const questions = ["how is weather in london?", "tell me a random joke"];
-
-	const { runner } = await getRootAgent();
-
-	for (const question of questions) {
-		console.log(`📝 Question: ${question}`);
-		const response = await runner.ask(question);
-		console.log(`🤖 Response: ${response}`);
-	}
+// Load environment variables from .env file (only needed for local development)
+if (process.env.NODE_ENV !== "production") {
+	dotenv.config({ path: ".env.development.local" });
 }
 
-main().catch(console.error);
+import agentAccount from "./routes/agentAccount";
+// Import routes
+import ethAccount from "./routes/ethAccount";
+import transaction from "./routes/transaction";
+
+const app = new Hono();
+
+// Configure CORS to restrict access to the server
+app.use(cors());
+
+// Health check
+app.get("/", (c) => c.json({ message: "App is running" }));
+
+// Routes
+app.route("/api/eth-account", ethAccount);
+app.route("/api/agent-account", agentAccount);
+app.route("/api/transaction", transaction);
+
+// Start the server
+const port = Number(process.env.PORT || "3000");
+
+console.log(`App is running on port ${port}`);
+
+serve({ fetch: app.fetch, port });
