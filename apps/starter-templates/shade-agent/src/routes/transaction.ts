@@ -21,7 +21,7 @@ app.get("/", async (c) => {
 			return c.json({ error: "Contract ID not configured" }, 500);
 		}
 
-		// Get the ETH price
+		// Get the data from agent
 		const agent = await getRootAgent();
 		const { price, sentiment } = await agent.runner.ask(
 			"What is current price and sentiment of eth?",
