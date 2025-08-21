@@ -3,32 +3,38 @@ import dotenv from "dotenv";
 import { Hono } from "hono";
 import { cors } from "hono/cors";
 
-// Load environment variables from .env file (only needed for local development)
-if (process.env.NODE_ENV !== "production") {
-	dotenv.config({ path: ".env.development.local" });
-}
-
 import agentAccount from "./routes/agentAccount";
-// Import routes
 import ethAccount from "./routes/ethAccount";
 import transaction from "./routes/transaction";
 
+dotenv.config();
+
+/**
+ * Hono Server with AI Agent
+ *
+ * A web server using Hono framework that exposes AI agent functionality via REST API.
+ */
 const app = new Hono();
 
-// Configure CORS to restrict access to the server
+// Middleware
 app.use(cors());
 
-// Health check
-app.get("/", (c) => c.json({ message: "App is running" }));
-
 // Routes
+app.get("/", (c) => c.json({ message: "App is running" }));
 app.route("/api/eth-account", ethAccount);
 app.route("/api/agent-account", agentAccount);
 app.route("/api/transaction", transaction);
 
-// Start the server
 const port = Number(process.env.PORT || "3000");
 
-console.log(`App is running on port ${port}`);
+console.log(`🚀 Started Hono server on port ${port}`);
+console.log(`👉 Visit http://localhost:${port} to see the server in action`);
 
-serve({ fetch: app.fetch, port });
+/**
+ * Start the Hono server with the configured app and port.
+ * The server exposes AI agent functionality through REST endpoints.
+ */
+serve({
+	fetch: app.fetch,
+	port,
+});
