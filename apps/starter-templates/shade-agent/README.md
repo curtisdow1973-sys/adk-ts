@@ -35,10 +35,10 @@ pnpm install
 Make sure to configure your environment variables:
 
 ```bash
-cp .env.example .env
+cp .env.development.local.example .env.development.local
 ```
 
-Edit `.env` and fill in the required variables:
+Edit `.env.development.local` and fill in the required variables:
 
 - `NEAR_ACCOUNT_ID` — Your NEAR account name
 - `NEAR_SEED_PHRASE` — Your NEAR account seed phrase

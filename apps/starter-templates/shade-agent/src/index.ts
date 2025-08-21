@@ -7,7 +7,10 @@ import agentAccount from "./routes/agentAccount";
 import ethAccount from "./routes/ethAccount";
 import transaction from "./routes/transaction";
 
-dotenv.config();
+// Load environment variables from .env file (only needed for local development)
+if (process.env.NODE_ENV !== "production") {
+	dotenv.config({ path: ".env.development.local" });
+}
 
 /**
  * Hono Server with AI Agent
