@@ -224,26 +224,40 @@ export class AgentLoader {
 			projectRoot = dirname(projectRoot);
 		}
 
-		const envPath = join(projectRoot, ".env");
-		if (existsSync(envPath)) {
-			try {
-				const envContent = readFileSync(envPath, "utf8");
-				const envLines = envContent.split("\n");
-				for (const line of envLines) {
-					const trimmedLine = line.trim();
-					if (trimmedLine && !trimmedLine.startsWith("#")) {
-						const [key, ...valueParts] = trimmedLine.split("=");
-						if (key && valueParts.length > 0) {
-							const value = valueParts.join("=").replace(/^"(.*)"$/, "$1");
-							// Set environment variables in current process
-							process.env[key.trim()] = value.trim();
+		// Check for multiple env files in priority order
+		const envFiles = [
+			".env.local",
+			".env.development.local",
+			".env.production.local",
+			".env.development",
+			".env.production",
+			".env",
+		];
+
+		for (const envFile of envFiles) {
+			const envPath = join(projectRoot, envFile);
+			if (existsSync(envPath)) {
+				try {
+					const envContent = readFileSync(envPath, "utf8");
+					const envLines = envContent.split("\n");
+					for (const line of envLines) {
+						const trimmedLine = line.trim();
+						if (trimmedLine && !trimmedLine.startsWith("#")) {
+							const [key, ...valueParts] = trimmedLine.split("=");
+							if (key && valueParts.length > 0) {
+								const value = valueParts.join("=").replace(/^"(.*)"$/, "$1");
+								// Set environment variables in current process (only if not already set)
+								if (!process.env[key.trim()]) {
+									process.env[key.trim()] = value.trim();
+								}
+							}
 						}
 					}
+				} catch (error) {
+					console.warn(
+						`⚠️ Warning: Could not load ${envFile} file: ${error instanceof Error ? error.message : String(error)}`,
+					);
 				}
-			} catch (error) {
-				console.warn(
-					`⚠️ Warning: Could not load .env file: ${error instanceof Error ? error.message : String(error)}`,
-				);
 			}
 		}
 	}
