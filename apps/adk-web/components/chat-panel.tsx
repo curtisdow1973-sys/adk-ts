@@ -275,6 +275,8 @@ export function ChatPanel({
 									key={message.id}
 									from={message.type === "user" ? "user" : "assistant"}
 								>
+									<MessageContent>{message.content}</MessageContent>
+
 									<MessageAvatar
 										src={
 											message.type === "user"
@@ -283,7 +285,6 @@ export function ChatPanel({
 										}
 										name={message.type === "user" ? "You" : selectedAgent.name}
 									/>
-									<MessageContent>{message.content}</MessageContent>
 								</AIMessage>
 							))
 						)}
