@@ -66,7 +66,7 @@ Phala Cloud is a service that offers secure and private hosting in a TEE using [
 
 ## Set up
 
-- Rename the `.env.development.local.example` file name to `.env.development.local` and configure your environment variables.
+- Rename the `.env.example` file name to `.env` and configure your environment variables.
 
 - Start up Docker:
 
