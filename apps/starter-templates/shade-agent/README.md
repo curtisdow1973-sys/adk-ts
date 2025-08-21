@@ -7,9 +7,9 @@
 
 
 
-# ADK Simple Agent Starter
+# ADK Shade Agent Template
 
-**A starter template to build your own agent with the `@iqai/adk` library.**
+**A starter template to build your own agent with the `@iqai/adk` and Near shade agents.**
 
 _Minimal • Extensible • TypeScript_
 
@@ -17,89 +17,153 @@ _Minimal • Extensible • TypeScript_
 
 </div>
 
-This is the recommended starter template for building your own agent with the ADK TypeScript framework.
+This is a simple template for the Shade Agent Framework with all the code and tools required for deploying a Shade Agent on NEAR and Phala Cloud.
 
-## 🚀 Get Started
+This template is a simple verifiable ETH Price Oracle that pushes prices to an Ethereum contract.
 
+For full instructions on this repository please refer to our [docs](https://docs.near.org/ai/shade-agents/sandbox/sandbox-deploying).
 
-The easiest way to create a new project using this template is with the ADK CLI:
+## Prerequisites
 
-```bash
-npm install -g @iqai/adk-cli # if you haven't already
-adk new --template simple-agent my-agent-project
-cd my-agent-project
-pnpm install
-```
-
-You can also use this template directly by copying the files, but using the CLI is recommended for best results.
-
-### Running the Agent
-
-**Default (Production/Development) Route**
-
-To run your agent in production or for standard development, use:
-```bash
-pnpm dev
-```
-
-**Fast Iteration & Agent Setup (ADK CLI)**
-
-For rapid prototyping, interactive testing, or initial agent setup, use the ADK CLI:
-```bash
-adk run   # Interactive CLI chat with your agents
-adk web   # Web interface for easy testing and demonstration
-```
-
-## 📁 Folder Structure
-The main agent code lives in `index.ts` where the subagents live inside the `agents` folder. The `agents/agent.ts` file is compatible with the ADK CLI for easy testing.
-
-```
-├── src/
-│   ├── agents/
-│   │   ├── agent.ts          # Root agent (ADK CLI compatible)
-│   │   ├── joke-agent/       # Joke-telling sub-agent
-│   │   │   ├── agent.ts
-│   │   │   └── tools.ts
-│   │   └── weather-agent/    # Weather information sub-agent
-│   │       ├── agent.ts
-│   │       └── tools.ts
-│   ├── env.ts                # Environment variable validation
-│   └── index.ts              # Main execution entry point
-```
-
-## ⚙️ Environment Setup
-Make sure to configure your environment variables:
+- First, `clone` this template.
 
 ```bash
-cp .env.example .env
+git clone https://github.com/NearDeFi/shade-agent-sandbox-template shade-agent
+cd shade-agent
 ```
 
-## 🧰 Dev Tools
-This starter includes:
-- **GitHub Actions**: CI/CD pipeline
-- 📦 **PNPM**: Fast package manager
-- 🤖 **ADK CLI**: Interactive testing with `adk run` and `adk web`
+- Install NEAR and Shade Agent tooling:
 
-## 🧪 Testing Your Agent
+```bash
+# Install the NEAR CLI
+curl --proto '=https' --tlsv1.2 -LsSf https://github.com/near/near-cli-rs/releases/latest/download/near-cli-rs-installer.sh | sh
 
-**Traditional Testing**: Run `pnpm dev` to execute the sample questions.
+# Install the Shade Agent CLI
+npm i -g @neardefi/shade-agent-cli
+```
 
-**Interactive Testing with ADK CLI**:
-1. Install: `npm install -g @iqai/adk-cli`
-2. Run: `adk run` for CLI chat or `adk web` for web interface
-3. Perfect for development, testing, and demonstrating your agent's capabilities
+- Create a `NEAR testnet account` and record the account name and `seed phrase`:
 
-## 🏗️ Building Your Agent
-1. **Create new agents** in the `src/agents/` directory
-2. **Add tools** to your agents in the `tools/` subdirectory
-3. **Configure services** in the `src/services/` directory
-4. **Update environment** variables in `src/env.ts`
+```bash
+near account create-account sponsor-by-faucet-service <example-name.testnet> autogenerate-new-keypair print-to-terminal network-config testnet create
+```
 
-## 📚 Links
-- [ADK Documentation](https://adk.iqai.com)
-- [ADK GitHub Repository](https://github.com/IQAIcom/adk-ts)
+replacing <example-name.testnet> with a unique name.
 
-## 🆘 Support
-If you encounter any issues or have questions:
-- 📝 [Create an issue](https://github.com/IQAIcom/adk-ts/issues)
-- 💬 [Start a discussion](https://github.com/IQAIcom/adk-ts/discussions)
+- Set up docker if you have not already:
+
+Install Docker for [Mac](https://docs.docker.com/desktop/setup/install/mac-install/) or [Linux](https://docs.docker.com/desktop/setup/install/linux/) and set up an account.
+
+Log in to docker, `docker login` for Mac or `sudo docker login` for Linux.
+
+- Set up a free Phala Cloud account at https://cloud.phala.network/register then get an API key from https://cloud.phala.network/dashboard/tokens.
+
+What is a Phala Cloud?
+
+Phala Cloud is a service that offers secure and private hosting in a TEE using [Dstack](https://docs.phala.network/overview/phala-network/dstack). Phala Cloud makes it easy to run a TEE, that's why we use it in our template!
+
+---
+
+## Set up
+
+- Rename the `.env.development.local.example` file name to `.env.development.local` and configure your environment variables.
+
+- Start up Docker:
+
+For Mac
+
+Simply open the Docker Desktop application or run:
+
+```bash
+open -a Docker
+```
+
+For Linux
+
+```bash
+sudo systemctl start docker
+```
+
+- Install dependencies 
+
+```bash
+npm i
+```
+
+---
+
+## Local development
+
+- Make sure the `NEXT_PUBLIC_contractId` prefix is set to `ac.proxy.` followed by your NEAR accountId.
+
+- In one terminal, run the Shade Agent CLI:
+
+```bash
+shade-agent-cli
+```
+
+The CLI on Linux may prompt you to enter your `sudo password`.
+
+- In another terminal, start your app:
+
+```bash
+npm run dev
+```
+
+Your app will start on https://localhost:3000
+
+---
+
+## TEE Deployment
+
+- Change the `NEXT_PUBLIC_contractId` prefix to `ac.sandbox.` followed by your NEAR accountId.
+
+- Run the Shade Agent CLI
+
+```bash
+shade-agent-cli
+```
+
+The CLI on Linux may prompt you to enter your `sudo password`.
+
+The last URL the CLI outputs is where your app is hosted.
+
+If your application is not working head over to your App on Phala Dashboard and review the logs.
+
+## Interacting with the Agent
+
+You can interact with your agent via the APIs directly or via a lightweight frontend contained in this repo.
+
+### Direct
+
+For Phala deployments swap localhost:3000 for your deployment URL
+
+Get the Agent account and it's balance:
+
+```
+https://localhost:3000/api/agent-account
+```
+
+Get the derived Ethereum Sepolia account and it's balance (you will need to fund this):
+
+```
+https://localhost:3000/api/eth-account
+```
+
+Send a transaction through the Agent to update the price of Eth:
+
+```
+https://localhost:3000/api/transaction
+```
+
+### Frontend
+
+To run the frontend run:
+
+```bash
+cd frontend
+npm i
+npm run dev
+```
+
+To run the frontend with your Phala deployment change the `API_URL` to Phala URL in your [config.js](./frontend/src/config.js) file.
