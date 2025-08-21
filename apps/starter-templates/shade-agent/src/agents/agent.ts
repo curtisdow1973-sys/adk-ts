@@ -1,7 +1,8 @@
 import { AgentBuilder } from "@iqai/adk";
+import z from "zod";
 import { env } from "../env";
-import { getJokeAgent } from "./joke-agent/agent";
-import { getWeatherAgent } from "./weather-agent/agent";
+import { getEthPriceAgent } from "./eth-price-agent/agent";
+import { getEthSentimentAgent } from "./eth-sentiment-agent/agent";
 
 /**
  * Creates and configures the root agent for the simple agent demonstration.
@@ -14,17 +15,23 @@ import { getWeatherAgent } from "./weather-agent/agent";
  * @returns The fully constructed root agent instance ready to process requests
  */
 export const getRootAgent = () => {
-	const jokeAgent = getJokeAgent();
-	const weatherAgent = getWeatherAgent();
+	const ethPriceAgent = getEthPriceAgent();
+	const ethSentimentAgent = getEthSentimentAgent();
 
 	return AgentBuilder.create("root_agent")
 		.withDescription(
-			"Root agent that delegates tasks to sub-agents for telling jokes and providing weather information.",
+			"Root agent that delegates tasks to sub-agents for fetching Ethereum price and sentiment information.",
 		)
 		.withInstruction(
-			"Use the joke sub-agent for humor requests and the weather sub-agent for weather-related queries. Route user requests to the appropriate sub-agent.",
+			"Use the ETH price sub-agent for price requests and the ETH sentiment sub-agent for sentiment-related queries. Route user requests to the appropriate sub-agent.",
 		)
 		.withModel(env.LLM_MODEL)
-		.withSubAgents([jokeAgent, weatherAgent])
+		.asSequential([ethPriceAgent, ethSentimentAgent])
+		.withOutputSchema(
+			z.object({
+				price: z.number().describe("price of ethereum"),
+				sentiment: z.enum(["positive", "negative", "neutral"]),
+			}),
+		)
 		.build();
 };
