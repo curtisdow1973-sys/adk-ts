@@ -16,8 +16,8 @@ app.get("/", async (c) => {
 			balance: balance.balance,
 		});
 	} catch (error) {
-		console.log("Error getting agent account:", error);
-		return c.json({ error: `Failed to get agent account ${error}` }, 500);
+		console.error("Error getting agent account:", error);
+		return c.json({ error: "Failed to get agent account" }, 500);
 	}
 });
 
