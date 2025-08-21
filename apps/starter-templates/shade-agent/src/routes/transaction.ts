@@ -42,7 +42,6 @@ app.get("/", async (c) => {
 			path: "ethereum-1",
 			payload: uint8ArrayToHex(hashesToSign[0]),
 		});
-		console.log("signRes", signRes);
 
 		// Reconstruct the signed transaction
 		const signedTransaction = Evm.finalizeTransactionSigning({
@@ -56,7 +55,7 @@ app.get("/", async (c) => {
 		// Send back both the txHash and the new price optimistically
 		return c.json({
 			txHash: txHash.hash,
-			newPrice: (price / 100).toFixed(2),
+			newPrice: price.toFixed(2),
 		});
 	} catch (error) {
 		console.error("Failed to send the transaction:", error);
