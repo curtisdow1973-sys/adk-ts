@@ -1,5 +1,11 @@
 # @iqai/adk-cli
 
+## 0.2.5
+
+### Patch Changes
+
+- 6a3a9ba: Add support for attaching media files to agent on adk-cli & adk-web
+
 ## 0.2.4
 
 ### Patch Changes
