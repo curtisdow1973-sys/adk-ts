@@ -1,169 +1,102 @@
 
 <div align="center">
-
-<img src="https://files.catbox.moe/vumztw.png" alt="ADK TypeScript Logo" width="100" />
-
-<br/>
-
-
-
-# ADK Shade Agent Template
-
-**A starter template to build your own agent with the `@iqai/adk` and Near shade agents.**
-
-_Minimal • Extensible • TypeScript_
-
----
-
+	<img src="https://files.catbox.moe/vumztw.png" alt="ADK TypeScript Logo" width="100" />
+	<br/>
+	<h1>adk-shade-agent-api</h1>
+	<b>LLM-powered Shade Agent for Ethereum Price and Sentiment</b>
+	<br/>
+		<i>LLM-powered • Onchain Oracles • Secure TEE • TypeScript</i>
 </div>
 
-This is a simple template for the Shade Agent Framework with all the code and tools required for deploying a Shade Agent on NEAR and Phala Cloud.
-
-This template is a simple verifiable ETH Price Oracle that pushes prices to an Ethereum contract.
-
-For full instructions on this repository please refer to our [docs](https://docs.near.org/ai/shade-agents/sandbox/sandbox-deploying).
-
-## Prerequisites
-
-- First, `clone` this template.
-
-```bash
-git clone https://github.com/NearDeFi/shade-agent-sandbox-template shade-agent
-cd shade-agent
-```
-
-- Install NEAR and Shade Agent tooling:
-
-```bash
-# Install the NEAR CLI
-curl --proto '=https' --tlsv1.2 -LsSf https://github.com/near/near-cli-rs/releases/latest/download/near-cli-rs-installer.sh | sh
-
-# Install the Shade Agent CLI
-npm i -g @neardefi/shade-agent-cli
-```
-
-- Create a `NEAR testnet account` and record the account name and `seed phrase`:
-
-```bash
-near account create-account sponsor-by-faucet-service <example-name.testnet> autogenerate-new-keypair print-to-terminal network-config testnet create
-```
-
-replacing <example-name.testnet> with a unique name.
-
-- Set up docker if you have not already:
-
-Install Docker for [Mac](https://docs.docker.com/desktop/setup/install/mac-install/) or [Linux](https://docs.docker.com/desktop/setup/install/linux/) and set up an account.
-
-Log in to docker, `docker login` for Mac or `sudo docker login` for Linux.
-
-- Set up a free Phala Cloud account at https://cloud.phala.network/register then get an API key from https://cloud.phala.network/dashboard/tokens.
-
-What is a Phala Cloud?
-
-Phala Cloud is a service that offers secure and private hosting in a TEE using [Dstack](https://docs.phala.network/overview/phala-network/dstack). Phala Cloud makes it easy to run a TEE, that's why we use it in our template!
-
 ---
 
-## Set up
+This template provides a ready-to-deploy Shade Agent API that uses LLMs to fetch the price and sentiment of Ethereum from news headlines, and saves the results to a contract via the Shade Agent framework. Built with TypeScript and [@iqai/adk](https://www.npmjs.com/package/@iqai/adk), it is designed for NEAR and Phala Cloud TEE environments.
 
-- Rename the `.env.example` file name to `.env` and configure your environment variables.
+## Features
 
-- Start up Docker:
+- Fetches Ethereum price using LLMs
+- Analyzes news headlines for ETH sentiment
+- Pushes price and sentiment to a contract via Shade Agent
+- REST API endpoints for agent and Ethereum account info, and transactions
+- Production-ready Docker and pnpm setup
 
-For Mac
+## 🚀 Get Started
 
-Simply open the Docker Desktop application or run:
-
-```bash
-open -a Docker
-```
-
-For Linux
+The easiest way to create a new project using this template is with the ADK CLI:
 
 ```bash
-sudo systemctl start docker
+npm install -g @iqai/adk-cli # if you haven't already
+adk new --template shade-agent my-shade-agent
+cd my-shade-agent
+pnpm install
 ```
 
-- Install dependencies 
+## ⚙️ Environment Setup
+Make sure to configure your environment variables:
 
 ```bash
-npm i
+cp .env.example .env
 ```
 
----
+Edit `.env` and fill in the required variables:
 
-## Local development
+- `NEAR_ACCOUNT_ID` — Your NEAR account name
+- `NEAR_SEED_PHRASE` — Your NEAR account seed phrase
+- `API_CODEHASH`, `APP_CODEHASH` — Contract code hashes
+- `NEXT_PUBLIC_contractId` — Contract ID (should be `ac.proxy.<your-account>` for local, `ac.sandbox.<your-account>` for TEE)
+- `NEAR_RPC_JSON`, `GOOGLE_API_KEY`, `ADK_DEBUG` — As needed for your deployment
 
-- Make sure the `NEXT_PUBLIC_contractId` prefix is set to `ac.proxy.` followed by your NEAR accountId.
+### 3. Local Development
 
-- In one terminal, run the Shade Agent CLI:
+Start the Shade Agent CLI in one terminal:
 
 ```bash
-shade-agent-cli
+pnpm dlx @neardefi/shade-agent-cli
 ```
 
-The CLI on Linux may prompt you to enter your `sudo password`.
-
-- In another terminal, start your app:
+In another terminal, run the API locally:
 
 ```bash
-npm run dev
+pnpm dev
 ```
 
-Your app will start on https://localhost:3000
+### 4. Docker Compose
 
----
-
-## TEE Deployment
-
-- Change the `NEXT_PUBLIC_contractId` prefix to `ac.sandbox.` followed by your NEAR accountId.
-
-- Run the Shade Agent CLI
+To build and run the agent in Docker:
 
 ```bash
-shade-agent-cli
+docker compose up --build
 ```
 
-The CLI on Linux may prompt you to enter your `sudo password`.
 
-The last URL the CLI outputs is where your app is hosted.
+### 5. Test agents
 
-If your application is not working head over to your App on Phala Dashboard and review the logs.
-
-## Interacting with the Agent
-
-You can interact with your agent via the APIs directly or via a lightweight frontend contained in this repo.
-
-### Direct
-
-For Phala deployments swap localhost:3000 for your deployment URL
-
-Get the Agent account and it's balance:
-
-```
-https://localhost:3000/api/agent-account
-```
-
-Get the derived Ethereum Sepolia account and it's balance (you will need to fund this):
-
-```
-https://localhost:3000/api/eth-account
-```
-
-Send a transaction through the Agent to update the price of Eth:
-
-```
-https://localhost:3000/api/transaction
-```
-
-### Frontend
-
-To run the frontend run:
+To test the agents in /agents folder use: 
 
 ```bash
-cd frontend
-npm i
-npm run dev
+adk web
 ```
 
-To run the frontend with your Phala deployment change the `API_URL` to Phala URL in your [config.js](./frontend/src/config.js) file.
+This spins up a ui to test your agent with a chat interface and ability to choose agent to chat with and more.
+
+
+## Endpoints
+
+- `GET /api/agent-account` — Returns agent account and balance
+- `GET /api/eth-account` — Returns derived Ethereum Sepolia account and balance
+- `POST /api/transaction` — Sends a transaction to update ETH price and sentiment
+
+## Deployment
+
+For TEE/Phala Cloud deployment, follow the official Shade Agent and Phala Cloud documentation. Make sure to update your environment variables for the deployment environment.
+
+## Project Structure
+
+- `src/agents/eth-price-agent/` — LLM-powered ETH price agent
+- `src/agents/eth-sentiment-agent/` — LLM-powered ETH sentiment agent
+- `src/routes/` — API endpoints
+- `src/utils/` — Ethereum utilities
+
+## License
+
+MIT
