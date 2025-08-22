@@ -3,6 +3,7 @@ import { utils } from "chainsig.js";
 import { Contract, JsonRpcProvider } from "ethers";
 import { Hono } from "hono";
 import { getRootAgent } from "../agents/agent";
+import { getFormatAgent } from "../agents/format-agent/agent";
 import {
 	Evm,
 	ethContractAbi,
@@ -22,10 +23,15 @@ app.get("/", async (c) => {
 		}
 
 		// Get the data from agent
-		const agent = await getRootAgent();
-		const { price, sentiment } = await agent.runner.ask(
+		const rootAgent = await getRootAgent();
+		const formatAgent = await getFormatAgent();
+
+		// Run models to get price and sentiment
+		const response = await rootAgent.runner.ask(
 			"What is current price and sentiment of eth?",
 		);
+		const { price, sentiment } = await formatAgent.runner.ask(response);
+
 		if (!price) {
 			return c.json({ error: "Failed to fetch ETH price" }, 500);
 		}
