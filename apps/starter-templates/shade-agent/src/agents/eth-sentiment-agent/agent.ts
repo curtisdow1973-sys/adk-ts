@@ -13,7 +13,10 @@ import { ethHeadlinesTool } from "./tools";
 export const getEthSentimentAgent = () => {
 	const ethSentimentAgent = new LlmAgent({
 		name: "eth_sentiment_agent",
-		description: "provides Ethereum sentiment and related headlines",
+		description: "provides Ethereum sentiment based on latest headlines",
+		instruction: `You have access to the get_eth_headlines tool.
+Call this tool to fetch the latest Ethereum-related headlines.
+Analyze the sentiment of the headlines and respond with whether the overall sentiment is positive, negative, or neutral.`,
 		model: env.LLM_MODEL,
 		tools: [ethHeadlinesTool],
 	});

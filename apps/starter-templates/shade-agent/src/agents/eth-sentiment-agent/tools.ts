@@ -1,36 +1,28 @@
 import { createTool } from "@iqai/adk";
-import * as z from "zod";
+import Parser from "rss-parser";
 
 /**
  * Tool for fetching latest Ethereum-related news headlines.
  *
- * Uses the CryptoPanic public API to retrieve recent headlines about Ethereum.
+ * Uses the Reddit r/ethereum RSS feed to retrieve recent headlines about Ethereum.
  * Returns a formatted list of headlines or an error message if unavailable.
  */
 export const ethHeadlinesTool = createTool({
 	name: "get_eth_headlines",
-	description: "Get latest Ethereum-related news headlines",
-	schema: z.object({
-		limit: z
-			.number()
-			.int()
-			.min(1)
-			.max(10)
-			.default(5)
-			.describe("Number of headlines to fetch"),
-	}),
-	fn: async ({ limit }) => {
+	description:
+		"Get latest Ethereum-related news headlines from Reddit r/ethereum using rss-parser",
+	fn: async () => {
 		try {
-			const response = await fetch(
-				"https://cryptopanic.com/api/v1/posts/?currencies=ETH&public=true",
+			const parser = new Parser();
+			const feed = await parser.parseURL(
+				"https://www.reddit.com/r/ethereum/.rss",
 			);
-			const data = await response.json();
-			if (!data.results || !Array.isArray(data.results)) {
+			const headlines = (feed.items || [])
+				.map((item, idx) => `${idx + 1}. ${item.title}`)
+				.slice(0, 10);
+			if (headlines.length === 0) {
 				return "No headlines found.";
 			}
-			const headlines = data.results
-				.slice(0, limit)
-				.map((item: any, idx: number) => `${idx + 1}. ${item.title}`);
 			return headlines.join("\n");
 		} catch {
 			return "Ethereum headlines unavailable at the moment.";
