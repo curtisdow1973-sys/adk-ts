@@ -1,5 +1,13 @@
 # @iqai/adk-cli
 
+## 0.2.7
+
+### Patch Changes
+
+- ea74fa0: Adds near shade agent template
+- Updated dependencies [dc2c3eb]
+  - @iqai/adk@0.2.4
+
 ## 0.2.6
 
 ### Patch Changes
