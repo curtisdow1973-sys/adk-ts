@@ -1,9 +1,7 @@
 import { AgentBuilder } from "@iqai/adk";
-import z from "zod";
 import { env } from "../env";
 import { getEthPriceAgent } from "./eth-price-agent/agent";
 import { getEthSentimentAgent } from "./eth-sentiment-agent/agent";
-import { getFormatAgent } from "./format-agent/agent";
 
 /**
  * Creates and configures the root agent for the simple agent demonstration.
