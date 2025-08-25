@@ -94,6 +94,7 @@ For TEE/Phala Cloud deployment, follow the official Shade Agent and Phala Cloud 
 
 - `src/agents/eth-price-agent/` — LLM-powered ETH price agent
 - `src/agents/eth-sentiment-agent/` — LLM-powered ETH sentiment agent
+- `src/agents/format-agent/` — This is used to extract sentiment and price of ethereum gathered from root agent in structured output
 - `src/routes/` — API endpoints
 - `src/utils/` — Ethereum utilities
 
