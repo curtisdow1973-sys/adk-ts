@@ -38,6 +38,12 @@ const templates: Template[] = [
 		source: "github:IQAIcom/adk-ts/apps/starter-templates/hono-server",
 	},
 	{
+		value: "shade-agent",
+		label: "🌓 Near Shade Agent",
+		hint: "Starter that uses Near Shade Agent",
+		source: "github:IQAIcom/adk-ts/apps/starter-templates/shade-agent",
+	},
+	{
 		value: "mcp-starter",
 		label: "🔌 MCP Integration",
 		hint: "Model Context Protocol server",
