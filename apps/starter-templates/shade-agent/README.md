@@ -2,8 +2,8 @@
 <div align="center">
 	<img src="https://files.catbox.moe/vumztw.png" alt="ADK TypeScript Logo" width="100" />
 	<br/>
-	<h1>adk-shade-agent-api</h1>
-	<b>LLM-powered Shade Agent for Ethereum Price and Sentiment</b>
+	<h1>ADK Near Shade Agent Template</h1>
+	<b>Starter template for creating AI Agents with ADK and Near Shade Agent</b>
 	<br/>
 		<i>LLM-powered • Onchain Oracles • Secure TEE • TypeScript</i>
 </div>
@@ -40,11 +40,11 @@ cp .env.development.local.example .env.development.local
 
 Edit `.env.development.local` and fill in the required variables:
 
-- `NEAR_ACCOUNT_ID` — Your NEAR account name
+- `NEAR_ACCOUNT_ID` — Your NEAR account name (this is used to fund your new shade agent account)
 - `NEAR_SEED_PHRASE` — Your NEAR account seed phrase
-- `API_CODEHASH`, `APP_CODEHASH` — Contract code hashes
 - `NEXT_PUBLIC_contractId` — Contract ID (should be `ac.proxy.<your-account>` for local, `ac.sandbox.<your-account>` for TEE)
 - `NEAR_RPC_JSON`, `GOOGLE_API_KEY`, `ADK_DEBUG` — As needed for your deployment
+- `PHALA_API_KEY` — For deploying Agent it to TEE powered by Phala cloud
 
 ### 3. Local Development
 
