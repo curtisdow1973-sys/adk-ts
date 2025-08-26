@@ -8,7 +8,7 @@ import {
 } from "node:fs";
 import { dirname, join, relative } from "node:path";
 import { pathToFileURL } from "node:url";
-import type { InMemorySessionService, LlmAgent } from "@iqai/adk";
+import type { FullMessage, InMemorySessionService, LlmAgent } from "@iqai/adk";
 import { AgentBuilder } from "@iqai/adk";
 import type { Agent, LoadedAgent } from "./types.js";
 
@@ -224,26 +224,40 @@ export class AgentLoader {
 			projectRoot = dirname(projectRoot);
 		}
 
-		const envPath = join(projectRoot, ".env");
-		if (existsSync(envPath)) {
-			try {
-				const envContent = readFileSync(envPath, "utf8");
-				const envLines = envContent.split("\n");
-				for (const line of envLines) {
-					const trimmedLine = line.trim();
-					if (trimmedLine && !trimmedLine.startsWith("#")) {
-						const [key, ...valueParts] = trimmedLine.split("=");
-						if (key && valueParts.length > 0) {
-							const value = valueParts.join("=").replace(/^"(.*)"$/, "$1");
-							// Set environment variables in current process
-							process.env[key.trim()] = value.trim();
+		// Check for multiple env files in priority order
+		const envFiles = [
+			".env.local",
+			".env.development.local",
+			".env.production.local",
+			".env.development",
+			".env.production",
+			".env",
+		];
+
+		for (const envFile of envFiles) {
+			const envPath = join(projectRoot, envFile);
+			if (existsSync(envPath)) {
+				try {
+					const envContent = readFileSync(envPath, "utf8");
+					const envLines = envContent.split("\n");
+					for (const line of envLines) {
+						const trimmedLine = line.trim();
+						if (trimmedLine && !trimmedLine.startsWith("#")) {
+							const [key, ...valueParts] = trimmedLine.split("=");
+							if (key && valueParts.length > 0) {
+								const value = valueParts.join("=").replace(/^"(.*)"$/, "$1");
+								// Set environment variables in current process (only if not already set)
+								if (!process.env[key.trim()]) {
+									process.env[key.trim()] = value.trim();
+								}
+							}
 						}
 					}
+				} catch (error) {
+					console.warn(
+						`⚠️ Warning: Could not load ${envFile} file: ${error instanceof Error ? error.message : String(error)}`,
+					);
 				}
-			} catch (error) {
-				console.warn(
-					`⚠️ Warning: Could not load .env file: ${error instanceof Error ? error.message : String(error)}`,
-				);
 			}
 		}
 	}
@@ -469,6 +483,7 @@ export class AgentManager {
 	async sendMessageToAgent(
 		agentPath: string,
 		message: string,
+		attachments?: Array<{ name: string; mimeType: string; data: string }>,
 	): Promise<string> {
 		// Auto-start the agent if it's not already running
 		if (!this.loadedAgents.has(agentPath)) {
@@ -481,8 +496,25 @@ export class AgentManager {
 		}
 
 		try {
-			// Send message to the agent using the runner with session service
-			// The session service will automatically handle message persistence
+			// If attachments are present, construct a structured request compatible with the runner
+			if (attachments && attachments.length > 0) {
+				const request: FullMessage = {
+					parts: [
+						{ text: message },
+						...attachments.map((file) => ({
+							inlineData: {
+								mimeType: file.mimeType,
+								data: file.data,
+							},
+						})),
+					],
+				};
+
+				const response = await loadedAgent.runner.ask(request);
+				return response as string;
+			}
+
+			// No attachments: simple text
 			const response = await loadedAgent.runner.ask(message);
 			return response;
 		} catch (error) {

@@ -1,5 +1,13 @@
 # @iqai/adk
 
+## 0.2.4
+
+### Patch Changes
+
+- dc2c3eb: Fix database session service to use consistent state prefixes with in-memory service
+
+  The database session service was using hardcoded prefix strings ("app*", "user*", "temp\_") instead of the proper State constants (State.APP_PREFIX, State.USER_PREFIX, State.TEMP_PREFIX) that are used by the in-memory session service. This inconsistency could cause state handling issues when switching between session service implementations.
+
 ## 0.2.3
 
 ### Patch Changes

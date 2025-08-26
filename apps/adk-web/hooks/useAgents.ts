@@ -104,7 +104,8 @@ export function useAgents(apiUrl: string) {
 		mutationFn: async ({
 			agent,
 			message,
-		}: { agent: Agent; message: string }) => {
+			attachments,
+		}: { agent: Agent; message: string; attachments?: File[] }) => {
 			// Add optimistic user message immediately
 			const userMessage: Message = {
 				id: Date.now(), // Temporary ID
@@ -114,12 +115,44 @@ export function useAgents(apiUrl: string) {
 			};
 			setMessages((prev) => [...prev, userMessage]);
 
+			// Encode attachments (if any) to base64
+			let encodedAttachments:
+				| Array<{ name: string; mimeType: string; data: string }>
+				| undefined;
+			if (attachments && attachments.length > 0) {
+				const fileToBase64 = (file: File) =>
+					new Promise<string>((resolve, reject) => {
+						const reader = new FileReader();
+						reader.onload = () => {
+							const result = reader.result as string;
+							const base64 = result.includes(",")
+								? result.split(",")[1]
+								: result;
+							resolve(base64);
+						};
+						reader.onerror = () => reject(reader.error);
+						reader.readAsDataURL(file);
+					});
+
+				encodedAttachments = await Promise.all(
+					attachments.map(async (file) => ({
+						name: file.name,
+						mimeType: file.type || "application/octet-stream",
+						data: await fileToBase64(file),
+					})),
+				);
+			}
+
+			const body = {
+				message,
+				attachments: encodedAttachments,
+			};
+
 			const response = await fetch(
 				`${apiUrl}/api/agents/${encodeURIComponent(agent.relativePath)}/message`,
 				{
 					method: "POST",
-					headers: { "Content-Type": "application/json" },
-					body: JSON.stringify({ message }),
+					body: JSON.stringify(body),
 				},
 			);
 			if (!response.ok) {
@@ -154,9 +187,13 @@ export function useAgents(apiUrl: string) {
 
 	// Action handlers
 	const sendMessage = useCallback(
-		(message: string) => {
+		(message: string, attachments?: File[]) => {
 			if (!selectedAgent) return;
-			sendMessageMutation.mutate({ agent: selectedAgent, message });
+			sendMessageMutation.mutate({
+				agent: selectedAgent,
+				message,
+				attachments,
+			});
 		},
 		[selectedAgent, sendMessageMutation],
 	);
