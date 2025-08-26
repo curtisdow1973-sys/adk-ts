@@ -63,8 +63,12 @@ export function setupRoutes(
 	// Send message to agent
 	app.post("/api/agents/:id/message", async (c) => {
 		const agentPath = decodeURIComponent(c.req.param("id"));
-		const { message }: MessageRequest = await c.req.json();
-		const response = await agentManager.sendMessageToAgent(agentPath, message);
+		const { message, attachments }: MessageRequest = await c.req.json();
+		const response = await agentManager.sendMessageToAgent(
+			agentPath,
+			message,
+			attachments,
+		);
 		const messageResponse: MessageResponse = { response };
 		return c.json(messageResponse);
 	});

@@ -1,5 +1,25 @@
 # @iqai/adk-cli
 
+## 0.2.7
+
+### Patch Changes
+
+- ea74fa0: Adds near shade agent template
+- Updated dependencies [dc2c3eb]
+  - @iqai/adk@0.2.4
+
+## 0.2.6
+
+### Patch Changes
+
+- 40381d9: Enhance the loading mechanism to check for multiple environment files in a specified priority order, ensuring that environment variables are set only if they are not already defined. Additionally, provide warnings for any errors encountered while loading these files.
+
+## 0.2.5
+
+### Patch Changes
+
+- 6a3a9ba: Add support for attaching media files to agent on adk-cli & adk-web
+
 ## 0.2.4
 
 ### Patch Changes
