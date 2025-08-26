@@ -8,9 +8,22 @@ import {
 } from "node:fs";
 import { dirname, join, relative } from "node:path";
 import { pathToFileURL } from "node:url";
-import type { FullMessage, InMemorySessionService, LlmAgent } from "@iqai/adk";
+import type {
+	Event,
+	FullMessage,
+	InMemorySessionService,
+	LlmAgent,
+	Session,
+} from "@iqai/adk";
 import { AgentBuilder } from "@iqai/adk";
-import type { Agent, LoadedAgent } from "./types.js";
+import type {
+	Agent,
+	CreateSessionRequest,
+	EventsResponse,
+	LoadedAgent,
+	SessionResponse,
+	SessionsResponse,
+} from "./types.js";
 
 export class AgentScanner {
 	constructor(private quiet = false) {}
@@ -381,6 +394,7 @@ export class AgentManager {
 	) {
 		this.scanner = new AgentScanner(quiet);
 		this.loader = new AgentLoader(quiet);
+		console.log("AgentManager initialized");
 	}
 
 	getAgents(): Map<string, Agent> {
@@ -392,14 +406,20 @@ export class AgentManager {
 	}
 
 	scanAgents(agentsDir: string): void {
+		console.log("Scanning agents in directory:", agentsDir);
 		this.agents = this.scanner.scanAgents(agentsDir, this.loadedAgents);
+		console.log("Found agents:", Array.from(this.agents.keys()));
 	}
 
 	async startAgent(agentPath: string): Promise<void> {
+		console.log("Starting agent:", agentPath);
 		const agent = this.agents.get(agentPath);
 		if (!agent) {
+			console.error("Agent not found in agents map:", agentPath);
+			console.log("Available agents:", Array.from(this.agents.keys()));
 			throw new Error(`Agent not found: ${agentPath}`);
 		}
+		console.log("Agent found, proceeding to load...");
 
 		if (this.loadedAgents.has(agentPath)) {
 			return; // Already running
@@ -450,6 +470,7 @@ export class AgentManager {
 				});
 
 			const { runner, session } = await agentBuilder.build();
+			console.log("Agent started with session:", session.id);
 
 			// Store the loaded agent with its runner
 			const loadedAgent: LoadedAgent = {
@@ -463,6 +484,31 @@ export class AgentManager {
 			this.loadedAgents.set(agentPath, loadedAgent);
 			agent.instance = exportedAgent;
 			agent.name = exportedAgent.name;
+
+			// Ensure the session is stored in the session service
+			try {
+				// Check if session already exists
+				const existingSession = await this.sessionService.getSession(
+					loadedAgent.appName,
+					loadedAgent.userId,
+					session.id
+				);
+
+				if (!existingSession) {
+					// Create and store the session if it doesn't exist
+					console.log("Creating session in sessionService:", session.id);
+					await this.sessionService.createSession(
+						loadedAgent.appName,
+						loadedAgent.userId,
+						session.state,
+						session.id
+					);
+				} else {
+					console.log("Session already exists in sessionService:", session.id);
+				}
+			} catch (error) {
+				console.error("Error ensuring session exists:", error);
+			}
 		} catch (error) {
 			console.error(`❌ Failed to load agent "${agent.name}":`, error);
 			throw new Error(
@@ -496,27 +542,32 @@ export class AgentManager {
 		}
 
 		try {
-			// If attachments are present, construct a structured request compatible with the runner
-			if (attachments && attachments.length > 0) {
-				const request: FullMessage = {
-					parts: [
-						{ text: message },
-						...attachments.map((file) => ({
-							inlineData: {
-								mimeType: file.mimeType,
-								data: file.data,
-							},
+			// Build FullMessage (text + optional attachments)
+			const fullMessage: FullMessage = {
+				parts: [
+					{ text: message },
+					...
+						(attachments || []).map((file) => ({
+							inlineData: { mimeType: file.mimeType, data: file.data },
 						})),
-					],
-				};
+				],
+			};
 
-				const response = await loadedAgent.runner.ask(request);
-				return response as string;
+			// Always run against the CURRENT loadedAgent.sessionId (switchable)
+			let accumulated = "";
+			for await (const event of loadedAgent.runner.runAsync({
+				userId: loadedAgent.userId,
+				sessionId: loadedAgent.sessionId,
+				newMessage: fullMessage,
+			})) {
+				const parts = (event as any)?.content?.parts;
+				if (Array.isArray(parts)) {
+					accumulated += parts
+						.map((p: any) => (p && typeof p === "object" && "text" in p ? p.text : ""))
+						.join("");
+				}
 			}
-
-			// No attachments: simple text
-			const response = await loadedAgent.runner.ask(message);
-			return response;
+			return accumulated.trim();
 		} catch (error) {
 			const errorMessage =
 				error instanceof Error ? error.message : String(error);
@@ -575,6 +626,172 @@ export class SessionManager {
 		} catch (error) {
 			console.error("Error fetching messages:", error);
 			return [];
+		}
+	}
+
+	/**
+	 * Get all sessions for a loaded agent
+	 */
+	async getAgentSessions(loadedAgent: LoadedAgent): Promise<SessionsResponse> {
+		try {
+			console.log("Listing sessions for:", loadedAgent.appName, loadedAgent.userId);
+			const listResponse = await this.sessionService.listSessions(
+				loadedAgent.appName,
+				loadedAgent.userId,
+			);
+			console.log("Raw sessions from service:", listResponse.sessions.length);
+
+			const sessions: SessionResponse[] = [];
+			for (const s of listResponse.sessions) {
+				// Ensure we load the full session to get the latest event list
+				let fullSession: any;
+				try {
+					fullSession = await this.sessionService.getSession(
+						loadedAgent.appName,
+						loadedAgent.userId,
+						s.id,
+					);
+				} catch (e) {
+					fullSession = s;
+				}
+
+				sessions.push({
+					id: s.id,
+					appName: s.appName,
+					userId: s.userId,
+					state: s.state,
+					eventCount: Array.isArray(fullSession?.events) ? fullSession.events.length : 0,
+					lastUpdateTime: s.lastUpdateTime,
+					createdAt: s.lastUpdateTime,
+				});
+			}
+
+			console.log("Processed sessions:", sessions.length);
+			return { sessions };
+		} catch (error) {
+			console.error("Error fetching sessions:", error);
+			return { sessions: [] };
+		}
+	}
+
+	/**
+	 * Create a new session for a loaded agent
+	 */
+	async createAgentSession(
+		loadedAgent: LoadedAgent,
+		request?: CreateSessionRequest,
+	): Promise<SessionResponse> {
+		try {
+			const newSession = await this.sessionService.createSession(
+				loadedAgent.appName,
+				loadedAgent.userId,
+				request?.state,
+				request?.sessionId,
+			);
+
+			return {
+				id: newSession.id,
+				appName: newSession.appName,
+				userId: newSession.userId,
+				state: newSession.state,
+				eventCount: newSession.events.length,
+				lastUpdateTime: newSession.lastUpdateTime,
+				createdAt: newSession.lastUpdateTime,
+			};
+		} catch (error) {
+			console.error("Error creating session:", error);
+			throw error;
+		}
+	}
+
+	/**
+	 * Delete a session for a loaded agent
+	 */
+	async deleteAgentSession(
+		loadedAgent: LoadedAgent,
+		sessionId: string,
+	): Promise<void> {
+		try {
+			await this.sessionService.deleteSession(
+				loadedAgent.appName,
+				loadedAgent.userId,
+				sessionId,
+			);
+		} catch (error) {
+			console.error("Error deleting session:", error);
+			throw error;
+		}
+	}
+
+	/**
+	 * Get events for a specific session
+	 */
+	async getSessionEvents(
+		loadedAgent: LoadedAgent,
+		sessionId: string,
+	): Promise<EventsResponse> {
+		try {
+			const session = await this.sessionService.getSession(
+				loadedAgent.appName,
+				loadedAgent.userId,
+				sessionId,
+			);
+
+			if (!session || !session.events) {
+				return { events: [], totalCount: 0 };
+			}
+
+			const events = session.events.map((event: any) => {
+				// Handle both Event class instances and plain objects
+				const isEventInstance = typeof event.getFunctionCalls === 'function';
+
+				return {
+					id: event.id,
+					author: event.author,
+					timestamp: event.timestamp,
+					content: event.content,
+					actions: event.actions,
+					functionCalls: isEventInstance ? event.getFunctionCalls() : (event.content?.parts?.filter((part: any) => part.functionCall) || []),
+					functionResponses: isEventInstance ? event.getFunctionResponses() : (event.content?.parts?.filter((part: any) => part.functionResponse) || []),
+					branch: event.branch,
+					isFinalResponse: isEventInstance ? event.isFinalResponse() : (!event.content?.parts?.some((part: any) => part.functionCall) && !event.partial),
+				};
+			});
+
+			return {
+				events,
+				totalCount: events.length,
+			};
+		} catch (error) {
+			console.error("Error fetching session events:", error);
+			return { events: [], totalCount: 0 };
+		}
+	}
+
+	/**
+	 * Switch the loaded agent to use a different session
+	 */
+	async switchAgentSession(
+		loadedAgent: LoadedAgent,
+		sessionId: string,
+	): Promise<void> {
+		try {
+			// Verify the session exists
+			const session = await this.sessionService.getSession(
+				loadedAgent.appName,
+				loadedAgent.userId,
+				sessionId,
+			);
+
+			if (!session) {
+				throw new Error(`Session ${sessionId} not found`);
+			}
+
+			// Update the loaded agent's session ID
+			(loadedAgent as any).sessionId = sessionId;
+		} catch (error) {
+			console.error("Error switching session:", error);
+			throw error;
 		}
 	}
 }

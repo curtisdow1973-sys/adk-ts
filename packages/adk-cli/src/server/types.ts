@@ -50,3 +50,37 @@ export interface MessagesResponse {
 		timestamp: string;
 	}>;
 }
+
+export interface SessionResponse {
+	id: string;
+	appName: string;
+	userId: string;
+	state: Record<string, any>;
+	eventCount: number;
+	lastUpdateTime: number;
+	createdAt: number;
+}
+
+export interface SessionsResponse {
+	sessions: SessionResponse[];
+}
+
+export interface CreateSessionRequest {
+	state?: Record<string, any>;
+	sessionId?: string;
+}
+
+export interface EventsResponse {
+	events: Array<{
+		id: string;
+		author: string;
+		timestamp: number;
+		content: any;
+		actions: any;
+		functionCalls: any[];
+		functionResponses: any[];
+		branch?: string;
+		isFinalResponse: boolean;
+	}>;
+	totalCount: number;
+}
