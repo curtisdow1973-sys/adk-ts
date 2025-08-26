@@ -11,6 +11,7 @@ import {
 import dedent from "dedent";
 import { v4 as uuidv4 } from "uuid";
 import * as z from "zod";
+import { ask } from "../utils";
 
 /**
  * 05 - Persistence and Sessions
@@ -158,19 +159,22 @@ async function demonstrateSessionPersistence() {
 
 	// Test session persistence
 	console.log("🧮 Testing counter persistence:");
-	const query1 = "Increment the 'examples_run' counter by 1";
-	console.log(`👤 User:  ${query1}`);
-	const counter1 = await runner.ask(query1);
+	const counter1 = await ask(
+		runner.ask.bind(runner),
+		"Increment the 'examples_run' counter by 1",
+	);
 	console.log(`🤖 Agent: ${counter1}\n`);
 
-	const query2 = "Increment the 'coffee_breaks' counter by 2";
-	console.log(`👤 User:  ${query2}`);
-	const counter2 = await runner.ask(query2);
+	const counter2 = await ask(
+		runner.ask.bind(runner),
+		"Increment the 'coffee_breaks' counter by 2",
+	);
 	console.log(`🤖 Agent: ${counter2}\n`);
 
-	const query3 = "Show me all my counters and their values";
-	console.log(`👤 User:  ${query3}`);
-	const counter3 = await runner.ask(query3);
+	const counter3 = await ask(
+		runner.ask.bind(runner),
+		"Show me all my counters and their values",
+	);
 	console.log(`🤖 Agent: ${counter3}\n`);
 
 	// Demonstrate session retrieval
@@ -214,58 +218,63 @@ async function demonstrateArtifactPersistence() {
 
 	// Test artifact creation
 	console.log("📄 Creating artifacts:");
-	const saveQuery1 = dedent`
-		Save a shopping list with these items:
-		- Apples
-		- Bread
-		- Milk
-		- Cheese
-		- Coffee
+	const saveResponse1 = await ask(
+		runner.ask.bind(runner),
+		dedent`
+			Save a shopping list with these items:
+			- Apples
+			- Bread
+			- Milk
+			- Cheese
+			- Coffee
 
-		Save it as "shopping-list.txt"
-	`;
-	console.log(`👤 User:  ${saveQuery1}`);
-	const saveResponse1 = await runner.ask(saveQuery1);
+			Save it as "shopping-list.txt"
+		`,
+	);
 	console.log(`🤖 Agent: ${saveResponse1}\n`);
 
-	const saveQuery2 = dedent`
-		Create a meeting agenda for tomorrow:
-		1. Project status update
-		2. Budget review
-		3. Next quarter planning
-		4. Action items
+	const saveResponse2 = await ask(
+		runner.ask.bind(runner),
+		dedent`
+			Create a meeting agenda for tomorrow:
+			1. Project status update
+			2. Budget review
+			3. Next quarter planning
+			4. Action items
 
-		Save it as "meeting-agenda.md"
-	`;
-	console.log(`👤 User:  ${saveQuery2}`);
-	const saveResponse2 = await runner.ask(saveQuery2);
+			Save it as "meeting-agenda.md"
+		`,
+	);
 	console.log(`🤖 Agent: ${saveResponse2}\n`);
 
 	// Test artifact loading
 	console.log("📖 Loading artifacts:");
-	const loadQuery = "Show me all my saved files and their contents";
-	console.log(`👤 User:  ${loadQuery}`);
-	const loadResponse = await runner.ask(loadQuery);
+	const loadResponse = await ask(
+		runner.ask.bind(runner),
+		"Show me all my saved files and their contents",
+	);
 	console.log(`🤖 Agent: ${loadResponse}\n`);
 
 	// Test artifact updating
 	console.log("✏️ Updating artifacts:");
-	const updateQuery = dedent`
-		Update the shopping list to add:
-		- Bananas
-		- Greek yogurt
+	const updateResponse = await ask(
+		runner.ask.bind(runner),
+		dedent`
+			Update the shopping list to add:
+			- Bananas
+			- Greek yogurt
 
-		And remove milk from the list.
-	`;
-	console.log(`👤 User:  ${updateQuery}`);
-	const updateResponse = await runner.ask(updateQuery);
+			And remove milk from the list.
+		`,
+	);
 	console.log(`🤖 Agent: ${updateResponse}\n`);
 
 	// Show final artifact state
 	console.log("📋 Final artifact verification:");
-	const finalQuery = "Show me the updated shopping list content";
-	console.log(`👤 User:  ${finalQuery}`);
-	const finalCheck = await runner.ask(finalQuery);
+	const finalCheck = await ask(
+		runner.ask.bind(runner),
+		"Show me the updated shopping list content",
+	);
 	console.log(`🤖 Agent: ${finalCheck}\n`);
 }
 
@@ -357,23 +366,25 @@ async function demonstrateHybridPersistence() {
 
 	// Test hybrid persistence
 	console.log("🏗️ Creating a project with hybrid persistence:");
-	const projectQuery = dedent`
-		Create a new project called "Website Redesign" with description
-		"Modernize company website with new design and improved UX".
+	const projectResponse = await ask(
+		runner.ask.bind(runner),
+		dedent`
+			Create a new project called "Website Redesign" with description
+			"Modernize company website with new design and improved UX".
 
-		Include these initial files:
-		1. README.md with project overview
-		2. requirements.txt with initial requirements
-		3. timeline.md with project phases
-	`;
-	console.log(`👤 User:  ${projectQuery}`);
-	const projectResponse = await runner.ask(projectQuery);
+			Include these initial files:
+			1. README.md with project overview
+			2. requirements.txt with initial requirements
+			3. timeline.md with project phases
+		`,
+	);
 	console.log(`🤖 Agent: ${projectResponse}\n`);
 
 	console.log("📊 Checking project status:");
-	const statusQuery = "Show me all my projects and their files";
-	console.log(`👤 User:  ${statusQuery}`);
-	const statusResponse = await runner.ask(statusQuery);
+	const statusResponse = await ask(
+		runner.ask.bind(runner),
+		"Show me all my projects and their files",
+	);
 	console.log(`🤖 Agent: ${statusResponse}\n`);
 }
 

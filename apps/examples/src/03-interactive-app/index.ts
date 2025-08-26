@@ -2,6 +2,7 @@ import { cancel, intro, isCancel, outro, text } from "@clack/prompts";
 import { AgentBuilder, InMemorySessionService, createTool } from "@iqai/adk";
 import * as z from "zod";
 import dedent from "dedent";
+import { ask } from "../utils";
 
 /**
  * 03 - Interactive Todo Application
@@ -346,9 +347,10 @@ async function main() {
 	// Start interactive session
 	intro("📝 Todo Assistant");
 
-	const initialQuery = "Show me my current todos and stats";
-	console.log(`\n👤 User:  ${initialQuery}`);
-	const initialStats = await runner.ask(initialQuery);
+	const initialStats = await ask(
+		runner.ask.bind(runner),
+		"Show me my current todos and stats",
+	);
 	console.log(`🤖 Agent: ${initialStats}\n`);
 
 	// Interactive loop
@@ -370,8 +372,7 @@ async function main() {
 		}
 
 		try {
-			console.log(`\n👤 User:  ${userInput}`);
-			const response = await runner.ask(userInput);
+			const response = await ask(runner.ask.bind(runner), userInput);
 			console.log(`🤖 Agent: ${response}`);
 
 			const updatedSession = await sessionService.getSession(

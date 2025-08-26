@@ -1,10 +1,7 @@
 import { env } from "node:process";
-import {
-	AgentBuilder,
-	McpToolset,
-	createSamplingHandler,
-} from "@iqai/adk";
+import { AgentBuilder, McpToolset, createSamplingHandler } from "@iqai/adk";
 import dedent from "dedent";
+import { ask } from "../utils";
 
 /**
  * 11 - MCP (Model Context Protocol) Integrations
@@ -46,10 +43,10 @@ async function demonstrateCustomMcpServer() {
 		console.log(`   Request: ${JSON.stringify(request)}`);
 
 		// Use the agent runner to handle the sampling request
-		const samplingQuery = "What is the user's name for personalization?";
-		console.log(`👤 User (sampling): ${samplingQuery}`);
-		const response = await samplingRunner.ask(samplingQuery);
-		return response;
+		return ask(
+			samplingRunner.ask.bind(samplingRunner),
+			"What is the user's name for personalization?",
+		);
 	});
 
 	// Create MCP toolset with our custom server
@@ -87,16 +84,18 @@ async function demonstrateCustomMcpServer() {
 
 		// Test the sampling-enabled greeting
 		console.log("� Testing personalized greeting with sampling:");
-		const greetingQuery = "Please greet me using the greeting tool.";
-		console.log(`👤 User:  ${greetingQuery}`);
-		const greetingResponse = await runner.ask(greetingQuery);
+		const greetingResponse = await ask(
+			runner.ask.bind(runner),
+			"Please greet me using the greeting tool.",
+		);
 		console.log(`🤖 Agent: ${greetingResponse}\n`);
 
 		// Test calculator tool
 		console.log("🧮 Testing calculator functionality:");
-		const calcQuery = "What's 25 multiplied by 8?";
-		console.log(`👤 User:  ${calcQuery}`);
-		const calcResponse = await runner.ask(calcQuery);
+		const calcResponse = await ask(
+			runner.ask.bind(runner),
+			"What's 25 multiplied by 8?",
+		);
 		console.log(`🤖 Agent: ${calcResponse}\n`);
 
 		await greetingToolset.close();

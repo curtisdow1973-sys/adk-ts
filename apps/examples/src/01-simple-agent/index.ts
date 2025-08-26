@@ -2,6 +2,7 @@ import { env } from "node:process";
 import { AgentBuilder } from "@iqai/adk";
 import dedent from "dedent";
 import { z } from "zod";
+import { ask } from "../utils";
 
 /**
  * 01 - Simple Agent
@@ -28,14 +29,12 @@ async function main() {
 		fun_fact: z.string().describe("An interesting fact about the city"),
 	});
 
-	const userPrompt = "What is the capital of France?";
-	console.log(`\n👤 User:  ${userPrompt}`);
+	const runner = (question: string) =>
+		AgentBuilder.withModel(env.LLM_MODEL || "gemini-2.5-flash")
+			.withOutputSchema(outputSchema)
+			.ask(question);
 
-	const response = await AgentBuilder.withModel(
-		env.LLM_MODEL || "gemini-2.5-flash",
-	)
-		.withOutputSchema(outputSchema)
-		.ask(userPrompt);
+	const response = await ask(runner, "What is the capital of France?");
 
 	console.log(
 		dedent`

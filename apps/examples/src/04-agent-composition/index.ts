@@ -9,6 +9,7 @@ import {
 } from "@iqai/adk";
 import dedent from "dedent";
 import * as z from "zod";
+import { ask } from "../utils";
 
 /**
  * 04 - Agent Composition and Multi-Agent Systems
@@ -141,11 +142,10 @@ async function demonstrateOutputKeys() {
 		.build();
 
 	console.log("🍽️ Restaurant order processing:");
-	const orderRequest =
-		"I'd like to order something vegetarian, not too spicy, around $20. Maybe a salad or pasta?";
-	console.log(`👤 User:  ${orderRequest}`);
-
-	const finalOrder = await runner.ask(orderRequest);
+	const finalOrder = await ask(
+		runner.ask.bind(runner),
+		"I'd like to order something vegetarian, not too spicy, around $20. Maybe a salad or pasta?",
+	);
 	console.log(`🤖 Agent: ${finalOrder}`);
 }
 
@@ -191,28 +191,28 @@ async function demonstrateSharedMemory() {
 		`,
 	);
 
-	console.log("📚 Alice's favorite book:");
-	const aliceQuery1 = "What's your favorite book and why?";
-	console.log(`👤 User:  ${aliceQuery1}`);
-	const aliceResponse1 = await alice.ask(aliceQuery1);
+	console.log("\n📚 Alice's favorite book:");
+	const aliceResponse1 = await ask(
+		alice.ask.bind(alice),
+		"What's your favorite book and why?",
+	);
 	console.log(`🤖 Alice: ${aliceResponse1}\n`);
 
 	console.log("🎬 Bob's favorite movie:");
 	const bobQuery1 = "What's your favorite movie and why?";
-	console.log(`👤 User:  ${bobQuery1}`);
-	const bobResponse1 = await bob.ask(bobQuery1);
+	const bobResponse1 = await ask(bob.ask.bind(bob), bobQuery1);
 	console.log(`🤖 Bob: ${bobResponse1}\n`);
 
 	console.log("🤝 Alice recalls Bob's movie:");
 	const aliceQuery2 = "What did Bob say was his favorite movie?";
-	console.log(`👤 User:  ${aliceQuery2}`);
-	const aliceResponse2 = await alice.ask(aliceQuery2);
+	const aliceResponse2 = await ask(alice.ask.bind(alice), aliceQuery2);
 	console.log(`🤖 Alice: ${aliceResponse2}\n`);
 
 	console.log("🤝 Bob recalls Alice's book:");
-	const bobQuery2 = "What did Alice say was her favorite book?";
-	console.log(`👤 User:  ${bobQuery2}`);
-	const bobResponse2 = await bob.ask(bobQuery2);
+	const bobResponse2 = await ask(
+		bob.ask.bind(bob),
+		"What did Alice say was her favorite book?",
+	);
 	console.log(`🤖 Bob: ${bobResponse2}\n`);
 }
 
@@ -278,27 +278,31 @@ async function demonstrateSubAgents() {
 
 	// Test sub-agent delegation
 	console.log("😄 Testing joke delegation:");
-	const jokeQuery = "Tell me a programming joke";
-	console.log(`👤 User:  ${jokeQuery}`);
-	const jokeResponse = await runner.ask(jokeQuery);
+	const jokeResponse = await ask(
+		runner.ask.bind(runner),
+		"Tell me a programming joke",
+	);
 	console.log(`🤖 Agent: ${jokeResponse}\n`);
 
 	console.log("🧮 Testing math delegation:");
-	const mathQuery = "What's 127 multiplied by 43?";
-	console.log(`👤 User:  ${mathQuery}`);
-	const mathResponse = await runner.ask(mathQuery);
+	const mathResponse = await ask(
+		runner.ask.bind(runner),
+		"What's 127 multiplied by 43?",
+	);
 	console.log(`🤖 Agent: ${mathResponse}\n`);
 
 	console.log("🌤️ Testing weather delegation:");
-	const weatherQuery = "What's the weather like in San Francisco?";
-	console.log(`👤 User:  ${weatherQuery}`);
-	const weatherResponse = await runner.ask(weatherQuery);
+	const weatherResponse = await ask(
+		runner.ask.bind(runner),
+		"What's the weather like in San Francisco?",
+	);
 	console.log(`🤖 Agent: ${weatherResponse}\n`);
 
 	console.log("💬 Testing general query (no delegation):");
-	const generalQuery = "What's the capital of Australia?";
-	console.log(`👤 User:  ${generalQuery}`);
-	const generalResponse = await runner.ask(generalQuery);
+	const generalResponse = await ask(
+		runner.ask.bind(runner),
+		"What's the capital of Australia?",
+	);
 	console.log(`🤖 Agent: ${generalResponse}\n`);
 }
 
@@ -350,8 +354,7 @@ async function demonstrateInteractiveMultiAgent() {
 		}
 
 		try {
-			console.log(`\n👤 User:  ${userInput}`);
-			const response = await runner.ask(userInput);
+			const response = await ask(runner.ask.bind(runner), userInput);
 			console.log(`🤖 Agent: ${response}`);
 			console.log("─".repeat(50));
 		} catch (error) {

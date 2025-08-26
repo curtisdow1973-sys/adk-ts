@@ -1,6 +1,7 @@
 import { AgentBuilder, LlmAgent, createTool } from "@iqai/adk";
 import { env } from "node:process";
 import * as z from "zod";
+import { ask } from "../utils";
 
 /**
  * 10 - Advanced Workflows
@@ -145,10 +146,10 @@ async function demonstrateBasicWorkflow() {
 		.withSubAgents([coordinator, researchAgent, analysisAgent])
 		.build();
 
-	const marketQuery =
-		"Create a market analysis for electric vehicle charging stations. Break this into research and analysis stages, tracking progress through each step.";
-	console.log(`👤 User:  ${marketQuery}`);
-	const response = await runner.ask(marketQuery);
+	const response = await ask(
+		runner.ask.bind(runner),
+		"Create a market analysis for electric vehicle charging stations. Break this into research and analysis stages, tracking progress through each step.",
+	);
 	console.log(`🤖 Agent: ${response}\n`);
 }
 
@@ -230,10 +231,10 @@ async function demonstrateLangGraphStyleWorkflow() {
 		)
 		.build();
 
-	const onboardingQuery =
-		"Create a customer onboarding system. Analyze complexity and route to appropriate processing.";
-	console.log(`👤 User:  ${onboardingQuery}`);
-	const response = await runner.ask(onboardingQuery);
+	const response = await ask(
+		runner.ask.bind(runner),
+		"Create a customer onboarding system. Analyze complexity and route to appropriate processing.",
+	);
 	console.log(`🤖 Agent: ${response}\n`);
 }
 
@@ -268,10 +269,10 @@ async function demonstrateErrorRecoveryWorkflow() {
 		.withSubAgents([errorRecoveryAgent, resilientWorker])
 		.build();
 
-	const recoveryQuery =
-		"Simulate processing customer data with potential failures. Show retry logic, alternative approaches, and escalation patterns.";
-	console.log(`👤 User:  ${recoveryQuery}`);
-	const response = await runner.ask(recoveryQuery);
+	const response = await ask(
+		runner.ask.bind(runner),
+		"Simulate processing customer data with potential failures. Show retry logic, alternative approaches, and escalation patterns.",
+	);
 	console.log(`🤖 Agent: ${response}\n`);
 }
 

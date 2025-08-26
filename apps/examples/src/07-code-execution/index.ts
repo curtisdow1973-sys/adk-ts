@@ -8,6 +8,7 @@ import {
 import { BuiltInCodeExecutor } from "@iqai/adk";
 import { v4 as uuidv4 } from "uuid";
 import dedent from "dedent";
+import { ask } from "../utils";
 
 /**
  * 07 - Code Execution
@@ -48,19 +49,17 @@ async function demonstrateBasicCodeExecution() {
 		.build();
 
 	console.log("🧮 Testing basic mathematical computation:");
-	const mathProblem =
-		"Calculate the sum of squares of all prime numbers less than 100";
-	console.log(`👤 User:  ${mathProblem}`);
-
-	const mathResult = await runner.ask(mathProblem);
+	const mathResult = await ask(
+		runner.ask.bind(runner),
+		"Calculate the sum of squares of all prime numbers less than 100",
+	);
 	console.log(`\n🤖 Agent: ${mathResult}\n`);
 
 	console.log("📊 Testing data manipulation:");
-	const dataTask =
-		"Generate a list of the first 10 Fibonacci numbers and calculate their average";
-	console.log(`👤 User:  ${dataTask}`);
-
-	const dataResult = await runner.ask(dataTask);
+	const dataResult = await ask(
+		runner.ask.bind(runner),
+		"Generate a list of the first 10 Fibonacci numbers and calculate their average",
+	);
 	console.log(`\n🤖 Agent: ${dataResult}\n`);
 }
 
@@ -90,31 +89,31 @@ async function demonstrateDataAnalysis() {
 		.build();
 
 	console.log("📈 Testing statistical analysis:");
-	const statsTask = dedent`
-		Create a dataset of 100 random sales figures (between 1000 and 10000),
-		then calculate:
-		1. Mean, median, and mode
-		2. Standard deviation
-		3. 95th percentile
-		4. Identify any outliers
-	`;
-	console.log(`👤 User:  ${statsTask}`);
-
-	const statsResult = await runner.ask(statsTask);
+	const statsResult = await ask(
+		runner.ask.bind(runner),
+		dedent`
+			Create a dataset of 100 random sales figures (between 1000 and 10000),
+			then calculate:
+			1. Mean, median, and mode
+			2. Standard deviation
+			3. 95th percentile
+			4. Identify any outliers
+		`,
+	);
 	console.log(`\n🤖 Agent: ${statsResult}\n`);
 
 	console.log("🔍 Testing pattern analysis:");
-	const patternTask = dedent`
-		Generate a time series dataset representing website traffic over 30 days
-		with some seasonal patterns (higher on weekends) and analyze:
-		1. Daily average traffic
-		2. Weekend vs weekday patterns
-		3. Week-over-week growth trends
-		4. Create a simple forecast for next week
-	`;
-	console.log(`👤 User:  ${patternTask}`);
-
-	const patternResult = await runner.ask(patternTask);
+	const patternResult = await ask(
+		runner.ask.bind(runner),
+		dedent`
+			Generate a time series dataset representing website traffic over 30 days
+			with some seasonal patterns (higher on weekends) and analyze:
+			1. Daily average traffic
+			2. Weekend vs weekday patterns
+			3. Week-over-week growth trends
+			4. Create a simple forecast for next week
+		`,
+	);
 	console.log(`\n🤖 Agent: ${patternResult}\n`);
 }
 
@@ -144,34 +143,34 @@ async function demonstrateAlgorithmImplementation() {
 		.build();
 
 	console.log("🔄 Testing sorting algorithm:");
-	const sortTask = dedent`
-		Implement the quicksort algorithm and test it with:
-		1. A random unsorted list of 20 numbers
-		2. An already sorted list
-		3. A reverse sorted list
-		4. A list with duplicate elements
+	const sortResult = await ask(
+		runner.ask.bind(runner),
+		dedent`
+			Implement the quicksort algorithm and test it with:
+			1. A random unsorted list of 20 numbers
+			2. An already sorted list
+			3. A reverse sorted list
+			4. A list with duplicate elements
 
-		Compare the performance and explain the results.
-	`;
-	console.log(`👤 User:  ${sortTask}`);
-
-	const sortResult = await runner.ask(sortTask);
+			Compare the performance and explain the results.
+		`,
+	);
 	console.log(`\n🤖 Agent: ${sortResult}\n`);
 
 	console.log("🌳 Testing graph algorithm:");
-	const graphTask = dedent`
-		Implement Dijkstra's shortest path algorithm and use it to find
-		the shortest path in a graph representing a simple road network:
+	const graphResult = await ask(
+		runner.ask.bind(runner),
+		dedent`
+			Implement Dijkstra's shortest path algorithm and use it to find
+			the shortest path in a graph representing a simple road network:
 
-		Cities: A, B, C, D, E
-		Roads with distances:
-		A-B: 4, A-C: 2, B-C: 1, B-D: 5, C-D: 8, C-E: 10, D-E: 2
+			Cities: A, B, C, D, E
+			Roads with distances:
+			A-B: 4, A-C: 2, B-C: 1, B-D: 5, C-D: 8, C-E: 10, D-E: 2
 
-		Find the shortest path from A to E and explain the algorithm's steps.
-	`;
-	console.log(`👤 User:  ${graphTask}`);
-
-	const graphResult = await runner.ask(graphTask);
+			Find the shortest path from A to E and explain the algorithm's steps.
+		`,
+	);
 	console.log(`\n🤖 Agent: ${graphResult}\n`);
 }
 
@@ -212,35 +211,38 @@ async function demonstrateInteractiveCodeSession() {
 		"Problem: Analyze the efficiency of different search algorithms\n",
 	);
 
-	const step1Query = dedent`
-		Let's start by implementing linear search and binary search algorithms.
-		Create both functions and test them with a sorted list of 1000 numbers.
-		Measure the time taken for each to find a target number.
-	`;
-	console.log(`👤 User:  ${step1Query}`);
-	const step1 = await runner.ask(step1Query);
+	const step1 = await ask(
+		runner.ask.bind(runner),
+		dedent`
+			Let's start by implementing linear search and binary search algorithms.
+			Create both functions and test them with a sorted list of 1000 numbers.
+			Measure the time taken for each to find a target number.
+		`,
+	);
 	console.log("Step 1 - Algorithm Implementation:");
 	console.log(`🤖 Agent: ${step1}\n`);
 
-	const step2Query = dedent`
-		Now let's create a comprehensive performance comparison.
-		Test both algorithms with different list sizes (100, 1000, 10000 elements)
-		and create a performance chart showing how search time scales with list size.
-	`;
-	console.log(`👤 User:  ${step2Query}`);
-	const step2 = await runner.ask(step2Query);
+	const step2 = await ask(
+		runner.ask.bind(runner),
+		dedent`
+			Now let's create a comprehensive performance comparison.
+			Test both algorithms with different list sizes (100, 1000, 10000 elements)
+			and create a performance chart showing how search time scales with list size.
+		`,
+	);
 	console.log("Step 2 - Performance Analysis:");
 	console.log(`🤖 Agent: ${step2}\n`);
 
-	const step3Query = dedent`
-		Finally, analyze the theoretical vs actual performance:
-		1. Calculate the theoretical time complexities
-		2. Compare with our measured results
-		3. Explain any discrepancies
-		4. Discuss when to use each algorithm
-	`;
-	console.log(`👤 User:  ${step3Query}`);
-	const step3 = await runner.ask(step3Query);
+	const step3 = await ask(
+		runner.ask.bind(runner),
+		dedent`
+			Finally, analyze the theoretical vs actual performance:
+			1. Calculate the theoretical time complexities
+			2. Compare with our measured results
+			3. Explain any discrepancies
+			4. Discuss when to use each algorithm
+		`,
+	);
 	console.log("Step 3 - Theoretical Analysis:");
 	console.log(`🤖 Agent: ${step3}\n`);
 }

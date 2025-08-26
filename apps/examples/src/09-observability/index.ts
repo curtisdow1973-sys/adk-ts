@@ -7,6 +7,7 @@ import {
 } from "@iqai/adk";
 import dedent from "dedent";
 import * as z from "zod";
+import { ask } from "../utils";
 
 /**
  * 09 - Observability and Telemetry
@@ -84,10 +85,10 @@ async function main() {
 		.build();
 
 	console.log("🤖 Asking agent about weather:");
-	const weatherQuery =
-		"What's the weather like in San Francisco? Also, can you give me some tips for what to wear in that weather?";
-	console.log(`👤 User:  ${weatherQuery}`);
-	const response = await runner.ask(weatherQuery);
+	const response = await ask(
+		runner.ask.bind(runner),
+		"What's the weather like in San Francisco? Also, can you give me some tips for what to wear in that weather?",
+	);
 
 	console.log(`🤖 Agent: ${response}`);
 

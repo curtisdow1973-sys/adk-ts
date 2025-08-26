@@ -8,6 +8,7 @@ import {
 	createTool,
 } from "@iqai/adk";
 import * as z from "zod";
+import { ask } from "../utils";
 
 /**
  * 08 - External Integrations
@@ -60,9 +61,10 @@ async function demonstrateAiSdkIntegration() {
 		.withTools(weatherTool)
 		.build();
 
-	const weatherQuery = "Get the weather for Tokyo";
-	console.log(`👤 User:  ${weatherQuery}`);
-	const response = await runner.ask(weatherQuery);
+	const response = await ask(
+		runner.ask.bind(runner),
+		"Get the weather for Tokyo",
+	);
 	console.log(`🤖 Agent: ${response}\n`);
 }
 
@@ -76,10 +78,10 @@ async function demonstrateHttpIntegration() {
 		.withTools(new HttpRequestTool())
 		.build();
 
-	const httpQuery =
-		"Make a GET request to https://httpbin.org/json and show what you received.";
-	console.log(`👤 User:  ${httpQuery}`);
-	const response = await runner.ask(httpQuery);
+	const response = await ask(
+		runner.ask.bind(runner),
+		"Make a GET request to https://httpbin.org/json and show what you received.",
+	);
 	console.log(`🤖 Agent: ${response}\n`);
 }
 
@@ -95,10 +97,10 @@ async function demonstrateFileSystemIntegration() {
 		.withTools(new FileOperationsTool({ basePath: tempDir }))
 		.build();
 
-	const fileQuery =
-		"Create a simple project: make a src directory, add index.html and styles.css files with basic content, then list the structure.";
-	console.log(`👤 User:  ${fileQuery}`);
-	const response = await runner.ask(fileQuery);
+	const response = await ask(
+		runner.ask.bind(runner),
+		"Create a simple project: make a src directory, add index.html and styles.css files with basic content, then list the structure.",
+	);
 	console.log(`🤖 Agent: ${response}\n`);
 }
 
@@ -120,10 +122,10 @@ async function demonstrateCompositeIntegration() {
 		)
 		.build();
 
-	const compositeQuery =
-		"Get weather for London and Tokyo, fetch a UUID from httpbin.org/uuid, then save a weather report as both JSON and markdown files.";
-	console.log(`👤 User:  ${compositeQuery}`);
-	const response = await runner.ask(compositeQuery);
+	const response = await ask(
+		runner.ask.bind(runner),
+		"Get weather for London and Tokyo, fetch a UUID from httpbin.org/uuid, then save a weather report as both JSON and markdown files.",
+	);
 	console.log(`🤖 Agent: ${response}\n`);
 }
 

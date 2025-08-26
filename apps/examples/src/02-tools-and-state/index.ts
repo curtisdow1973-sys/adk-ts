@@ -2,6 +2,7 @@ import { env } from "node:process";
 import { AgentBuilder, InMemorySessionService, createTool } from "@iqai/adk";
 import dedent from "dedent";
 import * as z from "zod";
+import { ask } from "../utils";
 
 /**
  * 02 - Tools and State Management
@@ -106,27 +107,27 @@ async function demonstrateToolsAndState() {
 		.build();
 
 	// Test adding items
-	const prompt1 = "Add 2 apples to my cart at $1.50 each";
-	console.log(`\n👤 User:  ${prompt1}`);
-	const item1 = await runner.ask(prompt1);
+	const item1 = await ask(
+		runner.ask.bind(runner),
+		"Add 2 apples to my cart at $1.50 each",
+	);
 	console.log(`🤖 Agent: ${item1}`);
 
-	const prompt2 = "Add 1 banana for $0.75";
-	console.log(`\n👤 User:  ${prompt2}`);
-	const item2 = await runner.ask(prompt2);
+	const item2 = await ask(runner.ask.bind(runner), "Add 1 banana for $0.75");
 	console.log(`🤖 Agent: ${item2}`);
 
 	// Test state injection - ask about cart without using tools
-	const prompt3 =
-		"How many items are in my cart and what are they? Use the state information from your instructions, don't call any tools.";
-	console.log(`\n👤 User:  ${prompt3}`);
-	const stateCheck = await runner.ask(prompt3);
+	const stateCheck = await ask(
+		runner.ask.bind(runner),
+		"How many items are in my cart and what are they? Use the state information from your instructions, don't call any tools.",
+	);
 	console.log(`🤖 Agent: ${stateCheck}`);
 
 	// Test viewing cart with tools
-	const prompt4 = "Show me my complete cart with total";
-	console.log(`\n👤 User:  ${prompt4}`);
-	const cartView = await runner.ask(prompt4);
+	const cartView = await ask(
+		runner.ask.bind(runner),
+		"Show me my complete cart with total",
+	);
 	console.log(`🤖 Agent: ${cartView}`);
 }
 
