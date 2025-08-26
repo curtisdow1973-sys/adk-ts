@@ -1,12 +1,18 @@
 "use client";
 
+import { Button } from "@/components/ui/button";
 import { ChatPanel } from "@/components/chat-panel";
+import { EventsPanel } from "@/components/events-panel";
 import { Footer } from "@/components/footer";
 import { Navbar } from "@/components/navbar";
+import { SessionsPanel } from "@/components/sessions-panel";
+import { Sidebar } from "@/components/sidebar/sidebar";
 import { ErrorState, LoadingState } from "@/components/ui/states";
 import { useAgents } from "@/hooks/useAgents";
+import { useEvents } from "@/hooks/useEvents";
+import { useSessions } from "@/hooks/useSessions";
 import { useSearchParams } from "next/navigation";
-import { Suspense, useEffect } from "react";
+import { Suspense, useCallback, useEffect, useState } from "react";
 
 function HomeContent() {
 	const searchParams = useSearchParams();
@@ -17,6 +23,13 @@ function HomeContent() {
 	// Default to port 8042 if neither is provided
 	const finalApiUrl =
 		apiUrl || (port ? `http://localhost:${port}` : "http://localhost:8042");
+
+	// Panel and session state
+	const [selectedPanel, setSelectedPanel] = useState<
+		"sessions" | "events" | null
+	>(null);
+	const [currentSessionId, setCurrentSessionId] = useState<string | null>(null);
+	const [selectedEvent, setSelectedEvent] = useState<any | null>(null);
 
 	const {
 		agents,
@@ -29,14 +42,76 @@ function HomeContent() {
 		selectAgent,
 		refreshAgents,
 		isSendingMessage,
-	} = useAgents(finalApiUrl);
+	} = useAgents(finalApiUrl, currentSessionId);
+
+	// Sessions and events hooks
+	const {
+		sessions,
+		isLoading: sessionsLoading,
+		createSession,
+		deleteSession,
+		switchSession,
+	} = useSessions(finalApiUrl, selectedAgent);
+
+	const { events, isLoading: eventsLoading } = useEvents(
+		finalApiUrl,
+		selectedAgent,
+		currentSessionId,
+	);
+
+	// Clear selected event when switching away from events panel or when session changes
+	useEffect(() => {
+		setSelectedEvent(null);
+	}, [selectedPanel, currentSessionId]);
+
+	// Panel action handlers
+	const handlePanelSelect = (panel: "sessions" | "events" | null) => {
+		setSelectedPanel(panel);
+	};
+
+	const handleCreateSession = useCallback(async (
+		state?: Record<string, any>,
+		sessionId?: string,
+	) => {
+		await createSession({ state, sessionId });
+	}, [createSession]);
 
 	// Auto-select first agent if none selected and agents are available
 	useEffect(() => {
 		if (agents.length > 0 && !selectedAgent) {
+			console.log("Auto-selecting first agent:", agents[0].name);
 			selectAgent(agents[0]);
 		}
 	}, [agents, selectedAgent, selectAgent]);
+
+	// Auto-select first session when sessions are loaded
+	useEffect(() => {
+		if (sessions.length > 0 && !currentSessionId) {
+			const firstSessionId = sessions[0].id;
+			setCurrentSessionId(firstSessionId);
+			console.log("Auto-selected session:", firstSessionId);
+		}
+	}, [sessions, currentSessionId]);
+
+	// Create initial session if agent is loaded but no sessions exist
+	useEffect(() => {
+		if (selectedAgent && sessions.length === 0 && !sessionsLoading) {
+			console.log("Creating initial session for agent:", selectedAgent.name);
+			handleCreateSession();
+		}
+	}, [selectedAgent, sessions.length, sessionsLoading, handleCreateSession]);
+
+	const handleDeleteSession = async (sessionId: string) => {
+		await deleteSession(sessionId);
+		if (currentSessionId === sessionId) {
+			setCurrentSessionId(null);
+		}
+	};
+
+	const handleSwitchSession = async (sessionId: string) => {
+		await switchSession(sessionId);
+		setCurrentSessionId(sessionId);
+	};
 
 	if (loading) {
 		return <LoadingState message="Connecting to ADK server..." />;
@@ -71,14 +146,68 @@ function HomeContent() {
 				onSelectAgent={selectAgent}
 			/>
 
-			<main className="flex-1 flex flex-col min-h-0">
-				<ChatPanel
-					selectedAgent={selectedAgent}
-					messages={messages}
-					onSendMessage={sendMessage}
-					isSendingMessage={isSendingMessage}
+			<div className="flex-1 flex min-h-0">
+				{/* Sidebar */}
+				<Sidebar
+					selectedPanel={selectedPanel}
+					onPanelSelect={handlePanelSelect}
 				/>
-			</main>
+
+				{/* Main Content Area */}
+				<div className="flex-1 flex min-h-0">
+					{/* Panel Content */}
+					{selectedPanel && (
+						<div className="w-96 border-r bg-background flex flex-col min-h-0">
+							{/* Panel Header */}
+							<div className="flex items-center justify-between p-4 border-b">
+								<h2 className="text-lg font-semibold">
+									{selectedPanel === "sessions" ? "Sessions" : "Events"}
+								</h2>
+								<Button
+									variant="ghost"
+									size="sm"
+									onClick={() => setSelectedPanel(null)}
+									className="h-6 w-6 p-0"
+								>
+									×
+								</Button>
+							</div>
+
+							{/* Panel Content */}
+							<div className="flex-1 min-h-0">
+								{selectedPanel === "sessions" && (
+									<SessionsPanel
+										sessions={sessions}
+										currentSessionId={currentSessionId}
+										onCreateSession={handleCreateSession}
+										onDeleteSession={handleDeleteSession}
+										onSwitchSession={handleSwitchSession}
+										isLoading={sessionsLoading}
+									/>
+								)}
+								{selectedPanel === "events" && (
+									<EventsPanel
+										events={events}
+										isLoading={eventsLoading}
+										onSelectEvent={(e) => setSelectedEvent(e)}
+										selectedEventId={selectedEvent?.id}
+									/>
+								)}
+							</div>
+						</div>
+					)}
+
+					{/* Chat Panel - Always visible, takes remaining space */}
+					<div className="flex-1 min-h-0">
+						<ChatPanel
+							selectedAgent={selectedAgent}
+							messages={messages}
+							onSendMessage={sendMessage}
+							isSendingMessage={isSendingMessage}
+						/>
+					</div>
+				</div>
+			</div>
 
 			<Footer />
 		</div>

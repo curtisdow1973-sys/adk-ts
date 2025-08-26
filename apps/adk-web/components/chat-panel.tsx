@@ -142,7 +142,7 @@ export function ChatPanel({
 	return (
 		<div className="flex flex-col min-h-0 flex-1">
 			{/* Container with borders */}
-			<div className="flex-1 flex flex-col max-w-4xl mx-auto w-full border-l border-r border-border bg-background min-h-0">
+			<div className="flex-1 flex flex-col max-w-4xl mx-auto w-full bg-background min-h-0">
 				{/* Input Area at Top */}
 				<div className="p-4">
 					<PromptInput onSubmit={handleSubmit} className="overflow-visible">
