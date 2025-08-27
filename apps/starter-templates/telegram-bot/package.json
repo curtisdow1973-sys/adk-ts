@@ -23,7 +23,7 @@
 	},
 	"homepage": "https://github.com/IQAICOM/adk-telegram-bot#readme",
 	"dependencies": {
-		"@iqai/adk": "^0.2.4",
+		"@iqai/adk": "^0.2.5",
 		"dotenv": "^17.2.0",
 		"zod": "^3.25.67"
 	},
