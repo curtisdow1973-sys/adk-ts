@@ -8,13 +8,7 @@ import {
 } from "node:fs";
 import { dirname, join, relative } from "node:path";
 import { pathToFileURL } from "node:url";
-import type {
-	Event,
-	FullMessage,
-	InMemorySessionService,
-	LlmAgent,
-	Session,
-} from "@iqai/adk";
+import type { FullMessage, InMemorySessionService, LlmAgent } from "@iqai/adk";
 import { AgentBuilder } from "@iqai/adk";
 import type {
 	Agent,
@@ -23,6 +17,7 @@ import type {
 	LoadedAgent,
 	SessionResponse,
 	SessionsResponse,
+	StateResponse,
 } from "./types.js";
 
 export class AgentScanner {
@@ -390,7 +385,7 @@ export class AgentManager {
 
 	constructor(
 		private sessionService: InMemorySessionService,
-		private quiet = false,
+		quiet = false,
 	) {
 		this.scanner = new AgentScanner(quiet);
 		this.loader = new AgentLoader(quiet);
@@ -462,15 +457,70 @@ export class AgentManager {
 
 			// Build runner/session while preserving the exact exported agent (including subAgents, tools, callbacks, etc.)
 			// We use withAgent() so we don't accidentally drop configuration like subAgents which was happening before
-			const agentBuilder = AgentBuilder.create(exportedAgent.name)
-				.withAgent(exportedAgent as any)
-				.withSessionService(this.sessionService, {
-					userId: `user_${agentPath}`,
-					appName: "adk-server",
-				});
+			const agentBuilder = AgentBuilder.create(exportedAgent.name).withAgent(
+				exportedAgent as any,
+			);
+
+			// Try to extract session configuration from the original agent
+			const extractedConfig = AgentBuilder.extractSessionConfig(exportedAgent);
+			console.log("Extracted session config from original agent:", {
+				hasSessionService: !!extractedConfig.sessionService,
+				sessionServiceType: extractedConfig.sessionService?.constructor?.name,
+				hasSessionOptions: !!extractedConfig.sessionOptions,
+			});
+
+			let initialState: Record<string, any> | undefined;
+
+			// If original agent has session service, try to extract state from existing sessions
+			if (extractedConfig.sessionService) {
+				try {
+					const sessions = await extractedConfig.sessionService.listSessions(
+						extractedConfig.sessionOptions?.appName || "adk-server",
+						extractedConfig.sessionOptions?.userId || `user_${agentPath}`,
+					);
+					console.log("Found sessions in original agent:", sessions.length);
+
+					if (sessions.length > 0) {
+						const firstSession =
+							await extractedConfig.sessionService.getSession(
+								extractedConfig.sessionOptions?.appName || "adk-server",
+								extractedConfig.sessionOptions?.userId || `user_${agentPath}`,
+								sessions[0],
+							);
+						if (
+							firstSession?.state &&
+							Object.keys(firstSession.state).length > 0
+						) {
+							initialState = firstSession.state;
+							console.log("Extracted initial state from original agent:", {
+								hasState: !!initialState,
+								stateKeys: initialState ? Object.keys(initialState) : [],
+								stateContent: initialState,
+							});
+						}
+					}
+				} catch (error) {
+					console.log(
+						"Could not extract state from original agent sessions:",
+						error,
+					);
+				}
+			}
+
+			// Configure with CLI session service and pass extracted initial state
+			agentBuilder.withSessionService(this.sessionService, {
+				userId: `user_${agentPath}`,
+				appName: "adk-server",
+				state: initialState,
+			});
 
 			const { runner, session } = await agentBuilder.build();
-			console.log("Agent started with session:", session.id);
+			console.log("Agent started with session:", {
+				sessionId: session.id,
+				hasState: !!session.state,
+				stateKeys: session.state ? Object.keys(session.state) : [],
+				stateContent: session.state,
+			});
 
 			// Store the loaded agent with its runner
 			const loadedAgent: LoadedAgent = {
@@ -491,7 +541,7 @@ export class AgentManager {
 				const existingSession = await this.sessionService.getSession(
 					loadedAgent.appName,
 					loadedAgent.userId,
-					session.id
+					session.id,
 				);
 
 				if (!existingSession) {
@@ -501,7 +551,7 @@ export class AgentManager {
 						loadedAgent.appName,
 						loadedAgent.userId,
 						session.state,
-						session.id
+						session.id,
 					);
 				} else {
 					console.log("Session already exists in sessionService:", session.id);
@@ -546,10 +596,9 @@ export class AgentManager {
 			const fullMessage: FullMessage = {
 				parts: [
 					{ text: message },
-					...
-						(attachments || []).map((file) => ({
-							inlineData: { mimeType: file.mimeType, data: file.data },
-						})),
+					...(attachments || []).map((file) => ({
+						inlineData: { mimeType: file.mimeType, data: file.data },
+					})),
 				],
 			};
 
@@ -563,7 +612,9 @@ export class AgentManager {
 				const parts = (event as any)?.content?.parts;
 				if (Array.isArray(parts)) {
 					accumulated += parts
-						.map((p: any) => (p && typeof p === "object" && "text" in p ? p.text : ""))
+						.map((p: any) =>
+							p && typeof p === "object" && "text" in p ? p.text : "",
+						)
 						.join("");
 				}
 			}
@@ -634,7 +685,11 @@ export class SessionManager {
 	 */
 	async getAgentSessions(loadedAgent: LoadedAgent): Promise<SessionsResponse> {
 		try {
-			console.log("Listing sessions for:", loadedAgent.appName, loadedAgent.userId);
+			console.log(
+				"Listing sessions for:",
+				loadedAgent.appName,
+				loadedAgent.userId,
+			);
 			const listResponse = await this.sessionService.listSessions(
 				loadedAgent.appName,
 				loadedAgent.userId,
@@ -660,7 +715,9 @@ export class SessionManager {
 					appName: s.appName,
 					userId: s.userId,
 					state: s.state,
-					eventCount: Array.isArray(fullSession?.events) ? fullSession.events.length : 0,
+					eventCount: Array.isArray(fullSession?.events)
+						? fullSession.events.length
+						: 0,
 					lastUpdateTime: s.lastUpdateTime,
 					createdAt: s.lastUpdateTime,
 				});
@@ -682,12 +739,27 @@ export class SessionManager {
 		request?: CreateSessionRequest,
 	): Promise<SessionResponse> {
 		try {
+			console.log("Creating agent session:", {
+				appName: loadedAgent.appName,
+				userId: loadedAgent.userId,
+				hasState: !!request?.state,
+				stateKeys: request?.state ? Object.keys(request.state) : [],
+				sessionId: request?.sessionId,
+			});
+
 			const newSession = await this.sessionService.createSession(
 				loadedAgent.appName,
 				loadedAgent.userId,
 				request?.state,
 				request?.sessionId,
 			);
+
+			console.log("Session created with state:", {
+				sessionId: newSession.id,
+				hasState: !!newSession.state,
+				stateKeys: newSession.state ? Object.keys(newSession.state) : [],
+				stateContent: newSession.state,
+			});
 
 			return {
 				id: newSession.id,
@@ -743,7 +815,7 @@ export class SessionManager {
 
 			const events = session.events.map((event: any) => {
 				// Handle both Event class instances and plain objects
-				const isEventInstance = typeof event.getFunctionCalls === 'function';
+				const isEventInstance = typeof event.getFunctionCalls === "function";
 
 				return {
 					id: event.id,
@@ -751,10 +823,20 @@ export class SessionManager {
 					timestamp: event.timestamp,
 					content: event.content,
 					actions: event.actions,
-					functionCalls: isEventInstance ? event.getFunctionCalls() : (event.content?.parts?.filter((part: any) => part.functionCall) || []),
-					functionResponses: isEventInstance ? event.getFunctionResponses() : (event.content?.parts?.filter((part: any) => part.functionResponse) || []),
+					functionCalls: isEventInstance
+						? event.getFunctionCalls()
+						: event.content?.parts?.filter((part: any) => part.functionCall) ||
+							[],
+					functionResponses: isEventInstance
+						? event.getFunctionResponses()
+						: event.content?.parts?.filter(
+								(part: any) => part.functionResponse,
+							) || [],
 					branch: event.branch,
-					isFinalResponse: isEventInstance ? event.isFinalResponse() : (!event.content?.parts?.some((part: any) => part.functionCall) && !event.partial),
+					isFinalResponse: isEventInstance
+						? event.isFinalResponse()
+						: !event.content?.parts?.some((part: any) => part.functionCall) &&
+							!event.partial,
 				};
 			});
 
@@ -793,5 +875,140 @@ export class SessionManager {
 			console.error("Error switching session:", error);
 			throw error;
 		}
+	}
+
+	/**
+	 * Get state for specific session
+	 */
+	async getSessionState(
+		loadedAgent: LoadedAgent,
+		sessionId: string,
+	): Promise<StateResponse> {
+		try {
+			console.log("Getting session state:", sessionId);
+
+			const session = await this.sessionService.getSession(
+				loadedAgent.appName,
+				loadedAgent.userId,
+				sessionId,
+			);
+
+			if (!session) {
+				throw new Error("Session not found");
+			}
+
+			const agentState: Record<string, any> = {};
+			const userState: Record<string, any> = {};
+			const sessionState = session.state || {};
+
+			console.log("Session state retrieved:", {
+				sessionId,
+				hasSessionState: !!session.state,
+				sessionStateKeys: Object.keys(sessionState),
+				sessionStateContent: sessionState,
+				sessionLastUpdateTime: session.lastUpdateTime,
+			});
+
+			const allKeys = { ...agentState, ...userState, ...sessionState };
+			const totalKeys = Object.keys(allKeys).length;
+			const sizeBytes = JSON.stringify(allKeys).length;
+
+			const response = {
+				agentState,
+				userState,
+				sessionState,
+				metadata: {
+					lastUpdated: session.lastUpdateTime,
+					changeCount: 0,
+					totalKeys,
+					sizeBytes,
+				},
+			};
+
+			console.log("Returning state response:", {
+				hasAgentState:
+					!!response.agentState && Object.keys(response.agentState).length > 0,
+				hasUserState:
+					!!response.userState && Object.keys(response.userState).length > 0,
+				hasSessionState:
+					!!response.sessionState &&
+					Object.keys(response.sessionState).length > 0,
+				sessionStateKeys: Object.keys(response.sessionState),
+				totalKeys: response.metadata.totalKeys,
+			});
+
+			return response;
+		} catch (error) {
+			console.error("Error getting session state:", error);
+			return {
+				agentState: {},
+				userState: {},
+				sessionState: {},
+				metadata: {
+					lastUpdated: Date.now() / 1000,
+					changeCount: 0,
+					totalKeys: 0,
+					sizeBytes: 0,
+				},
+			};
+		}
+	}
+
+	/**
+	 * Update session state
+	 */
+	async updateSessionState(
+		loadedAgent: LoadedAgent,
+		sessionId: string,
+		path: string,
+		value: any,
+	): Promise<void> {
+		try {
+			console.log("Updating session state:", sessionId, path, "=", value);
+
+			const session = await this.sessionService.getSession(
+				loadedAgent.appName,
+				loadedAgent.userId,
+				sessionId,
+			);
+
+			if (!session) {
+				throw new Error("Session not found");
+			}
+
+			const updatedState = { ...session.state };
+			this.setNestedValue(updatedState, path, value);
+
+			await this.sessionService.createSession(
+				loadedAgent.appName,
+				loadedAgent.userId,
+				updatedState,
+				sessionId,
+			);
+
+			console.log("Session state updated successfully");
+		} catch (error) {
+			console.error("Error updating session state:", error);
+			throw error;
+		}
+	}
+
+	/**
+	 * Helper method to set nested values using dot notation
+	 */
+	private setNestedValue(obj: any, path: string, value: any): void {
+		const keys = path.split(".");
+		const lastKey = keys.pop()!;
+		const target = keys.reduce((current, key) => {
+			if (
+				!(key in current) ||
+				typeof current[key] !== "object" ||
+				current[key] === null
+			) {
+				current[key] = {};
+			}
+			return current[key];
+		}, obj);
+		target[lastKey] = value;
 	}
 }

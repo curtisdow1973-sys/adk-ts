@@ -84,3 +84,20 @@ export interface EventsResponse {
 	}>;
 	totalCount: number;
 }
+
+export interface StateResponse {
+	agentState: Record<string, any>;
+	userState: Record<string, any>;
+	sessionState: Record<string, any>;
+	metadata: {
+		lastUpdated: number;
+		changeCount: number;
+		totalKeys: number;
+		sizeBytes: number;
+	};
+}
+
+export interface StateUpdateRequest {
+	path: string;
+	value: any;
+}

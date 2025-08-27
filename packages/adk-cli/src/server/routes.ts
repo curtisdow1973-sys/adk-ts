@@ -7,6 +7,7 @@ import type {
 	MessageRequest,
 	MessageResponse,
 	MessagesResponse,
+	StateUpdateRequest,
 } from "./types.js";
 
 export function setupRoutes(
@@ -78,7 +79,10 @@ export function setupRoutes(
 	app.get("/api/agents/:id/sessions", async (c) => {
 		const agentPath = decodeURIComponent(c.req.param("id"));
 		console.log("Getting sessions for agent path:", agentPath);
-		console.log("Available loaded agents:", Array.from(agentManager.getLoadedAgents().keys()));
+		console.log(
+			"Available loaded agents:",
+			Array.from(agentManager.getLoadedAgents().keys()),
+		);
 
 		// Try to load the agent if it's not already loaded
 		if (!agentManager.getLoadedAgents().has(agentPath)) {
@@ -115,9 +119,16 @@ export function setupRoutes(
 			console.log("Agent not loaded, trying to start it:", agentPath);
 			try {
 				await agentManager.startAgent(agentPath);
-				console.log("Agent started successfully for session creation:", agentPath);
+				console.log(
+					"Agent started successfully for session creation:",
+					agentPath,
+				);
 			} catch (error) {
-				console.error("Failed to start agent for session creation:", agentPath, error);
+				console.error(
+					"Failed to start agent for session creation:",
+					agentPath,
+					error,
+				);
 				return c.json({ error: "Failed to load agent" }, 404);
 			}
 		}
@@ -152,7 +163,11 @@ export function setupRoutes(
 			try {
 				await agentManager.startAgent(agentPath);
 			} catch (error) {
-				console.error("Failed to start agent for session deletion:", agentPath, error);
+				console.error(
+					"Failed to start agent for session deletion:",
+					agentPath,
+					error,
+				);
 				return c.json({ error: "Failed to load agent" }, 404);
 			}
 		}
@@ -181,7 +196,11 @@ export function setupRoutes(
 			try {
 				await agentManager.startAgent(agentPath);
 			} catch (error) {
-				console.error("Failed to start agent for session switch:", agentPath, error);
+				console.error(
+					"Failed to start agent for session switch:",
+					agentPath,
+					error,
+				);
 				return c.json({ error: "Failed to load agent" }, 404);
 			}
 		}
@@ -225,5 +244,72 @@ export function setupRoutes(
 			sessionId,
 		);
 		return c.json(events);
+	});
+
+	// Get state for specific session
+	app.get("/api/agents/:id/sessions/:sessionId/state", async (c) => {
+		const agentPath = decodeURIComponent(c.req.param("id"));
+		const sessionId = c.req.param("sessionId");
+
+		// Try to load the agent if it's not already loaded
+		if (!agentManager.getLoadedAgents().has(agentPath)) {
+			try {
+				await agentManager.startAgent(agentPath);
+			} catch (error) {
+				console.error(
+					"Failed to start agent for session state:",
+					agentPath,
+					error,
+				);
+				return c.json({ error: "Failed to load agent" }, 404);
+			}
+		}
+
+		const loadedAgent = agentManager.getLoadedAgents().get(agentPath);
+		if (!loadedAgent) {
+			return c.json({ error: "Agent not loaded" }, 404);
+		}
+
+		const state = await sessionManager.getSessionState(loadedAgent, sessionId);
+		return c.json(state);
+	});
+
+	// Update session state
+	app.put("/api/agents/:id/sessions/:sessionId/state", async (c) => {
+		const agentPath = decodeURIComponent(c.req.param("id"));
+		const sessionId = c.req.param("sessionId");
+		const request: StateUpdateRequest = await c.req.json();
+
+		// Try to load the agent if it's not already loaded
+		if (!agentManager.getLoadedAgents().has(agentPath)) {
+			try {
+				await agentManager.startAgent(agentPath);
+			} catch (error) {
+				console.error(
+					"Failed to start agent for session state update:",
+					agentPath,
+					error,
+				);
+				return c.json({ error: "Failed to load agent" }, 404);
+			}
+		}
+
+		const loadedAgent = agentManager.getLoadedAgents().get(agentPath);
+		if (!loadedAgent) {
+			return c.json({ error: "Agent not loaded" }, 404);
+		}
+
+		try {
+			await sessionManager.updateSessionState(
+				loadedAgent,
+				sessionId,
+				request.path,
+				request.value,
+			);
+			return c.json({ success: true });
+		} catch (error) {
+			console.error("Error updating session state:", error);
+			return c.json({ error: "Failed to update state" }, 500);
+		}
 	});
 }
