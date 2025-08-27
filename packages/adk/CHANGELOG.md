@@ -1,5 +1,11 @@
 # @iqai/adk
 
+## 0.2.5
+
+### Patch Changes
+
+- e1dc750: - Implements output schema to work with tools and agent transfers
+
 ## 0.2.4
 
 ### Patch Changes
