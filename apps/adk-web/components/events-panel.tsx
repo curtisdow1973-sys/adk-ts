@@ -1,5 +1,7 @@
 "use client";
 
+import { EventCard } from "@/components/event-card";
+import { EventDetails } from "@/components/event-details";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -12,14 +14,8 @@ import {
 	SelectTrigger,
 	SelectValue,
 } from "@/components/ui/select";
-import {
-	AlertCircle,
-	Search,
-	ArrowLeft,
-} from "lucide-react";
+import { AlertCircle, ArrowLeft, Search } from "lucide-react";
 import { useMemo, useState } from "react";
-import { EventDetails } from "@/components/event-details";
-import { EventCard } from "@/components/event-card";
 
 interface Event {
 	id: string;
@@ -40,7 +36,12 @@ interface EventsPanelProps {
 	selectedEventId?: string;
 }
 
-export function EventsPanel({ events, isLoading = false, onSelectEvent, selectedEventId }: EventsPanelProps) {
+export function EventsPanel({
+	events,
+	isLoading = false,
+	onSelectEvent,
+	selectedEventId,
+}: EventsPanelProps) {
 	const [searchTerm, setSearchTerm] = useState("");
 	const [authorFilter, setAuthorFilter] = useState<string>("all");
 	const [eventTypeFilter, setEventTypeFilter] = useState<string>("all");
@@ -94,12 +95,21 @@ export function EventsPanel({ events, isLoading = false, onSelectEvent, selected
 		return (
 			<div className="h-full flex flex-col bg-background">
 				<div className="p-3 border-b flex items-center gap-2">
-					<Button variant="ghost" size="sm" className="h-7 w-7 p-0" onClick={() => setDrillEvent(null)}>
+					<Button
+						variant="ghost"
+						size="sm"
+						className="h-7 w-7 p-0"
+						onClick={() => setDrillEvent(null)}
+					>
 						<ArrowLeft className="h-4 w-4" />
 					</Button>
 					<span className="text-sm font-medium">Event Details</span>
 				</div>
-				<EventDetails event={drillEvent} onClose={() => setDrillEvent(null)} hideHeader />
+				<EventDetails
+					event={drillEvent}
+					onClose={() => setDrillEvent(null)}
+					hideHeader
+				/>
 			</div>
 		);
 	}
@@ -114,27 +124,40 @@ export function EventsPanel({ events, isLoading = false, onSelectEvent, selected
 				<div className="flex flex-col gap-3">
 					<div className="relative">
 						<Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-						<Input placeholder="Search events..." value={searchTerm} onChange={(e) => setSearchTerm(e.target.value)} className="pl-9" />
+						<Input
+							placeholder="Search events..."
+							value={searchTerm}
+							onChange={(e) => setSearchTerm(e.target.value)}
+							className="pl-9"
+						/>
 					</div>
 
 					<div className="grid grid-cols-2 gap-2">
 						<Select value={authorFilter} onValueChange={setAuthorFilter}>
-							<SelectTrigger className="w-full"><SelectValue placeholder="Author" /></SelectTrigger>
+							<SelectTrigger className="w-full">
+								<SelectValue placeholder="Author" />
+							</SelectTrigger>
 							<SelectContent>
 								<SelectItem value="all">All Authors</SelectItem>
 								{authors.map((author) => (
-									<SelectItem key={author} value={author}>{author === "user" ? "👤 User" : `🤖 ${author}`}</SelectItem>
+									<SelectItem key={author} value={author}>
+										{author === "user" ? "👤 User" : `🤖 ${author}`}
+									</SelectItem>
 								))}
 							</SelectContent>
 						</Select>
 
 						<Select value={eventTypeFilter} onValueChange={setEventTypeFilter}>
-							<SelectTrigger className="w-full"><SelectValue placeholder="Event Type" /></SelectTrigger>
+							<SelectTrigger className="w-full">
+								<SelectValue placeholder="Event Type" />
+							</SelectTrigger>
 							<SelectContent>
 								<SelectItem value="all">All Types</SelectItem>
 								<SelectItem value="messages">Messages</SelectItem>
 								<SelectItem value="function-calls">Function Calls</SelectItem>
-								<SelectItem value="function-responses">Function Responses</SelectItem>
+								<SelectItem value="function-responses">
+									Function Responses
+								</SelectItem>
 								<SelectItem value="final-responses">Final Responses</SelectItem>
 							</SelectContent>
 						</Select>
@@ -142,10 +165,12 @@ export function EventsPanel({ events, isLoading = false, onSelectEvent, selected
 				</div>
 			</div>
 
-			<ScrollArea className="flex-1">
+			<ScrollArea className="flex-1 max-h-[calc(100vh-200px)]">
 				<div className="p-4 space-y-3">
 					{isLoading ? (
-						<div className="text-center text-muted-foreground py-8">Loading events...</div>
+						<div className="text-center text-muted-foreground py-8">
+							Loading events...
+						</div>
 					) : filteredEvents.length === 0 ? (
 						<div className="text-center text-muted-foreground py-8">
 							<AlertCircle className="h-12 w-12 mx-auto mb-4 opacity-50" />
@@ -154,7 +179,14 @@ export function EventsPanel({ events, isLoading = false, onSelectEvent, selected
 						</div>
 					) : (
 						filteredEvents.map((event) => (
-							<EventCard key={event.id} event={event} onClick={() => { setDrillEvent(event); onSelectEvent?.(event); }} />
+							<EventCard
+								key={event.id}
+								event={event}
+								onClick={() => {
+									setDrillEvent(event);
+									onSelectEvent?.(event);
+								}}
+							/>
 						))
 					)}
 				</div>

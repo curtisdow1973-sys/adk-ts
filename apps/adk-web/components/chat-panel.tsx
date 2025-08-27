@@ -18,6 +18,7 @@ import {
 	PromptInputTools,
 } from "@/components/ai-elements/prompt-input";
 import { Button } from "@/components/ui/button";
+import { useChatAttachments } from "@/hooks/useChatAttachments";
 import { cn } from "@/lib/utils";
 import {
 	Bot,
@@ -43,10 +44,19 @@ export function ChatPanel({
 	isSendingMessage = false,
 }: ChatPanelProps) {
 	const [inputMessage, setInputMessage] = useState("");
-	const [attachedFiles, setAttachedFiles] = useState<File[]>([]);
-	const [showAttachmentDropdown, setShowAttachmentDropdown] = useState(false);
-	const fileInputRef = useRef<HTMLInputElement>(null);
-	const photoInputRef = useRef<HTMLInputElement>(null);
+	const {
+		attachedFiles,
+		showAttachmentDropdown,
+		setShowAttachmentDropdown,
+		fileInputRef,
+		photoInputRef,
+		handleFileAttach,
+		handlePhotoAttach,
+		handleScreenshot,
+		handleFileChange,
+		removeFile,
+		resetAttachments,
+	} = useChatAttachments();
 	const dropdownRef = useRef<HTMLDivElement>(null);
 
 	const handleSubmit = (e: React.FormEvent) => {
@@ -55,7 +65,7 @@ export function ChatPanel({
 
 		onSendMessage(inputMessage, attachedFiles);
 		setInputMessage("");
-		setAttachedFiles([]);
+		resetAttachments();
 	};
 
 	// Close dropdown when clicking outside
@@ -71,69 +81,7 @@ export function ChatPanel({
 
 		document.addEventListener("mousedown", handleClickOutside);
 		return () => document.removeEventListener("mousedown", handleClickOutside);
-	}, []);
-
-	const handleFileAttach = () => {
-		setShowAttachmentDropdown(false);
-		fileInputRef.current?.click();
-	};
-
-	const handlePhotoAttach = () => {
-		setShowAttachmentDropdown(false);
-		photoInputRef.current?.click();
-	};
-
-	const handleScreenshot = async () => {
-		setShowAttachmentDropdown(false);
-		try {
-			// Use the browser's screen capture API
-			const stream = await navigator.mediaDevices.getDisplayMedia({
-				video: true,
-			});
-
-			// Create a video element to capture the frame
-			const video = document.createElement("video");
-			video.srcObject = stream;
-			video.play();
-
-			video.addEventListener("loadedmetadata", () => {
-				// Create canvas to capture the frame
-				const canvas = document.createElement("canvas");
-				canvas.width = video.videoWidth;
-				canvas.height = video.videoHeight;
-				const ctx = canvas.getContext("2d");
-
-				if (ctx) {
-					ctx.drawImage(video, 0, 0);
-
-					// Convert to blob and create file
-					canvas.toBlob((blob) => {
-						if (blob) {
-							const file = new File([blob], `screenshot-${Date.now()}.png`, {
-								type: "image/png",
-							});
-							setAttachedFiles((prev) => [...prev, file]);
-						}
-
-						// Stop the stream
-						stream.getTracks().forEach((track) => track.stop());
-					}, "image/png");
-				}
-			});
-		} catch (error) {
-			console.error("Failed to capture screenshot:", error);
-		}
-	};
-
-	const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-		const files = Array.from(e.target.files || []);
-		setAttachedFiles((prev) => [...prev, ...files]);
-		e.target.value = ""; // Reset input
-	};
-
-	const removeFile = (index: number) => {
-		setAttachedFiles((prev) => prev.filter((_, i) => i !== index));
-	};
+	}, [setShowAttachmentDropdown]);
 
 	if (!selectedAgent) {
 		return <EmptyChat />;
@@ -159,7 +107,7 @@ export function ChatPanel({
 						{attachedFiles.length > 0 && (
 							<div className="px-3 py-2 border-t border-border">
 								<div className="flex flex-wrap gap-2">
-									{attachedFiles.map((file, index) => (
+									{attachedFiles.map((file: File, index: number) => (
 										<div
 											key={`${file.name}-${file.size}-${index}`}
 											className="flex items-center gap-2 px-2 py-1 bg-secondary rounded-md text-sm"
@@ -257,7 +205,7 @@ export function ChatPanel({
 				</div>
 
 				{/* Chat Messages Area */}
-				<Conversation className="flex-1 min-h-0">
+				<Conversation className="flex-1 min-h-0 max-h-[calc(100vh-125px)]">
 					<ConversationContent>
 						{messages.length === 0 ? (
 							<div className="flex flex-col items-center justify-center min-h-[400px] text-center text-muted-foreground">

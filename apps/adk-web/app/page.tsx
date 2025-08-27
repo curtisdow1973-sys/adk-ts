@@ -1,12 +1,13 @@
 "use client";
 
-import { Button } from "@/components/ui/button";
 import { ChatPanel } from "@/components/chat-panel";
 import { EventsPanel } from "@/components/events-panel";
 import { Footer } from "@/components/footer";
 import { Navbar } from "@/components/navbar";
 import { SessionsPanel } from "@/components/sessions-panel";
 import { Sidebar } from "@/components/sidebar/sidebar";
+import { StatePanel } from "@/components/state-panel";
+import { Button } from "@/components/ui/button";
 import { ErrorState, LoadingState } from "@/components/ui/states";
 import { useAgents } from "@/hooks/useAgents";
 import { useEvents } from "@/hooks/useEvents";
@@ -26,7 +27,7 @@ function HomeContent() {
 
 	// Panel and session state
 	const [selectedPanel, setSelectedPanel] = useState<
-		"sessions" | "events" | null
+		"sessions" | "events" | "state" | null
 	>(null);
 	const [currentSessionId, setCurrentSessionId] = useState<string | null>(null);
 	const [selectedEvent, setSelectedEvent] = useState<any | null>(null);
@@ -62,19 +63,19 @@ function HomeContent() {
 	// Clear selected event when switching away from events panel or when session changes
 	useEffect(() => {
 		setSelectedEvent(null);
-	}, [selectedPanel, currentSessionId]);
+	});
 
 	// Panel action handlers
-	const handlePanelSelect = (panel: "sessions" | "events" | null) => {
+	const handlePanelSelect = (panel: "sessions" | "events" | "state" | null) => {
 		setSelectedPanel(panel);
 	};
 
-	const handleCreateSession = useCallback(async (
-		state?: Record<string, any>,
-		sessionId?: string,
-	) => {
-		await createSession({ state, sessionId });
-	}, [createSession]);
+	const handleCreateSession = useCallback(
+		async (state?: Record<string, any>, sessionId?: string) => {
+			await createSession({ state, sessionId });
+		},
+		[createSession],
+	);
 
 	// Auto-select first agent if none selected and agents are available
 	useEffect(() => {
@@ -161,7 +162,11 @@ function HomeContent() {
 							{/* Panel Header */}
 							<div className="flex items-center justify-between p-4 border-b">
 								<h2 className="text-lg font-semibold">
-									{selectedPanel === "sessions" ? "Sessions" : "Events"}
+									{selectedPanel === "sessions"
+										? "Sessions"
+										: selectedPanel === "events"
+											? "Events"
+											: "State"}
 								</h2>
 								<Button
 									variant="ghost"
@@ -191,6 +196,12 @@ function HomeContent() {
 										isLoading={eventsLoading}
 										onSelectEvent={(e) => setSelectedEvent(e)}
 										selectedEventId={selectedEvent?.id}
+									/>
+								)}
+								{selectedPanel === "state" && (
+									<StatePanel
+										selectedAgent={selectedAgent}
+										currentSessionId={currentSessionId}
 									/>
 								)}
 							</div>

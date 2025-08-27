@@ -2,11 +2,11 @@
 
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
-import { Activity, Database } from "lucide-react";
+import { Activity, Archive, Database } from "lucide-react";
 
 interface SidebarProps {
-	selectedPanel: "sessions" | "events" | null;
-	onPanelSelect: (panel: "sessions" | "events" | null) => void;
+	selectedPanel: "sessions" | "events" | "state" | null;
+	onPanelSelect: (panel: "sessions" | "events" | "state" | null) => void;
 	className?: string;
 }
 
@@ -20,13 +20,16 @@ export function Sidebar({
 			id: "sessions" as const,
 			label: "Sessions",
 			icon: Database,
-			description: "Manage agent sessions",
 		},
 		{
 			id: "events" as const,
 			label: "Events",
 			icon: Activity,
-			description: "View agent events",
+		},
+		{
+			id: "state" as const,
+			label: "State",
+			icon: Archive,
 		},
 	];
 
@@ -43,10 +46,7 @@ export function Sidebar({
 							key={item.id}
 							variant={isSelected ? "secondary" : "ghost"}
 							size="sm"
-							className={cn(
-								"w-10 h-10 p-0",
-								isSelected && "bg-accent",
-							)}
+							className={cn("w-10 h-10 p-0", isSelected && "bg-accent")}
 							onClick={() => onPanelSelect(isSelected ? null : item.id)}
 							title={item.label}
 						>
