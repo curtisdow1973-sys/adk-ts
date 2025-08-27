@@ -545,23 +545,29 @@ export class LlmAgent<T extends BaseLlm = BaseLlm> extends BaseAgent {
 			return;
 		}
 
+		// Historically we enforced a strict "reply-only" mode when outputSchema
+		// was provided (disabling transfers and tools). To allow tools and agent
+		// transfers to run while still validating the final response against the
+		// schema, we avoid throwing or forcibly flipping transfer flags here.
+		// Instead, we warn the user if the agent is configured in a mixed mode
+		// and defer application of the output schema to response post-processing
+		// when runtime behaviors (tool calls / transfers) are present.
+
 		if (!this.disallowTransferToParent || !this.disallowTransferToPeers) {
 			this.logger.warn(
-				`Invalid config for agent ${this.name}: output_schema cannot co-exist with agent transfer configurations. Setting disallow_transfer_to_parent=true, disallow_transfer_to_peers=true`,
+				`Agent ${this.name}: outputSchema is set while transfer flags allow transfers. The output schema will be applied in response post-processing to preserve tool-calling and transfer behavior.`,
 			);
-			this.disallowTransferToParent = true;
-			this.disallowTransferToPeers = true;
 		}
 
 		if (this.subAgents && this.subAgents.length > 0) {
-			throw new Error(
-				`Invalid config for agent ${this.name}: if output_schema is set, sub_agents must be empty to disable agent transfer.`,
+			this.logger.warn(
+				`Agent ${this.name}: outputSchema is set and subAgents are present. Agent transfers to sub-agents will remain enabled; the schema will be validated after transfers/tools complete.`,
 			);
 		}
 
 		if (this.tools && this.tools.length > 0) {
-			throw new Error(
-				`Invalid config for agent ${this.name}: if output_schema is set, tools must be empty`,
+			this.logger.warn(
+				`Agent ${this.name}: outputSchema is set and tools are configured. Tools will be callable; the output schema will be applied during response post-processing.`,
 			);
 		}
 	}
