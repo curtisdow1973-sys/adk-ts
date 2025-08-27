@@ -1,3 +1,4 @@
+import { jsonrepair } from "jsonrepair";
 import type { InvocationContext } from "../../agents/invocation-context";
 import { Event } from "../../events/event";
 import { Logger } from "../../logger";
@@ -59,9 +60,55 @@ class OutputSchemaResponseProcessor extends BaseLlmResponseProcessor {
 			return;
 		}
 
+		// Helper: strip common code fences and surrounding explanatory text
+		function stripCodeFences(raw: string): string {
+			// Prefer explicit triple-backtick fenced blocks (```json or ```)
+			const fencePattern = /```(?:json)?\s*([\s\S]*?)```/i;
+			const fenceMatch = raw.match(fencePattern);
+			if (fenceMatch?.[1]) {
+				return fenceMatch[1].trim();
+			}
+
+			// Some models include inline single-line backticks or surrounding explanatory lines.
+			// Remove lines that look like prose before the JSON (e.g. "Here's the JSON:")
+			const lines = raw.split(/\r?\n/).map((l) => l.trim());
+			// Find first line that looks like it starts with { or [
+			const startIdx = lines.findIndex(
+				(l) => l.startsWith("{") || l.startsWith("["),
+			);
+			if (startIdx >= 0) {
+				return lines.slice(startIdx).join("\n").trim();
+			}
+
+			return raw.trim();
+		}
+
 		try {
-			// Parse and validate the JSON content against the schema
-			const parsed = JSON.parse(textContent);
+			// Prepare candidate JSON text by stripping fences and simple prefixes
+			const candidate = stripCodeFences(textContent);
+
+			// Try a normal parse first, fall back to jsonrepair if available
+			let parsed: any;
+			try {
+				parsed = JSON.parse(candidate);
+			} catch (err) {
+				// Try jsonrepair (throws if it can't repair)
+				try {
+					this.logger.debug(
+						"Initial JSON.parse failed, attempting jsonrepair",
+						{
+							agent: agent.name,
+						},
+					);
+					const repaired = jsonrepair(candidate as string);
+					parsed = JSON.parse(repaired);
+					this.logger.debug("jsonrepair successful", { agent: agent.name });
+				} catch (repairErr) {
+					// If repair also fails, rethrow the original parse error to be handled below
+					throw err;
+				}
+			}
+
 			const validated = (agent.outputSchema as any).parse(parsed);
 
 			// Update the response content with validated data
