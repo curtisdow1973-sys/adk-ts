@@ -1,5 +1,11 @@
 import { Button } from "@/components/ui/button";
-import { Card, CardContent } from "@/components/ui/card";
+import {
+	Card,
+	CardAction,
+	CardContent,
+	CardHeader,
+	CardTitle,
+} from "@/components/ui/card";
 import { Textarea } from "@/components/ui/textarea";
 import { Edit, X } from "lucide-react";
 import { useState } from "react";
@@ -56,31 +62,36 @@ export function StateCard({
 
 	return (
 		<Card className="border border-border/50">
-			<CardContent className="px-3 py-1">
-				<div className="flex items-start justify-between gap-2 mb-2">
-					<span className="text-xs font-mono text-muted-foreground truncate">
+			<CardHeader className="pb-2">
+				<div className="flex items-center justify-between">
+					<CardTitle className="text-xs font-mono text-muted-foreground truncate">
 						{stateKey}
-					</span>
+					</CardTitle>
 					<div className="flex items-center gap-0.5 shrink-0">
-						<Button
-							variant="ghost"
-							size="sm"
-							className="h-6 w-6 p-0 hover:bg-muted/60"
-							onClick={() => startEditing(stateKey, value)}
-						>
-							<Edit className="h-3 w-3" />
-						</Button>
-						<Button
-							variant="ghost"
-							size="sm"
-							className="h-6 w-6 p-0 hover:bg-destructive/10 hover:text-destructive"
-							onClick={handleDelete}
-						>
-							<X className="h-3 w-3" />
-						</Button>
+						<CardAction>
+							<Button
+								variant="ghost"
+								size="sm"
+								className="h-6 w-6 p-0 hover:bg-muted/60"
+								onClick={() => startEditing(stateKey, value)}
+							>
+								<Edit className="h-3 w-3" />
+							</Button>
+						</CardAction>
+						<CardAction>
+							<Button
+								variant="ghost"
+								size="sm"
+								className="h-6 w-6 p-0 hover:bg-destructive/10 hover:text-destructive"
+								onClick={handleDelete}
+							>
+								<X className="h-3 w-3" />
+							</Button>
+						</CardAction>
 					</div>
 				</div>
-
+			</CardHeader>
+			<CardContent className="pt-0">
 				{editingKey === stateKey ? (
 					<div className="space-y-2">
 						<Textarea

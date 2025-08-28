@@ -3,6 +3,7 @@
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import { Activity, Archive, Database } from "lucide-react";
+import Image from "next/image";
 
 interface SidebarProps {
 	selectedPanel: "sessions" | "events" | "state" | null;
@@ -34,9 +35,31 @@ export function Sidebar({
 	];
 
 	return (
-		<div className={cn("w-14 border-r bg-card flex flex-col", className)}>
+		<div
+			className={cn("w-14 border-r bg-card flex flex-col h-full", className)}
+		>
+			{/* Logo */}
+			<div className="flex items-center justify-center h-[60px] border-b flex-shrink-0">
+				<div className="relative">
+					<Image
+						src="/adk.png"
+						alt="ADK Logo"
+						width={24}
+						height={24}
+						className="dark:hidden"
+					/>
+					<Image
+						src="/dark-adk.png"
+						alt="ADK Logo"
+						width={24}
+						height={24}
+						className="hidden dark:block"
+					/>
+				</div>
+			</div>
+
 			{/* Navigation */}
-			<div className="flex-1 flex flex-col items-center py-4 space-y-2">
+			<div className="flex-1 flex flex-col items-center py-4 space-y-2 overflow-y-auto">
 				{navigationItems.map((item) => {
 					const Icon = item.icon;
 					const isSelected = selectedPanel === item.id;

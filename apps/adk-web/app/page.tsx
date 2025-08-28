@@ -2,7 +2,6 @@
 
 import { ChatPanel } from "@/components/chat-panel";
 import { EventsPanel } from "@/components/events-panel";
-import { Footer } from "@/components/footer";
 import { Navbar } from "@/components/navbar";
 import { SessionsPanel } from "@/components/sessions-panel";
 import { Sidebar } from "@/components/sidebar/sidebar";
@@ -140,78 +139,84 @@ function HomeContent() {
 	}
 
 	return (
-		<div className="min-h-screen flex flex-col bg-background">
-			<Navbar
-				apiUrl={finalApiUrl}
-				agents={agents}
-				selectedAgent={selectedAgent}
-				onSelectAgent={selectAgent}
-			/>
-
-			<div className="flex-1 flex min-h-0 max-h-[calc(100vh-140px)]">
-				{/* Sidebar */}
+		<div className="h-screen flex bg-background">
+			{/* Sidebar */}
+			<div className="flex-shrink-0 h-full">
 				<Sidebar
 					selectedPanel={selectedPanel}
 					onPanelSelect={handlePanelSelect}
 				/>
+			</div>
 
-				{/* Main Content Area */}
-				<div className="flex-1 flex min-h-0">
-					{/* Panel Content */}
-					{selectedPanel && (
-						<div className="w-96 border-r bg-background flex flex-col min-h-0">
-							{/* Panel Header */}
-							<div className="flex items-center justify-between p-4 border-b">
-								<h2 className="text-lg font-semibold">
-									{selectedPanel === "sessions"
-										? "Sessions"
-										: selectedPanel === "events"
-											? "Events"
-											: "State"}
-								</h2>
-								<Button
-									variant="ghost"
-									size="sm"
-									onClick={() => setSelectedPanel(null)}
-									className="h-6 w-6 p-0"
-									aria-label="Close panel"
-								>
-									<X className="size-4" />
-								</Button>
-							</div>
-
-							{/* Panel Content */}
-							<div className="flex-1 min-h-0">
-								{selectedPanel === "sessions" && (
-									<SessionsPanel
-										sessions={sessions}
-										currentSessionId={currentSessionId}
-										onCreateSession={handleCreateSession}
-										onDeleteSession={handleDeleteSession}
-										onSwitchSession={handleSwitchSession}
-										isLoading={sessionsLoading}
-									/>
-								)}
-								{selectedPanel === "events" && (
-									<EventsPanel
-										events={events}
-										isLoading={eventsLoading}
-										onSelectEvent={(e) => setSelectedEvent(e)}
-										selectedEventId={selectedEvent?.id}
-									/>
-								)}
-								{selectedPanel === "state" && (
-									<StatePanel
-										selectedAgent={selectedAgent}
-										currentSessionId={currentSessionId}
-									/>
-								)}
-							</div>
+			{/* Main Content Area */}
+			<div className="flex-1 flex min-h-0">
+				{/* Panel Content */}
+				{selectedPanel && (
+					<div className="w-80 border-r bg-background flex flex-col">
+						{/* Panel Header */}
+						<div className="flex h-[60px] items-center justify-between p-4 border-b">
+							<h2 className="text-lg font-semibold">
+								{selectedPanel === "sessions"
+									? "Sessions"
+									: selectedPanel === "events"
+										? "Events"
+										: "State"}
+							</h2>
+							<Button
+								variant="ghost"
+								size="sm"
+								onClick={() => setSelectedPanel(null)}
+								className="h-6 w-6 p-0"
+								aria-label="Close panel"
+							>
+								<X className="size-4" />
+							</Button>
 						</div>
-					)}
 
-					{/* Chat Panel - Always visible, takes remaining space */}
-					<div className="flex-1 min-h-0">
+						{/* Panel Content */}
+						<div className="flex-1 overflow-hidden">
+							{selectedPanel === "sessions" && (
+								<SessionsPanel
+									sessions={sessions}
+									currentSessionId={currentSessionId}
+									onCreateSession={handleCreateSession}
+									onDeleteSession={handleDeleteSession}
+									onSwitchSession={handleSwitchSession}
+									isLoading={sessionsLoading}
+								/>
+							)}
+							{selectedPanel === "events" && (
+								<EventsPanel
+									events={events}
+									isLoading={eventsLoading}
+									onSelectEvent={(e) => setSelectedEvent(e)}
+									selectedEventId={selectedEvent?.id}
+								/>
+							)}
+							{selectedPanel === "state" && (
+								<StatePanel
+									selectedAgent={selectedAgent}
+									currentSessionId={currentSessionId}
+								/>
+							)}
+						</div>
+					</div>
+				)}
+
+				{/* Chat Panel - Always visible, takes remaining space */}
+				<div className="flex-1 flex flex-col min-h-0">
+					{/* Navbar above chat */}
+					<div className="flex-shrink-0">
+						<Navbar
+							apiUrl={finalApiUrl}
+							agents={agents}
+							selectedAgent={selectedAgent}
+							onSelectAgent={selectAgent}
+						/>
+					</div>
+
+					{/* Chat Content */}
+					<div className="flex-1 min-h-0 overflow-hidden">
 						<ChatPanel
 							selectedAgent={selectedAgent}
 							messages={messages}
@@ -221,8 +226,6 @@ function HomeContent() {
 					</div>
 				</div>
 			</div>
-
-			<Footer />
 		</div>
 	);
 }

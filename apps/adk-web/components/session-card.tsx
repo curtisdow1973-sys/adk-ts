@@ -1,7 +1,13 @@
 "use client";
 
 import { Badge } from "@/components/ui/badge";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import {
+	Card,
+	CardAction,
+	CardContent,
+	CardHeader,
+	CardTitle,
+} from "@/components/ui/card";
 import { cn } from "@/lib/utils";
 import { formatDistanceToNow } from "date-fns";
 import { Clock, Trash2 } from "lucide-react";
@@ -36,7 +42,7 @@ export function SessionCard({
 		<Card
 			className={cn(
 				"transition-colors hover:bg-muted/50 cursor-pointer",
-				active && "ring-1 ring-primary",
+				active && "bg-primary/5 border-primary/20 border-l-primary border-l-4",
 			)}
 			onClick={onClick}
 		>
@@ -50,13 +56,20 @@ export function SessionCard({
 							<Badge variant="outline" className="text-xs">
 								{session.eventCount} events
 							</Badge>
-							{active && (
-								<Badge variant="default" className="text-xs">
-									Active
-								</Badge>
-							)}
 						</div>
 					</div>
+					{onDelete && (
+						<CardAction>
+							<button
+								type="button"
+								onClick={handleDelete}
+								className="p-1 rounded hover:bg-muted"
+								aria-label="Delete session"
+							>
+								<Trash2 className="h-4 w-4 text-muted-foreground" />
+							</button>
+						</CardAction>
+					)}
 				</div>
 			</CardHeader>
 			<CardContent className="pt-0">
@@ -70,16 +83,6 @@ export function SessionCard({
 							})}
 						</span>
 					</div>
-					{onDelete && (
-						<button
-							type="button"
-							onClick={handleDelete}
-							className="p-1 rounded hover:bg-muted"
-							aria-label="Delete session"
-						>
-							<Trash2 className="h-4 w-4 text-muted-foreground" />
-						</button>
-					)}
 				</div>
 				{session.state && Object.keys(session.state).length > 0 && (
 					<div className="mt-2">
