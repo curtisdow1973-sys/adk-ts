@@ -142,11 +142,13 @@ export function EventDetails({
 									>
 										<div className="flex items-center gap-2 mb-2">
 											<Clock className="h-4 w-4 text-blue-500" />
-											<span className="font-medium">{call.name}</span>
+											<span className="font-medium">
+												{call.functionCall.name}
+											</span>
 										</div>
-										{call.args && (
+										{call.functionCall.args && (
 											<pre className="text-xs bg-muted/70 p-2 rounded max-h-40 overflow-auto whitespace-pre-wrap break-words">
-												{JSON.stringify(call.args, null, 2)}
+												{JSON.stringify(call.functionCall.args, null, 2)}
 											</pre>
 										)}
 									</div>
