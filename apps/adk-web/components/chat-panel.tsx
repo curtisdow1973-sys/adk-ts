@@ -70,43 +70,60 @@ export function ChatPanel({
 	}
 	return (
 		<div className="relative size-full flex flex-col justify-between h-full">
-			<Conversation className="max-h-[70vh] max-w-4xl w-full mx-auto bg-repeat heropattern-jigsaw-red-100">
-				<ConversationContent>
-					{messages.length === 0 ? (
-						<div className="flex flex-col items-center justify-center min-h-[400px] text-center text-muted-foreground">
-							<MessageSquare className="h-12 w-12 mb-4 opacity-50" />
-							<h3 className="text-lg font-medium mb-2">Start a conversation</h3>
-							<p className="text-sm">
-								Send a message to {selectedAgent.name} to get started
-							</p>
-						</div>
-					) : (
-						messages.map((message) => (
-							<Message
-								from={message.type === "user" ? "user" : "assistant"}
-								key={message.id}
-							>
-								<MessageContent>
-									<Response key={message.id} className="px-2">
-										{message.content}
-									</Response>
-								</MessageContent>
-								<MessageAvatar
-									icon={
-										message.type === "user" ? (
-											<UserIcon className="size-4" />
-										) : (
-											<Bot className="size-4" />
-										)
-									}
-									name={message.type === "user" ? "You" : selectedAgent.name}
-								/>
-							</Message>
-						))
-					)}
-				</ConversationContent>
-				<ConversationScrollButton />
-			</Conversation>
+			<div className="h-full w-full relative text-gray-700">
+				{/* Circuit Board - Light Pattern */}
+				<div
+					className="absolute inset-0 z-0 pointer-events-none"
+					style={{
+						backgroundImage: `
+        repeating-linear-gradient(0deg, transparent, transparent 19px, rgba(75, 85, 99, 0.08) 19px, rgba(75, 85, 99, 0.08) 20px, transparent 20px, transparent 39px, rgba(75, 85, 99, 0.08) 39px, rgba(75, 85, 99, 0.08) 40px),
+        repeating-linear-gradient(90deg, transparent, transparent 19px, rgba(75, 85, 99, 0.08) 19px, rgba(75, 85, 99, 0.08) 20px, transparent 20px, transparent 39px, rgba(75, 85, 99, 0.08) 39px, rgba(75, 85, 99, 0.08) 40px),
+        radial-gradient(circle at 20px 20px, rgba(55, 65, 81, 0.12) 2px, transparent 2px),
+        radial-gradient(circle at 40px 40px, rgba(55, 65, 81, 0.12) 2px, transparent 2px)
+      `,
+						backgroundSize: "40px 40px, 40px 40px, 40px 40px, 40px 40px",
+					}}
+				/>
+				<Conversation className="max-h-[70vh] max-w-4xl w-full mx-auto bg-repeat heropattern-jigsaw-red-100">
+					<ConversationContent>
+						{messages.length === 0 ? (
+							<div className="flex flex-col items-center justify-center min-h-[400px] text-center text-muted-foreground">
+								<MessageSquare className="h-12 w-12 mb-4 opacity-50" />
+								<h3 className="text-lg font-medium mb-2">
+									Start a conversation
+								</h3>
+								<p className="text-sm">
+									Send a message to {selectedAgent.name} to get started
+								</p>
+							</div>
+						) : (
+							messages.map((message) => (
+								<Message
+									from={message.type === "user" ? "user" : "assistant"}
+									key={message.id}
+								>
+									<MessageContent>
+										<Response key={message.id} className="px-2">
+											{message.content}
+										</Response>
+									</MessageContent>
+									<MessageAvatar
+										icon={
+											message.type === "user" ? (
+												<UserIcon className="size-4" />
+											) : (
+												<Bot className="size-4" />
+											)
+										}
+										name={message.type === "user" ? "You" : selectedAgent.name}
+									/>
+								</Message>
+							))
+						)}
+					</ConversationContent>
+					<ConversationScrollButton />
+				</Conversation>
+			</div>
 
 			<div className="border-t">
 				<div className="max-w-4xl mx-auto p-4">
