@@ -23,7 +23,7 @@ import { Response } from "@/components/ai-elements/response";
 import { Button } from "@/components/ui/button";
 import { useChatAttachments } from "@/hooks/useChatAttachments";
 import { cn } from "@/lib/utils";
-import { Bot, MessageSquare, Paperclip } from "lucide-react";
+import { Bot, MessageSquare, Paperclip, User as UserIcon } from "lucide-react";
 import { useState } from "react";
 
 interface ChatPanelProps {
@@ -93,10 +93,12 @@ export function ChatPanel({
 									</Response>
 								</MessageContent>
 								<MessageAvatar
-									src={
-										message.type === "user"
-											? "/user-avatar.png"
-											: "/agent-avatar.png"
+									icon={
+										message.type === "user" ? (
+											<UserIcon className="size-4" />
+										) : (
+											<Bot className="size-4" />
+										)
 									}
 									name={message.type === "user" ? "You" : selectedAgent.name}
 								/>
