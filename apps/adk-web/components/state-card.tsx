@@ -62,9 +62,9 @@ export function StateCard({
 
 	return (
 		<Card className="border border-border/50">
-			<CardHeader className="pb-2">
+			<CardHeader>
 				<div className="flex items-center justify-between">
-					<CardTitle className="text-xs font-mono text-muted-foreground truncate">
+					<CardTitle className="font-mono text-muted-foreground truncate">
 						{stateKey}
 					</CardTitle>
 					<div className="flex items-center gap-0.5 shrink-0">
@@ -91,7 +91,7 @@ export function StateCard({
 					</div>
 				</div>
 			</CardHeader>
-			<CardContent className="pt-0">
+			<CardContent>
 				{editingKey === stateKey ? (
 					<div className="space-y-2">
 						<Textarea

@@ -50,7 +50,7 @@ export function EventDetails({
 	hideHeader,
 }: EventDetailsProps) {
 	return (
-		<div className="h-full flex flex-col bg-background">
+		<div className="h-full flex flex-col bg-background pb-16">
 			{!hideHeader && (
 				<div className="flex items-center justify-between p-4 border-b">
 					<div className="flex items-center gap-2">
@@ -169,11 +169,13 @@ export function EventDetails({
 									>
 										<div className="flex items-center gap-2 mb-2">
 											<CheckCircle className="h-4 w-4 text-green-500" />
-											<span className="font-medium">{response.name}</span>
+											<span className="font-medium">
+												{response.functionResponse.name}
+											</span>
 										</div>
-										{response.response && (
+										{response.functionResponse && (
 											<pre className="text-xs bg-muted/70 p-2 rounded max-h-40 overflow-auto whitespace-pre-wrap break-words">
-												{JSON.stringify(response.response, null, 2)}
+												{JSON.stringify(response.functionResponse, null, 2)}
 											</pre>
 										)}
 									</div>
