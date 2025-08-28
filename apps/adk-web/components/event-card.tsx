@@ -52,7 +52,7 @@ function getEventTypeLabel(event: EventLike) {
 
 function getEventSummary(event: EventLike) {
 	if (event.functionCalls.length > 0) {
-		const call = event.functionCalls[0];
+		const call = event.functionCalls[0].functionCall;
 		return `${call.name}(${call.args ? Object.keys(call.args).join(", ") : ""})`;
 	}
 	if (event.functionResponses.length > 0)
