@@ -1,6 +1,7 @@
 "use client";
 
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { toast } from "sonner";
 import type { Agent } from "../app/(dashboard)/_schema";
 
 interface Session {
@@ -47,7 +48,6 @@ export function useSessions(apiUrl: string, selectedAgent: Agent | null) {
 				`${apiUrl}/api/agents/${encodedPath}/sessions`,
 			);
 			if (!response.ok) {
-				console.error(`Failed to fetch sessions: ${response.status}`);
 				throw new Error(`Failed to fetch sessions: ${response.status}`);
 			}
 			const data: SessionsResponse = await response.json();
@@ -83,7 +83,7 @@ export function useSessions(apiUrl: string, selectedAgent: Agent | null) {
 
 			if (!response.ok) {
 				const errorData = await response.text();
-				console.error("Session creation failed:", response.status, errorData);
+				toast.error("Failed to create session. Please try again.");
 				throw new Error(
 					`Failed to create session: ${response.status} - ${errorData}`,
 				);
@@ -102,7 +102,8 @@ export function useSessions(apiUrl: string, selectedAgent: Agent | null) {
 			return created;
 		},
 		onError: (error) => {
-			console.error("Failed to create session:", error);
+			console.error(error);
+			toast.error("Failed to create session. Please try again.");
 		},
 	});
 
@@ -128,13 +129,15 @@ export function useSessions(apiUrl: string, selectedAgent: Agent | null) {
 			}
 		},
 		onSuccess: () => {
+			toast.success("Session deleted successfully!");
 			// Refetch sessions after successful deletion
 			queryClient.invalidateQueries({
 				queryKey: ["sessions", apiUrl, selectedAgent?.relativePath],
 			});
 		},
 		onError: (error) => {
-			console.error("Failed to delete session:", error);
+			console.error(error);
+			toast.error("Failed to delete session. Please try again.");
 		},
 	});
 
@@ -170,7 +173,8 @@ export function useSessions(apiUrl: string, selectedAgent: Agent | null) {
 			});
 		},
 		onError: (error) => {
-			console.error("Failed to switch session:", error);
+			console.error(error);
+			toast.error("Failed to switch session. Please try again.");
 		},
 	});
 

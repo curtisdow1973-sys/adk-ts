@@ -34,7 +34,7 @@ export function Sidebar({
 	];
 
 	return (
-		<div className={cn("w-16 border-r bg-card flex flex-col", className)}>
+		<div className={cn("w-14 border-r bg-card flex flex-col", className)}>
 			{/* Navigation */}
 			<div className="flex-1 flex flex-col items-center py-4 space-y-2">
 				{navigationItems.map((item) => {

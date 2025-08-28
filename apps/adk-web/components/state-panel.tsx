@@ -19,6 +19,7 @@ import CodeEditor from "@uiw/react-textarea-code-editor";
 import { Code2, Edit, Plus, Settings, Wand2 } from "lucide-react";
 import { useSearchParams } from "next/navigation";
 import { useState } from "react";
+import { toast } from "sonner";
 import type { Agent } from "../app/(dashboard)/_schema";
 
 interface StatePanelProps {
@@ -60,8 +61,9 @@ export function StatePanel({
 	const handleUpdateState = async (path: string, value: any) => {
 		try {
 			await updateState(path, value);
+			toast.success("State updated successfully!");
 		} catch (error) {
-			console.error("Failed to update state:", error);
+			toast.error("Failed to update state. Please try again.");
 		}
 	};
 
@@ -73,10 +75,12 @@ export function StatePanel({
 			for (const [k, v] of entries) {
 				await updateState(k, v);
 			}
+			toast.success("State saved successfully!");
 			setIsDialogOpen(false);
 		} catch (error) {
-			console.error("Invalid JSON:", error);
-			// Could add user-friendly error message here
+			toast.error(
+				"Invalid JSON format. Please check your syntax and try again.",
+			);
 		}
 	};
 
@@ -203,7 +207,9 @@ export function StatePanel({
 											setIsDialogOpen(false);
 											jsonEditor.setError(null);
 										} catch (e) {
-											console.error("Unexpected error:", e);
+											toast.error(
+												"An unexpected error occurred while saving state.",
+											);
 											jsonEditor.setError("An unexpected error occurred");
 										}
 									}}
@@ -235,7 +241,7 @@ export function StatePanel({
 								<div className="text-center text-muted-foreground">
 									<Settings className="h-12 w-12 mx-auto mb-4 opacity-50" />
 									<p>No state variables</p>
-									<p className="text-sm">Add your first state variable above</p>
+									<p className="text-sm">Add your first state config above</p>
 								</div>
 							</CardContent>
 						</Card>

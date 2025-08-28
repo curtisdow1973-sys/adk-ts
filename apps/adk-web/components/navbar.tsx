@@ -1,6 +1,5 @@
 import type { Agent } from "@/app/(dashboard)/_schema";
 import { ThemeToggle } from "@/components/theme-toggle";
-import { Badge } from "@/components/ui/badge";
 import {
 	Select,
 	SelectContent,
@@ -8,7 +7,6 @@ import {
 	SelectTrigger,
 	SelectValue,
 } from "@/components/ui/select";
-import { cn } from "@/lib/utils";
 import { Bot } from "lucide-react";
 import Image from "next/image";
 
@@ -26,7 +24,7 @@ export function Navbar({
 	onSelectAgent,
 }: NavbarProps) {
 	return (
-		<nav className="border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
+		<nav className="border-b bg-background/95 backdrop-blur h-[70px] supports-[backdrop-filter]:bg-background/60">
 			<div className="container mx-auto px-6 py-3">
 				<div className="flex items-center justify-between">
 					{/* Logo and Title */}

@@ -2,7 +2,7 @@ import { Brain } from "lucide-react";
 
 export function Footer() {
 	return (
-		<footer className="border-t bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 mt-auto">
+		<footer className="border-t bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 h-[70px] grid place-items-center mt-auto">
 			<div className="container mx-auto px-6 py-4">
 				<div className="flex items-center justify-between text-sm text-muted-foreground">
 					<div>© 2025 ADK TypeScript. Released under the MIT License.</div>

@@ -12,6 +12,7 @@ import { ErrorState, LoadingState } from "@/components/ui/states";
 import { useAgents } from "@/hooks/useAgents";
 import { useEvents } from "@/hooks/useEvents";
 import { useSessions } from "@/hooks/useSessions";
+import { X } from "lucide-react";
 import { useSearchParams } from "next/navigation";
 import { Suspense, useCallback, useEffect, useState } from "react";
 
@@ -147,7 +148,7 @@ function HomeContent() {
 				onSelectAgent={selectAgent}
 			/>
 
-			<div className="flex-1 flex min-h-0">
+			<div className="flex-1 flex min-h-0 max-h-[calc(100vh-140px)]">
 				{/* Sidebar */}
 				<Sidebar
 					selectedPanel={selectedPanel}
@@ -173,8 +174,9 @@ function HomeContent() {
 									size="sm"
 									onClick={() => setSelectedPanel(null)}
 									className="h-6 w-6 p-0"
+									aria-label="Close panel"
 								>
-									×
+									<X className="size-4" />
 								</Button>
 							</div>
 

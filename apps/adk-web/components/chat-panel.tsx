@@ -1,11 +1,13 @@
-import type { Agent, Message } from "@/app/(dashboard)/_schema";
+"use client";
+
+import type { Agent, Message as ChatMessage } from "@/app/(dashboard)/_schema";
 import {
 	Conversation,
 	ConversationContent,
 	ConversationScrollButton,
 } from "@/components/ai-elements/conversation";
 import {
-	Message as AIMessage,
+	Message,
 	MessageAvatar,
 	MessageContent,
 } from "@/components/ai-elements/message";
@@ -17,22 +19,16 @@ import {
 	PromptInputToolbar,
 	PromptInputTools,
 } from "@/components/ai-elements/prompt-input";
+import { Response } from "@/components/ai-elements/response";
 import { Button } from "@/components/ui/button";
 import { useChatAttachments } from "@/hooks/useChatAttachments";
 import { cn } from "@/lib/utils";
-import {
-	Bot,
-	Camera,
-	FileUp,
-	MessageSquare,
-	Paperclip,
-	ScreenShare,
-} from "lucide-react";
-import { useEffect, useRef, useState } from "react";
+import { Bot, MessageSquare, Paperclip } from "lucide-react";
+import { useState } from "react";
 
 interface ChatPanelProps {
 	selectedAgent: Agent | null;
-	messages: Message[];
+	messages: ChatMessage[];
 	onSendMessage: (message: string, attachments?: File[]) => void;
 	isSendingMessage?: boolean;
 }
@@ -46,200 +42,158 @@ export function ChatPanel({
 	const [inputMessage, setInputMessage] = useState("");
 	const {
 		attachedFiles,
-		showAttachmentDropdown,
-		setShowAttachmentDropdown,
 		fileInputRef,
-		photoInputRef,
 		handleFileAttach,
-		handlePhotoAttach,
-		handleScreenshot,
 		handleFileChange,
+		handleDragOver,
+		handleDragLeave,
+		handleDrop,
 		removeFile,
 		resetAttachments,
+		isDragOver,
 	} = useChatAttachments();
-	const dropdownRef = useRef<HTMLDivElement>(null);
 
 	const handleSubmit = (e: React.FormEvent) => {
 		e.preventDefault();
-		if (!inputMessage.trim() || !selectedAgent) return;
+		if ((!inputMessage.trim() && attachedFiles.length === 0) || !selectedAgent)
+			return;
 
 		onSendMessage(inputMessage, attachedFiles);
 		setInputMessage("");
 		resetAttachments();
 	};
 
-	// Close dropdown when clicking outside
-	useEffect(() => {
-		const handleClickOutside = (event: MouseEvent) => {
-			if (
-				dropdownRef.current &&
-				!dropdownRef.current.contains(event.target as Node)
-			) {
-				setShowAttachmentDropdown(false);
-			}
-		};
-
-		document.addEventListener("mousedown", handleClickOutside);
-		return () => document.removeEventListener("mousedown", handleClickOutside);
-	}, [setShowAttachmentDropdown]);
+	// Close dropdown when clicking outside (handled by backdrop now)
 
 	if (!selectedAgent) {
 		return <EmptyChat />;
 	}
 
 	return (
-		<div className="flex flex-col min-h-0 flex-1">
-			{/* Container with borders */}
-			<div className="flex-1 flex flex-col max-w-4xl mx-auto w-full bg-background min-h-0">
-				{/* Input Area at Top */}
-				<div className="p-4">
-					<PromptInput onSubmit={handleSubmit} className="overflow-visible">
-						<PromptInputTextarea
-							placeholder={`Message ${selectedAgent.name}...`}
-							value={inputMessage}
-							onChange={(e) => setInputMessage(e.target.value)}
-							disabled={isSendingMessage}
-							minHeight={48}
-							maxHeight={164}
-						/>
+		<div className="max-w-4xl mx-auto py-4 relative size-full flex flex-col h-full">
+			<Conversation className="max-h-[70vh]">
+				<ConversationContent>
+					{messages.length === 0 ? (
+						<div className="flex flex-col items-center justify-center min-h-[400px] text-center text-muted-foreground">
+							<MessageSquare className="h-12 w-12 mb-4 opacity-50" />
+							<h3 className="text-lg font-medium mb-2">Start a conversation</h3>
+							<p className="text-sm">
+								Send a message to {selectedAgent.name} to get started
+							</p>
+						</div>
+					) : (
+						messages.map((message) => (
+							<Message
+								from={message.type === "user" ? "user" : "assistant"}
+								key={message.id}
+							>
+								<MessageContent>
+									<Response key={message.id} className="px-2">
+										{message.content}
+									</Response>
+								</MessageContent>
+								<MessageAvatar
+									src={
+										message.type === "user"
+											? "/user-avatar.png"
+											: "/agent-avatar.png"
+									}
+									name={message.type === "user" ? "You" : selectedAgent.name}
+								/>
+							</Message>
+						))
+					)}
+				</ConversationContent>
+				<ConversationScrollButton />
+			</Conversation>
 
-						{/* Show attached files */}
-						{attachedFiles.length > 0 && (
-							<div className="px-3 py-2 border-t border-border">
-								<div className="flex flex-wrap gap-2">
-									{attachedFiles.map((file: File, index: number) => (
-										<div
-											key={`${file.name}-${file.size}-${index}`}
-											className="flex items-center gap-2 px-2 py-1 bg-secondary rounded-md text-sm"
-										>
-											<span className="text-secondary-foreground">
-												{file.name}
-											</span>
-											<Button
-												type="button"
-												variant="ghost"
-												size="icon"
-												className="h-4 w-4 text-muted-foreground hover:text-destructive"
-												onClick={() => removeFile(index)}
-											>
-												×
-											</Button>
-										</div>
-									))}
-								</div>
-							</div>
-						)}
-
-						<PromptInputToolbar>
-							<PromptInputTools>
-								<div className="relative" ref={dropdownRef}>
-									<PromptInputButton
-										onClick={() =>
-											setShowAttachmentDropdown(!showAttachmentDropdown)
-										}
-										className={cn(
-											"transition-colors",
-											showAttachmentDropdown &&
-												"bg-accent text-accent-foreground",
-										)}
-									>
-										<Paperclip className="size-4" />
-									</PromptInputButton>
-
-									{showAttachmentDropdown && (
-										<div className="absolute top-full left-0 mt-3 w-36 bg-card border border-border rounded-md shadow-lg z-50">
-											<div className="p-1">
-												<button
-													type="button"
-													onClick={handleFileAttach}
-													className="w-full flex items-center gap-2 px-2 py-1.5 text-sm text-card-foreground hover:bg-accent hover:text-accent-foreground transition-colors text-left rounded-sm"
-												>
-													<FileUp className="size-4" />
-													Upload File
-												</button>
-												<button
-													type="button"
-													onClick={handlePhotoAttach}
-													className="w-full flex items-center gap-2 px-2 py-1.5 text-sm text-card-foreground hover:bg-accent hover:text-accent-foreground transition-colors text-left rounded-sm"
-												>
-													<Camera className="size-4" />
-													Upload Photo
-												</button>
-												<button
-													type="button"
-													onClick={handleScreenshot}
-													className="w-full flex items-center gap-2 px-2 py-1.5 text-sm text-card-foreground hover:bg-accent hover:text-accent-foreground transition-colors text-left rounded-sm"
-												>
-													<ScreenShare className="size-4" />
-													Screenshot
-												</button>
-											</div>
-										</div>
-									)}
-								</div>
-							</PromptInputTools>
-							<PromptInputSubmit
-								disabled={!inputMessage.trim() || isSendingMessage}
-								status={isSendingMessage ? "submitted" : undefined}
-							/>
-						</PromptInputToolbar>
-					</PromptInput>
-
-					{/* Hidden file inputs */}
-					<input
-						ref={fileInputRef}
-						type="file"
-						multiple
-						className="hidden"
-						onChange={handleFileChange}
-						accept="*/*"
-					/>
-					<input
-						ref={photoInputRef}
-						type="file"
-						multiple
-						className="hidden"
-						onChange={handleFileChange}
-						accept="image/*"
-					/>
-				</div>
-
-				{/* Chat Messages Area */}
-				<Conversation className="flex-1 min-h-0 max-h-[calc(100vh-125px)]">
-					<ConversationContent>
-						{messages.length === 0 ? (
-							<div className="flex flex-col items-center justify-center min-h-[400px] text-center text-muted-foreground">
-								<MessageSquare className="h-12 w-12 mb-4 opacity-50" />
-								<h3 className="text-lg font-medium mb-2">
-									Start a conversation
-								</h3>
-								<p className="text-sm">
-									Send a message to {selectedAgent.name} to get started
-								</p>
-							</div>
-						) : (
-							messages.map((message) => (
-								<AIMessage
-									key={message.id}
-									from={message.type === "user" ? "user" : "assistant"}
+			{/* Show attached files above input */}
+			{attachedFiles.length > 0 && (
+				<div className="py-2">
+					<div className="flex flex-wrap gap-2">
+						{attachedFiles.map((file: File, index: number) => (
+							<div
+								key={`${file.name}-${file.size}-${index}`}
+								className="flex items-center gap-2 px-3 py-2 bg-secondary rounded-lg text-sm"
+							>
+								<span className="text-secondary-foreground">{file.name}</span>
+								<Button
+									type="button"
+									variant="ghost"
+									size="icon"
+									className="h-4 w-4 text-muted-foreground hover:text-destructive"
+									onClick={() => removeFile(index)}
 								>
-									<MessageContent>{message.content}</MessageContent>
+									×
+								</Button>
+							</div>
+						))}
+					</div>
+				</div>
+			)}
 
-									<MessageAvatar
-										src={
-											message.type === "user"
-												? "/user-avatar.png"
-												: "/agent-avatar.png"
-										}
-										name={message.type === "user" ? "You" : selectedAgent.name}
-									/>
-								</AIMessage>
-							))
-						)}
-					</ConversationContent>
-					<ConversationScrollButton />
-				</Conversation>
+			<div
+				className={cn(
+					"relative w-full max-w-4xl mx-auto transition-all duration-200",
+					isDragOver && "bg-accent/10 border-accent rounded-lg p-2",
+				)}
+				onDragOver={handleDragOver}
+				onDragLeave={handleDragLeave}
+				onDrop={handleDrop}
+			>
+				<PromptInput onSubmit={handleSubmit} className="w-full">
+					<PromptInputTextarea
+						value={inputMessage}
+						placeholder={
+							isDragOver
+								? "Drop files here..."
+								: `Message ${selectedAgent.name}...`
+						}
+						onChange={(e) => setInputMessage(e.target.value)}
+						disabled={isSendingMessage}
+					/>
+
+					<PromptInputToolbar>
+						<PromptInputTools>
+							{/* Simplified Attachment Button */}
+							<PromptInputButton
+								onClick={handleFileAttach}
+								className="transition-colors hover:bg-accent hover:text-accent-foreground"
+								title="Attach files"
+							>
+								<Paperclip className="size-4" />
+							</PromptInputButton>
+						</PromptInputTools>
+
+						<PromptInputSubmit
+							status={isSendingMessage ? "streaming" : "ready"}
+							disabled={!inputMessage.trim() && attachedFiles.length === 0}
+						/>
+					</PromptInputToolbar>
+				</PromptInput>
+
+				{/* Drag and Drop Overlay */}
+				{isDragOver && (
+					<div className="absolute inset-0 bg-accent/5 border-2 border-dashed border-primary rounded-lg flex items-center justify-center pointer-events-none">
+						<div className="text-center">
+							<Paperclip className="size-8 mx-auto mb-2 text-primary" />
+							<p className="text-sm font-medium text-primary">
+								Drop files to attach
+							</p>
+						</div>
+					</div>
+				)}
 			</div>
+
+			{/* Hidden file input */}
+			<input
+				ref={fileInputRef}
+				type="file"
+				multiple
+				className="hidden"
+				onChange={handleFileChange}
+				accept="*/*"
+			/>
 		</div>
 	);
 }

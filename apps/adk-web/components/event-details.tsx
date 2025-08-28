@@ -4,7 +4,15 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { format, formatDistanceToNow } from "date-fns";
-import { Bot, CheckCircle, Clock, Code, MessageSquare, User, X } from "lucide-react";
+import {
+	Bot,
+	CheckCircle,
+	Clock,
+	Code,
+	MessageSquare,
+	User,
+	X,
+} from "lucide-react";
 
 interface EventLike {
 	id: string;
@@ -25,14 +33,22 @@ interface EventDetailsProps {
 }
 
 function getEventIcon(event: EventLike) {
-	if (event.functionCalls?.length > 0) return <Clock className="h-4 w-4 text-blue-500" />;
-	if (event.functionResponses?.length > 0) return <CheckCircle className="h-4 w-4 text-green-500" />;
-	if (event.isFinalResponse) return <MessageSquare className="h-4 w-4 text-purple-500" />;
-	if (event.content?.parts?.some((p: any) => p.codeExecutionResult)) return <Code className="h-4 w-4 text-orange-500" />;
+	if (event.functionCalls?.length > 0)
+		return <Clock className="h-4 w-4 text-blue-500" />;
+	if (event.functionResponses?.length > 0)
+		return <CheckCircle className="h-4 w-4 text-green-500" />;
+	if (event.isFinalResponse)
+		return <MessageSquare className="h-4 w-4 text-purple-500" />;
+	if (event.content?.parts?.some((p: any) => p.codeExecutionResult))
+		return <Code className="h-4 w-4 text-orange-500" />;
 	return <MessageSquare className="h-4 w-4 text-gray-500" />;
 }
 
-export function EventDetails({ event, onClose, hideHeader }: EventDetailsProps) {
+export function EventDetails({
+	event,
+	onClose,
+	hideHeader,
+}: EventDetailsProps) {
 	return (
 		<div className="h-full flex flex-col bg-background">
 			{!hideHeader && (
@@ -40,9 +56,16 @@ export function EventDetails({ event, onClose, hideHeader }: EventDetailsProps) 
 					<div className="flex items-center gap-2">
 						{getEventIcon(event)}
 						<h3 className="text-base font-semibold">Event Details</h3>
-						<Badge variant="outline" className="text-xs">{event.id.slice(0, 6)}</Badge>
+						<Badge variant="outline" className="text-xs">
+							{event.id.slice(0, 6)}
+						</Badge>
 					</div>
-					<Button variant="ghost" size="sm" className="h-6 w-6 p-0" onClick={onClose}>
+					<Button
+						variant="ghost"
+						size="sm"
+						className="h-6 w-6 p-0"
+						onClick={onClose}
+					>
 						<X className="h-4 w-4" />
 					</Button>
 				</div>
@@ -59,7 +82,11 @@ export function EventDetails({ event, onClose, hideHeader }: EventDetailsProps) 
 						<div>
 							<span className="font-medium">Timestamp:</span>
 							<p className="text-xs mt-1">
-								{format(new Date(event.timestamp * 1000), "PPpp")} ({formatDistanceToNow(new Date(event.timestamp * 1000), { addSuffix: true })})
+								{format(new Date(event.timestamp * 1000), "PPpp")} (
+								{formatDistanceToNow(new Date(event.timestamp * 1000), {
+									addSuffix: true,
+								})}
+								)
 							</p>
 						</div>
 						<div>
@@ -75,8 +102,10 @@ export function EventDetails({ event, onClose, hideHeader }: EventDetailsProps) 
 						</div>
 						{event.branch && (
 							<div>
-								<span className="font-medium">Branch:</span>
-								<p className="font-mono text-xs mt-1 break-all">{event.branch}</p>
+								<span className="font-medium">Agent:</span>
+								<p className="font-mono text-xs mt-1 break-all">
+									{event.branch}
+								</p>
 							</div>
 						)}
 					</div>
@@ -85,7 +114,9 @@ export function EventDetails({ event, onClose, hideHeader }: EventDetailsProps) 
 					{event.content && Object.keys(event.content).length > 0 && (
 						<div>
 							<h4 className="font-medium mb-2">Content</h4>
-							<pre className="text-xs bg-muted p-3 rounded max-h-80 overflow-auto whitespace-pre-wrap break-words">{JSON.stringify(event.content, null, 2)}</pre>
+							<pre className="text-xs bg-muted p-3 rounded max-h-80 overflow-auto whitespace-pre-wrap break-words">
+								{JSON.stringify(event.content, null, 2)}
+							</pre>
 						</div>
 					)}
 
@@ -93,7 +124,9 @@ export function EventDetails({ event, onClose, hideHeader }: EventDetailsProps) 
 					{event.actions && Object.keys(event.actions).length > 0 && (
 						<div>
 							<h4 className="font-medium mb-2">Actions</h4>
-							<pre className="text-xs bg-muted p-3 rounded max-h-80 overflow-auto whitespace-pre-wrap break-words">{JSON.stringify(event.actions, null, 2)}</pre>
+							<pre className="text-xs bg-muted p-3 rounded max-h-80 overflow-auto whitespace-pre-wrap break-words">
+								{JSON.stringify(event.actions, null, 2)}
+							</pre>
 						</div>
 					)}
 
@@ -103,13 +136,18 @@ export function EventDetails({ event, onClose, hideHeader }: EventDetailsProps) 
 							<h4 className="font-medium mb-2">Function Calls</h4>
 							<div className="space-y-2">
 								{event.functionCalls.map((call, index) => (
-									<div key={`${event.id}-call-${index}`} className="border rounded p-3 bg-muted/50">
+									<div
+										key={`${event.id}-call-${index}`}
+										className="border rounded p-3 bg-muted/50"
+									>
 										<div className="flex items-center gap-2 mb-2">
 											<Clock className="h-4 w-4 text-blue-500" />
 											<span className="font-medium">{call.name}</span>
 										</div>
 										{call.args && (
-											<pre className="text-xs bg-muted/70 p-2 rounded max-h-40 overflow-auto whitespace-pre-wrap break-words">{JSON.stringify(call.args, null, 2)}</pre>
+											<pre className="text-xs bg-muted/70 p-2 rounded max-h-40 overflow-auto whitespace-pre-wrap break-words">
+												{JSON.stringify(call.args, null, 2)}
+											</pre>
 										)}
 									</div>
 								))}
@@ -123,13 +161,18 @@ export function EventDetails({ event, onClose, hideHeader }: EventDetailsProps) 
 							<h4 className="font-medium mb-2">Function Responses</h4>
 							<div className="space-y-2">
 								{event.functionResponses.map((response, index) => (
-									<div key={`${event.id}-response-${index}`} className="border rounded p-3 bg-muted/50">
+									<div
+										key={`${event.id}-response-${index}`}
+										className="border rounded p-3 bg-muted/50"
+									>
 										<div className="flex items-center gap-2 mb-2">
 											<CheckCircle className="h-4 w-4 text-green-500" />
 											<span className="font-medium">{response.name}</span>
 										</div>
 										{response.response && (
-											<pre className="text-xs bg-muted/70 p-2 rounded max-h-40 overflow-auto whitespace-pre-wrap break-words">{JSON.stringify(response.response, null, 2)}</pre>
+											<pre className="text-xs bg-muted/70 p-2 rounded max-h-40 overflow-auto whitespace-pre-wrap break-words">
+												{JSON.stringify(response.response, null, 2)}
+											</pre>
 										)}
 									</div>
 								))}

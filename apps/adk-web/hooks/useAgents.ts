@@ -2,6 +2,7 @@
 
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useCallback, useEffect, useState } from "react";
+import { toast } from "sonner";
 import type { Agent, Message } from "../app/(dashboard)/_schema";
 
 interface AgentApiResponse {
@@ -51,7 +52,12 @@ export function useAgents(apiUrl: string, currentSessionId?: string | null) {
 
 	// Fetch messages for selected agent and session by transforming events → messages
 	const { data: sessionEvents } = useQuery({
-		queryKey: ["agent-messages", apiUrl, selectedAgent?.relativePath, currentSessionId],
+		queryKey: [
+			"agent-messages",
+			apiUrl,
+			selectedAgent?.relativePath,
+			currentSessionId,
+		],
 		queryFn: async (): Promise<EventsResponse> => {
 			if (!apiUrl || !selectedAgent || !currentSessionId) {
 				return { events: [], totalCount: 0 };
@@ -59,7 +65,8 @@ export function useAgents(apiUrl: string, currentSessionId?: string | null) {
 			const res = await fetch(
 				`${apiUrl}/api/agents/${encodeURIComponent(selectedAgent.relativePath)}/sessions/${currentSessionId}/events`,
 			);
-			if (!res.ok) throw new Error(`Failed to fetch events for messages: ${res.status}`);
+			if (!res.ok)
+				throw new Error(`Failed to fetch events for messages: ${res.status}`);
 			return res.json();
 		},
 		enabled: !!apiUrl && !!selectedAgent && !!currentSessionId,
@@ -73,8 +80,13 @@ export function useAgents(apiUrl: string, currentSessionId?: string | null) {
 				.map((ev, index) => {
 					const textParts = Array.isArray(ev.content?.parts)
 						? ev.content.parts
-							.filter((p: any) => typeof p === "object" && "text" in p && typeof p.text === "string")
-							.map((p: any) => p.text)
+								.filter(
+									(p: any) =>
+										typeof p === "object" &&
+										"text" in p &&
+										typeof p.text === "string",
+								)
+								.map((p: any) => p.text)
 						: [];
 					const text = textParts.join("").trim();
 					return {
@@ -117,7 +129,9 @@ export function useAgents(apiUrl: string, currentSessionId?: string | null) {
 						const reader = new FileReader();
 						reader.onload = () => {
 							const result = reader.result as string;
-							const base64 = result.includes(",") ? result.split(",")[1] : result;
+							const base64 = result.includes(",")
+								? result.split(",")[1]
+								: result;
 							resolve(base64);
 						};
 						reader.onerror = () => reject(reader.error);
@@ -142,7 +156,9 @@ export function useAgents(apiUrl: string, currentSessionId?: string | null) {
 			if (!response.ok) {
 				setMessages((prev) => prev.filter((m) => m.id !== userMessage.id));
 				const errorData = await response.text();
-				throw new Error(`Failed to send message: ${response.status} - ${errorData}`);
+				throw new Error(
+					`Failed to send message: ${response.status} - ${errorData}`,
+				);
 			}
 			return response.json();
 		},
@@ -150,15 +166,26 @@ export function useAgents(apiUrl: string, currentSessionId?: string | null) {
 			// Refresh session events and derived messages
 			if (currentSessionId && selectedAgent) {
 				queryClient.invalidateQueries({
-					queryKey: ["events", apiUrl, selectedAgent.relativePath, currentSessionId],
+					queryKey: [
+						"events",
+						apiUrl,
+						selectedAgent.relativePath,
+						currentSessionId,
+					],
 				});
 				queryClient.invalidateQueries({
-					queryKey: ["agent-messages", apiUrl, selectedAgent.relativePath, currentSessionId],
+					queryKey: [
+						"agent-messages",
+						apiUrl,
+						selectedAgent.relativePath,
+						currentSessionId,
+					],
 				});
 			}
 		},
 		onError: (error) => {
-			console.error("Failed to send message:", error);
+			console.error(error);
+			toast.error("Failed to send message. Please try again.");
 		},
 	});
 
@@ -171,7 +198,11 @@ export function useAgents(apiUrl: string, currentSessionId?: string | null) {
 	const sendMessage = useCallback(
 		(message: string, attachments?: File[]) => {
 			if (!selectedAgent) return;
-			sendMessageMutation.mutate({ agent: selectedAgent, message, attachments });
+			sendMessageMutation.mutate({
+				agent: selectedAgent,
+				message,
+				attachments,
+			});
 		},
 		[selectedAgent, sendMessageMutation],
 	);

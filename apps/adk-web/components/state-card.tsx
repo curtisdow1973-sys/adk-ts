@@ -1,8 +1,9 @@
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent } from "@/components/ui/card";
 import { Textarea } from "@/components/ui/textarea";
 import { Edit, X } from "lucide-react";
 import { useState } from "react";
+import { toast } from "sonner";
 
 interface StateCardProps {
 	stateKey: string;
@@ -34,16 +35,23 @@ export function StateCard({
 		try {
 			const parsedValue = JSON.parse(editValue);
 			await onUpdate(stateKey, parsedValue);
+			toast.success(`State "${stateKey}" updated successfully!`);
 			setEditingKey(null);
 			setEditValue("");
 		} catch (error) {
-			console.error("Invalid JSON:", error);
-			// You might want to show an error message here
+			toast.error(
+				"Invalid JSON format. Please check your syntax and try again.",
+			);
 		}
 	};
 
 	const handleDelete = async () => {
-		await onDelete(stateKey);
+		try {
+			await onDelete(stateKey);
+			toast.success(`State "${stateKey}" deleted successfully!`);
+		} catch (error) {
+			toast.error(`Failed to delete state "${stateKey}". Please try again.`);
+		}
 	};
 
 	return (

@@ -1,75 +1,52 @@
 import { useRef, useState } from "react";
+import { toast } from "sonner";
 
 export interface UseChatAttachmentsReturn {
 	attachedFiles: File[];
 	setAttachedFiles: React.Dispatch<React.SetStateAction<File[]>>;
-	showAttachmentDropdown: boolean;
-	setShowAttachmentDropdown: React.Dispatch<React.SetStateAction<boolean>>;
 	fileInputRef: React.RefObject<HTMLInputElement | null>;
-	photoInputRef: React.RefObject<HTMLInputElement | null>;
 	handleFileAttach: () => void;
-	handlePhotoAttach: () => void;
-	handleScreenshot: () => Promise<void>;
 	handleFileChange: (e: React.ChangeEvent<HTMLInputElement>) => void;
+	handleDragOver: (e: React.DragEvent) => void;
+	handleDragLeave: (e: React.DragEvent) => void;
+	handleDrop: (e: React.DragEvent) => void;
 	removeFile: (index: number) => void;
 	resetAttachments: () => void;
+	isDragOver: boolean;
 }
 
 export function useChatAttachments(): UseChatAttachmentsReturn {
 	const [attachedFiles, setAttachedFiles] = useState<File[]>([]);
-	const [showAttachmentDropdown, setShowAttachmentDropdown] = useState(false);
+	const [isDragOver, setIsDragOver] = useState(false);
 	const fileInputRef = useRef<HTMLInputElement>(null);
-	const photoInputRef = useRef<HTMLInputElement>(null);
 
 	const handleFileAttach = () => {
-		setShowAttachmentDropdown(false);
 		fileInputRef.current?.click();
 	};
 
-	const handlePhotoAttach = () => {
-		setShowAttachmentDropdown(false);
-		photoInputRef.current?.click();
+	const handleDragOver = (e: React.DragEvent) => {
+		e.preventDefault();
+		e.stopPropagation();
+		setIsDragOver(true);
 	};
 
-	const handleScreenshot = async () => {
-		setShowAttachmentDropdown(false);
-		try {
-			// Use the browser's screen capture API
-			const stream = await navigator.mediaDevices.getDisplayMedia({
-				video: true,
-			});
+	const handleDragLeave = (e: React.DragEvent) => {
+		e.preventDefault();
+		e.stopPropagation();
+		setIsDragOver(false);
+	};
 
-			// Create a video element to capture the frame
-			const video = document.createElement("video");
-			video.srcObject = stream;
-			video.play();
+	const handleDrop = (e: React.DragEvent) => {
+		e.preventDefault();
+		e.stopPropagation();
+		setIsDragOver(false);
 
-			video.addEventListener("loadedmetadata", () => {
-				// Create canvas to capture the frame
-				const canvas = document.createElement("canvas");
-				canvas.width = video.videoWidth;
-				canvas.height = video.videoHeight;
-				const ctx = canvas.getContext("2d");
-
-				if (ctx) {
-					ctx.drawImage(video, 0, 0);
-
-					// Convert to blob and create file
-					canvas.toBlob((blob) => {
-						if (blob) {
-							const file = new File([blob], `screenshot-${Date.now()}.png`, {
-								type: "image/png",
-							});
-							setAttachedFiles((prev) => [...prev, file]);
-						}
-
-						// Stop the stream
-						stream.getTracks().forEach((track) => track.stop());
-					}, "image/png");
-				}
-			});
-		} catch (error) {
-			console.error("Failed to capture screenshot:", error);
+		const files = Array.from(e.dataTransfer.files);
+		if (files.length > 0) {
+			setAttachedFiles((prev) => [...prev, ...files]);
+			toast.success(
+				`${files.length} file${files.length > 1 ? "s" : ""} attached successfully!`,
+			);
 		}
 	};
 
@@ -77,6 +54,11 @@ export function useChatAttachments(): UseChatAttachmentsReturn {
 		const files = Array.from(e.target.files || []);
 		setAttachedFiles((prev) => [...prev, ...files]);
 		e.target.value = ""; // Reset input
+		if (files.length > 0) {
+			toast.success(
+				`${files.length} file${files.length > 1 ? "s" : ""} attached successfully!`,
+			);
+		}
 	};
 
 	const removeFile = (index: number) => {
@@ -90,15 +72,14 @@ export function useChatAttachments(): UseChatAttachmentsReturn {
 	return {
 		attachedFiles,
 		setAttachedFiles,
-		showAttachmentDropdown,
-		setShowAttachmentDropdown,
 		fileInputRef,
-		photoInputRef,
 		handleFileAttach,
-		handlePhotoAttach,
-		handleScreenshot,
 		handleFileChange,
+		handleDragOver,
+		handleDragLeave,
+		handleDrop,
 		removeFile,
 		resetAttachments,
+		isDragOver,
 	};
 }
