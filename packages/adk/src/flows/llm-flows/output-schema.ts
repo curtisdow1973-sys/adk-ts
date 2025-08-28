@@ -1,3 +1,4 @@
+import { jsonrepair } from "jsonrepair";
 import type { InvocationContext } from "../../agents/invocation-context";
 import { Event } from "../../events/event";
 import { Logger } from "../../logger";
@@ -60,8 +61,10 @@ class OutputSchemaResponseProcessor extends BaseLlmResponseProcessor {
 		}
 
 		try {
-			// Parse and validate the JSON content against the schema
-			const parsed = JSON.parse(textContent);
+			// Prepare candidate JSON text by stripping fences and try parsing (with repair fallback)
+			const candidate = this.stripCodeFences(textContent);
+			const parsed = this.tryParseJson(candidate, agent.name);
+
 			const validated = (agent.outputSchema as any).parse(parsed);
 
 			// Update the response content with validated data
@@ -125,6 +128,45 @@ class OutputSchemaResponseProcessor extends BaseLlmResponseProcessor {
 			errorEvent.error = new Error(detailedError);
 
 			yield errorEvent;
+		}
+	}
+
+	// Strip common code fences and surrounding explanatory text from LLM output.
+	private stripCodeFences(raw: string): string {
+		// Prefer explicit triple-backtick fenced blocks (```json or ```)
+		const fencePattern = /```(?:json)?\s*([\s\S]*?)```/i;
+		const fenceMatch = raw.match(fencePattern);
+		if (fenceMatch?.[1]) {
+			return fenceMatch[1].trim();
+		}
+
+		// Remove lines that look like prose before the JSON (e.g. "Here's the JSON:")
+		const lines = raw.split(/\r?\n/).map((l) => l.trim());
+		const startIdx = lines.findIndex(
+			(l) => l.startsWith("{") || l.startsWith("["),
+		);
+		if (startIdx >= 0) {
+			return lines.slice(startIdx).join("\n").trim();
+		}
+
+		return raw.trim();
+	}
+
+	// Try parsing JSON; if parse fails, attempt to repair using jsonrepair and parse again.
+	private tryParseJson(candidate: string, agentName: string): any {
+		try {
+			return JSON.parse(candidate);
+		} catch (err) {
+			this.logger.debug("Initial JSON.parse failed, attempting jsonrepair", {
+				agent: agentName,
+			});
+			try {
+				const repaired = jsonrepair(candidate as string);
+				return JSON.parse(repaired);
+			} catch (repairErr) {
+				// If repair also fails, rethrow the original parse error
+				throw err;
+			}
 		}
 	}
 }
