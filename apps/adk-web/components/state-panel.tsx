@@ -236,15 +236,11 @@ export function StatePanel({
 							<p>Error: {error}</p>
 						</div>
 					) : stateEntries.length === 0 ? (
-						<Card>
-							<CardContent className="py-8">
-								<div className="text-center text-muted-foreground">
-									<Settings className="h-12 w-12 mx-auto mb-4 opacity-50" />
-									<p>No state variables</p>
-									<p className="text-sm">Add your first state config above</p>
-								</div>
-							</CardContent>
-						</Card>
+						<div className="text-center text-muted-foreground py-8">
+							<Settings className="h-12 w-12 mx-auto mb-4 opacity-50" />
+							<p className="text-sm">No state variables</p>
+							<p className="text-xs">Add your first state config above</p>
+						</div>
 					) : (
 						stateEntries.map(([key, value]) => (
 							<StateCard
