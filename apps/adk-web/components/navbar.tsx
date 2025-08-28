@@ -8,6 +8,7 @@ import {
 	SelectValue,
 } from "@/components/ui/select";
 import { Bot } from "lucide-react";
+import { Tooltip, TooltipContent, TooltipTrigger } from "./ui/tooltip";
 
 interface NavbarProps {
 	apiUrl: string;
@@ -27,15 +28,19 @@ export function Navbar({
 			<div className="px-4 py-3">
 				<div className="flex items-center justify-between">
 					{/* Connection Status */}
-					<div className="flex items-center space-x-2">
-						<div
-							className="h-2 w-2 rounded-full bg-green-500"
-							title="Connected to this server"
-						/>
-						<span className="text-xs text-muted-foreground">
-							{new URL(apiUrl).host}
-						</span>
-					</div>
+					<Tooltip>
+						<TooltipTrigger asChild>
+							<div className="flex items-center space-x-2 cursor-pointer">
+								<div className="h-2 w-2 rounded-full bg-green-500" />
+								<span className="text-xs text-muted-foreground">
+									{new URL(apiUrl).host}
+								</span>
+							</div>
+						</TooltipTrigger>
+						<TooltipContent>
+							<span>Connected to this server</span>
+						</TooltipContent>
+					</Tooltip>
 
 					{/* Agent Selector */}
 					<div className="flex items-center space-x-3">
