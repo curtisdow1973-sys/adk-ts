@@ -68,10 +68,9 @@ export function ChatPanel({
 	if (!selectedAgent) {
 		return <EmptyChat />;
 	}
-
 	return (
-		<div className="max-w-4xl mx-auto py-4 relative size-full flex flex-col h-full">
-			<Conversation className="max-h-[70vh]">
+		<div className="relative size-full flex flex-col justify-between h-full">
+			<Conversation className="max-h-[70vh] max-w-4xl w-full mx-auto bg-repeat heropattern-jigsaw-red-100">
 				<ConversationContent>
 					{messages.length === 0 ? (
 						<div className="flex flex-col items-center justify-center min-h-[400px] text-center text-muted-foreground">
@@ -109,93 +108,94 @@ export function ChatPanel({
 				<ConversationScrollButton />
 			</Conversation>
 
-			{/* Show attached files above input */}
-			{attachedFiles.length > 0 && (
-				<div className="py-2">
-					<div className="flex flex-wrap gap-2">
-						{attachedFiles.map((file: File, index: number) => (
-							<div
-								key={`${file.name}-${file.size}-${index}`}
-								className="flex items-center gap-2 px-3 py-2 bg-secondary rounded-lg text-sm"
-							>
-								<span className="text-secondary-foreground">{file.name}</span>
-								<Button
-									type="button"
-									variant="ghost"
-									size="icon"
-									className="h-4 w-4 text-muted-foreground hover:text-destructive"
-									onClick={() => removeFile(index)}
-								>
-									×
-								</Button>
+			<div className="border-t">
+				<div className="max-w-4xl mx-auto p-4">
+					{/* Show attached files above input */}
+					{attachedFiles.length > 0 && (
+						<div className="py-2">
+							<div className="flex flex-wrap gap-2">
+								{attachedFiles.map((file: File, index: number) => (
+									<div
+										key={`${file.name}-${file.size}-${index}`}
+										className="flex items-center gap-2 px-3 py-2 bg-secondary rounded-lg text-sm"
+									>
+										<span className="text-secondary-foreground">
+											{file.name}
+										</span>
+										<Button
+											type="button"
+											variant="ghost"
+											size="icon"
+											className="h-4 w-4 text-muted-foreground hover:text-destructive"
+											onClick={() => removeFile(index)}
+										>
+											×
+										</Button>
+									</div>
+								))}
 							</div>
-						))}
-					</div>
-				</div>
-			)}
-
-			<div
-				className={cn(
-					"relative w-full max-w-4xl mx-auto transition-all duration-200",
-					isDragOver && "bg-accent/10 border-accent rounded-lg p-2",
-				)}
-				onDragOver={handleDragOver}
-				onDragLeave={handleDragLeave}
-				onDrop={handleDrop}
-			>
-				<PromptInput onSubmit={handleSubmit} className="w-full">
-					<PromptInputTextarea
-						value={inputMessage}
-						placeholder={
-							isDragOver
-								? "Drop files here..."
-								: `Message ${selectedAgent.name}...`
-						}
-						onChange={(e) => setInputMessage(e.target.value)}
-						disabled={isSendingMessage}
-					/>
-
-					<PromptInputToolbar>
-						<PromptInputTools>
-							{/* Simplified Attachment Button */}
-							<PromptInputButton
-								onClick={handleFileAttach}
-								className="transition-colors hover:bg-accent hover:text-accent-foreground"
-								title="Attach files"
-							>
-								<Paperclip className="size-4" />
-							</PromptInputButton>
-						</PromptInputTools>
-
-						<PromptInputSubmit
-							status={isSendingMessage ? "streaming" : "ready"}
-							disabled={!inputMessage.trim() && attachedFiles.length === 0}
-						/>
-					</PromptInputToolbar>
-				</PromptInput>
-
-				{/* Drag and Drop Overlay */}
-				{isDragOver && (
-					<div className="absolute inset-0 bg-accent/5 border-2 border-dashed border-primary rounded-lg flex items-center justify-center pointer-events-none">
-						<div className="text-center">
-							<Paperclip className="size-8 mx-auto mb-2 text-primary" />
-							<p className="text-sm font-medium text-primary">
-								Drop files to attach
-							</p>
 						</div>
+					)}
+					<div
+						className={cn(
+							"relative w-full max-w-4xl mx-auto transition-all duration-200",
+							isDragOver && "bg-accent/10 border-accent rounded-lg p-2",
+						)}
+						onDragOver={handleDragOver}
+						onDragLeave={handleDragLeave}
+						onDrop={handleDrop}
+					>
+						<PromptInput onSubmit={handleSubmit} className="w-full">
+							<PromptInputTextarea
+								value={inputMessage}
+								placeholder={
+									isDragOver
+										? "Drop files here..."
+										: `Message ${selectedAgent.name}...`
+								}
+								onChange={(e) => setInputMessage(e.target.value)}
+								disabled={isSendingMessage}
+							/>
+							<PromptInputToolbar>
+								<PromptInputTools>
+									{/* Simplified Attachment Button */}
+									<PromptInputButton
+										onClick={handleFileAttach}
+										className="transition-colors hover:bg-accent hover:text-accent-foreground"
+										title="Attach files"
+									>
+										<Paperclip className="size-4" />
+									</PromptInputButton>
+								</PromptInputTools>
+								<PromptInputSubmit
+									status={isSendingMessage ? "streaming" : "ready"}
+									disabled={!inputMessage.trim() && attachedFiles.length === 0}
+								/>
+							</PromptInputToolbar>
+						</PromptInput>
+						{/* Drag and Drop Overlay */}
+						{isDragOver && (
+							<div className="absolute inset-0 bg-accent/5 border-2 border-dashed border-primary rounded-lg flex items-center justify-center pointer-events-none">
+								<div className="text-center">
+									<Paperclip className="size-8 mx-auto mb-2 text-primary" />
+									<p className="text-sm font-medium text-primary">
+										Drop files to attach
+									</p>
+								</div>
+							</div>
+						)}
 					</div>
-				)}
+					{/* Hidden file input */}
+					<input
+						ref={fileInputRef}
+						type="file"
+						multiple
+						className="hidden"
+						onChange={handleFileChange}
+						accept="*/*"
+					/>
+				</div>
 			</div>
-
-			{/* Hidden file input */}
-			<input
-				ref={fileInputRef}
-				type="file"
-				multiple
-				className="hidden"
-				onChange={handleFileChange}
-				accept="*/*"
-			/>
 		</div>
 	);
 }
