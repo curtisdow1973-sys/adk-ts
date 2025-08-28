@@ -200,9 +200,9 @@ export function ChatPanel({
 
 function EmptyChat() {
 	return (
-		<div className="flex flex-col min-h-0 flex-1">
+		<div className="flex flex-col min-h-0 flex-1 h-full">
 			{/* Container with borders */}
-			<div className="flex-1 flex items-center justify-center max-w-4xl mx-auto w-full border-l border-r border-border bg-background min-h-[400px]">
+			<div className="flex-1 flex items-center justify-center max-w-4xl mx-auto w-full h-full">
 				<div className="text-center max-w-md p-8">
 					{/* Beautiful illustration placeholder */}
 					<div className="mb-8 relative">
