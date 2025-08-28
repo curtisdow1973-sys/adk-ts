@@ -97,28 +97,47 @@ export function ChatPanel({
 								</p>
 							</div>
 						) : (
-							messages.map((message) => (
-								<Message
-									from={message.type === "user" ? "user" : "assistant"}
-									key={message.id}
-								>
-									<MessageContent>
-										<Response key={message.id} className="px-2">
-											{message.content}
-										</Response>
-									</MessageContent>
-									<MessageAvatar
-										icon={
-											message.type === "user" ? (
-												<UserIcon className="size-4" />
-											) : (
-												<Bot className="size-4" />
-											)
-										}
-										name={message.type === "user" ? "You" : selectedAgent.name}
-									/>
-								</Message>
-							))
+							<>
+								{messages.map((message) => (
+									<Message
+										from={message.type === "user" ? "user" : "assistant"}
+										key={message.id}
+									>
+										<MessageContent>
+											<Response key={message.id} className="px-2">
+												{message.content}
+											</Response>
+										</MessageContent>
+										<MessageAvatar
+											icon={
+												message.type === "user" ? (
+													<UserIcon className="size-4" />
+												) : (
+													<Bot className="size-4" />
+												)
+											}
+											name={
+												message.type === "user" ? "You" : selectedAgent.name
+											}
+										/>
+									</Message>
+								))}
+
+								{/* In-conversation loading indicator (appears after user's last message) */}
+								{isSendingMessage && (
+									<Message from="assistant" key="loading">
+										<MessageContent>
+											<Response className="px-2 italic animate-pulse text-sm text-muted-foreground">
+												Typing...
+											</Response>
+										</MessageContent>
+										<MessageAvatar
+											icon={<Bot className="size-4" />}
+											name={selectedAgent.name}
+										/>
+									</Message>
+								)}
+							</>
 						)}
 					</ConversationContent>
 					<ConversationScrollButton />
