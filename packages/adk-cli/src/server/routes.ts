@@ -1,6 +1,7 @@
 import type { Hono } from "hono";
 import { cors } from "hono/cors";
-import type { AgentManager, SessionManager } from "./services.js";
+import type { AgentManager } from "./services/agent-manager.service.js";
+import type { SessionManager } from "./services/session-manager.service.js";
 import type {
 	AgentListResponse,
 	CreateSessionRequest,

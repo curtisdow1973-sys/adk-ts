@@ -2,7 +2,8 @@ import { type ServerType, serve } from "@hono/node-server";
 import { InMemorySessionService } from "@iqai/adk";
 import { Hono } from "hono";
 import { setupRoutes } from "./routes.js";
-import { AgentManager, SessionManager } from "./services.js";
+import { AgentManager } from "./services/agent-manager.service.js";
+import { SessionManager } from "./services/session-manager.service.js";
 import type { ServerConfig } from "./types.js";
 
 export class ADKServer {
