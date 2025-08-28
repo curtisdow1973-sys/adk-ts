@@ -8,7 +8,14 @@ import {
 	CardHeader,
 	CardTitle,
 } from "@/components/ui/card";
-import { formatDistanceToNow } from "date-fns";
+import {
+	differenceInSeconds,
+	differenceInMinutes,
+	differenceInHours,
+	differenceInDays,
+	differenceInMonths,
+	differenceInYears,
+} from "date-fns";
 import {
 	Bot,
 	CheckCircle,
@@ -61,6 +68,27 @@ function getEventSummary(event: EventLike) {
 	return "Event content";
 }
 
+function formatCompactDistanceToNow(date: Date) {
+	const now = new Date();
+	const secs = differenceInSeconds(now, date);
+	if (secs < 60) return `${secs}s ago`;
+
+	const mins = differenceInMinutes(now, date);
+	if (mins < 60) return `${mins} min ago`;
+
+	const hrs = differenceInHours(now, date);
+	if (hrs < 24) return `${hrs} hr ago`;
+
+	const days = differenceInDays(now, date);
+	if (days < 30) return `${days} d ago`;
+
+	const months = differenceInMonths(now, date);
+	if (months < 12) return `${months} mo ago`;
+
+	const years = differenceInYears(now, date);
+	return `${years} yr ago`;
+}
+
 interface EventCardProps {
 	event: EventLike;
 	onClick?: () => void;
@@ -83,9 +111,7 @@ export function EventCard({ event, onClick }: EventCardProps) {
 						</div>
 						<div className="flex items-center gap-1 text-xs text-muted-foreground">
 							<Clock className="h-3 w-3" />
-							{formatDistanceToNow(new Date(event.timestamp * 1000), {
-								addSuffix: true,
-							})}
+							{formatCompactDistanceToNow(new Date(event.timestamp * 1000))}
 						</div>
 					</div>
 
