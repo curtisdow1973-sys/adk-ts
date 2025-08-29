@@ -461,51 +461,11 @@ export class AgentManager {
 				exportedAgent as any,
 			);
 
-			// Try to extract session configuration from the original agent
-			const extractedConfig = AgentBuilder.extractSessionConfig(exportedAgent);
-			console.log("Extracted session config from original agent:", {
-				hasSessionService: !!extractedConfig.sessionService,
-				sessionServiceType: extractedConfig.sessionService?.constructor?.name,
-				hasSessionOptions: !!extractedConfig.sessionOptions,
-			});
-
-			let initialState: Record<string, any> | undefined;
-
-			// If original agent has session service, try to extract state from existing sessions
-			if (extractedConfig.sessionService) {
-				try {
-					const sessions = await extractedConfig.sessionService.listSessions(
-						extractedConfig.sessionOptions?.appName || "adk-server",
-						extractedConfig.sessionOptions?.userId || `user_${agentPath}`,
-					);
-					console.log("Found sessions in original agent:", sessions.length);
-
-					if (sessions.length > 0) {
-						const firstSession =
-							await extractedConfig.sessionService.getSession(
-								extractedConfig.sessionOptions?.appName || "adk-server",
-								extractedConfig.sessionOptions?.userId || `user_${agentPath}`,
-								sessions[0],
-							);
-						if (
-							firstSession?.state &&
-							Object.keys(firstSession.state).length > 0
-						) {
-							initialState = firstSession.state;
-							console.log("Extracted initial state from original agent:", {
-								hasState: !!initialState,
-								stateKeys: initialState ? Object.keys(initialState) : [],
-								stateContent: initialState,
-							});
-						}
-					}
-				} catch (error) {
-					console.log(
-						"Could not extract state from original agent sessions:",
-						error,
-					);
-				}
-			}
+			// Always use the CLI-provided InMemorySessionService. Do not attempt to
+			// reuse or extract a session service/state from the exported agent. We
+			// will always wire the provided `this.sessionService` into the built
+			// agent so session management is consistent across the CLI.
+			const initialState: Record<string, any> | undefined = undefined;
 
 			// Configure with CLI session service and pass extracted initial state
 			agentBuilder.withSessionService(this.sessionService, {
