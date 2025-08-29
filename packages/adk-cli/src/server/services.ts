@@ -8,7 +8,13 @@ import {
 } from "node:fs";
 import { dirname, join, relative } from "node:path";
 import { pathToFileURL } from "node:url";
-import type { FullMessage, InMemorySessionService, LlmAgent } from "@iqai/adk";
+import type {
+	BaseAgent,
+	BuiltAgent,
+	EnhancedRunner,
+	FullMessage,
+	InMemorySessionService,
+} from "@iqai/adk";
 import { AgentBuilder } from "@iqai/adk";
 import { Logger } from "./logger.js";
 import type {
@@ -131,7 +137,9 @@ export class AgentLoader {
 	/**
 	 * Import a TypeScript file by compiling it on-demand
 	 */
-	async importTypeScriptFile(filePath: string): Promise<any> {
+	async importTypeScriptFile(
+		filePath: string,
+	): Promise<Record<string, unknown>> {
 		// Determine project root (for tsconfig and resolving deps)
 		const startDir = dirname(filePath);
 		let projectRoot = startDir;
@@ -160,8 +168,15 @@ export class AgentLoader {
 			// Externalize bare module imports (node_modules), bundle relative/local files
 			const plugin = {
 				name: "externalize-bare-imports",
-				setup(build: any) {
-					build.onResolve({ filter: /.*/ }, (args: any) => {
+				setup(build: {
+					onResolve: (
+						options: { filter: RegExp },
+						callback: (args: { path: string }) =>
+							| { path: string; external: boolean }
+							| undefined,
+					) => void;
+				}) {
+					build.onResolve({ filter: /.*/ }, (args: { path: string }) => {
 						if (
 							args.path.startsWith(".") ||
 							args.path.startsWith("/") ||
@@ -190,18 +205,21 @@ export class AgentLoader {
 				...(existsSync(tsconfigPath) ? { tsconfig: tsconfigPath } : {}),
 			});
 
-			const mod = await import(
+			const mod = (await import(
 				`${pathToFileURL(outFile).href}?t=${Date.now()}`
-			);
-			let agentExport = (mod as any)?.agent;
-			if (!agentExport && (mod as any)?.default) {
-				agentExport = (mod as any).default.agent ?? (mod as any).default;
+			)) as Record<string, unknown>;
+			let agentExport = mod?.agent;
+			if (!agentExport && mod?.default) {
+				const defaultExport = mod.default as Record<string, unknown>;
+				agentExport = defaultExport?.agent ?? defaultExport;
 			}
 			try {
 				unlinkSync(outFile);
 			} catch {}
 			if (agentExport) {
-				const isPrimitive = (v: any) =>
+				const isPrimitive = (
+					v: unknown,
+				): v is null | undefined | string | number | boolean =>
 					v == null || ["string", "number", "boolean"].includes(typeof v);
 				if (isPrimitive(agentExport)) {
 					// Primitive named 'agent' export (e.g., a string) isn't a real agent; fall through to full-module scan
@@ -273,20 +291,38 @@ export class AgentLoader {
 		}
 	}
 
-	// Minimal resolution logic for agent exports: supports
-	// 1) export const agent = new LlmAgent(...)
-	// 2) export function agent() { return new LlmAgent(...) }
-	// 3) export async function agent() { return new LlmAgent(...) }
-	// 4) default export (object or function) returning or containing .agent
-	async resolveAgentExport(mod: any): Promise<{ agent: LlmAgent }> {
-		let candidate = mod?.agent ?? mod?.default?.agent ?? mod?.default ?? mod;
+	// Enhanced resolution logic for agent exports: always returns BaseAgent
+	async resolveAgentExport(mod: Record<string, unknown>): Promise<BaseAgent> {
+		const moduleDefault = mod?.default as Record<string, unknown> | undefined;
+		let candidate: unknown =
+			mod?.agent ?? moduleDefault?.agent ?? moduleDefault ?? mod;
 
-		const isLikelyAgentInstance = (obj: any) =>
-			obj && typeof obj === "object" && typeof obj.name === "string";
-		const isPrimitive = (v: any) =>
+		// Type guards
+		const isLikelyAgentInstance = (obj: unknown): obj is BaseAgent =>
+			obj != null &&
+			typeof obj === "object" &&
+			typeof (obj as BaseAgent).name === "string" &&
+			typeof (obj as BaseAgent).runAsync === "function";
+
+		const isAgentBuilder = (obj: unknown): obj is AgentBuilder =>
+			obj != null &&
+			typeof obj === "object" &&
+			typeof (obj as AgentBuilder).build === "function" &&
+			typeof (obj as AgentBuilder).withModel === "function";
+
+		const isBuiltAgent = (obj: unknown): obj is BuiltAgent =>
+			obj != null &&
+			typeof obj === "object" &&
+			"agent" in obj &&
+			"runner" in obj &&
+			"session" in obj;
+
+		const isPrimitive = (
+			v: unknown,
+		): v is null | undefined | string | number | boolean =>
 			v == null || ["string", "number", "boolean"].includes(typeof v);
 
-		const invokeMaybe = async (fn: any) => {
+		const invokeMaybe = async (fn: () => unknown): Promise<unknown> => {
 			let out = fn();
 			if (out && typeof out === "object" && "then" in out) {
 				out = await out;
@@ -294,32 +330,47 @@ export class AgentLoader {
 			return out;
 		};
 
-		// If initial candidate is invalid primitive (e.g., exported const agent = "foo"), or
-		// the entire module namespace (no direct agent), then probe named exports.
-		if (
-			(!isLikelyAgentInstance(candidate) && isPrimitive(candidate)) ||
-			(!isLikelyAgentInstance(candidate) && candidate && candidate === mod)
-		) {
-			candidate = mod; // ensure we iterate full namespace
+		// Helper to extract BaseAgent from different types
+		const extractBaseAgent = async (
+			item: unknown,
+		): Promise<BaseAgent | null> => {
+			if (isLikelyAgentInstance(item)) {
+				return item; // Already a BaseAgent
+			}
+			if (isAgentBuilder(item)) {
+				// Build the AgentBuilder to get BuiltAgent, then extract agent
+				const built = await item.build();
+				return built.agent;
+			}
+			if (isBuiltAgent(item)) {
+				// Extract agent from BuiltAgent
+				return item.agent;
+			}
+			return null;
+		};
+
+		// Probe named exports if initial candidate is not valid
+		if (isPrimitive(candidate) || (candidate && candidate === mod)) {
+			candidate = mod;
 			for (const [key, value] of Object.entries(mod)) {
 				if (key === "default") continue;
-				// Prefer keys containing 'agent'
 				const keyLower = key.toLowerCase();
-				if (isPrimitive(value)) continue; // skip obvious non-candidates
-				if (isLikelyAgentInstance(value)) {
-					candidate = value;
-					break;
+				if (isPrimitive(value)) continue;
+
+				const baseAgent = await extractBaseAgent(value);
+				if (baseAgent) {
+					return baseAgent;
 				}
+
 				// Handle static container object: export const container = { agent: <LlmAgent> }
-				if (
-					value &&
-					typeof value === "object" &&
-					(value as any).agent &&
-					isLikelyAgentInstance((value as any).agent)
-				) {
-					candidate = (value as any).agent;
-					break;
+				if (value && typeof value === "object" && "agent" in value) {
+					const container = value as Record<string, unknown>;
+					const containerAgent = await extractBaseAgent(container.agent);
+					if (containerAgent) {
+						return containerAgent;
+					}
 				}
+
 				if (
 					typeof value === "function" &&
 					(/(agent|build|create)/i.test(keyLower) ||
@@ -327,22 +378,21 @@ export class AgentLoader {
 							/(agent|build|create)/i.test(value.name.toLowerCase())))
 				) {
 					try {
-						const maybe = await invokeMaybe(value);
-						if (isLikelyAgentInstance(maybe)) {
-							candidate = maybe;
-							break;
+						const maybe = await invokeMaybe(value as () => unknown);
+						const baseAgent = await extractBaseAgent(maybe);
+						if (baseAgent) {
+							return baseAgent;
 						}
-						if (
-							maybe &&
-							typeof maybe === "object" &&
-							maybe.agent &&
-							isLikelyAgentInstance(maybe.agent)
-						) {
-							candidate = maybe.agent;
-							break;
+
+						if (maybe && typeof maybe === "object" && "agent" in maybe) {
+							const container = maybe as Record<string, unknown>;
+							const containerAgent = await extractBaseAgent(container.agent);
+							if (containerAgent) {
+								return containerAgent;
+							}
 						}
 					} catch (e) {
-						// Swallow and continue trying other exports
+						// Swallow and continue
 					}
 				}
 			}
@@ -351,32 +401,31 @@ export class AgentLoader {
 		// If candidate is a function (sync or async), invoke it
 		if (typeof candidate === "function") {
 			try {
-				candidate = await invokeMaybe(candidate);
+				candidate = await invokeMaybe(candidate as () => unknown);
 			} catch (e) {
 				throw new Error(
 					`Failed executing exported agent function: ${e instanceof Error ? e.message : String(e)}`,
 				);
 			}
 		}
-		// Handle built structure { agent, runner, session }
-		if (
-			candidate &&
-			typeof candidate === "object" &&
-			candidate.agent &&
-			isLikelyAgentInstance(candidate.agent)
-		) {
-			candidate = candidate.agent;
+
+		// Extract BaseAgent from the final candidate
+		const baseAgent = await extractBaseAgent(candidate);
+		if (baseAgent) {
+			return baseAgent;
 		}
-		// Unwrap { agent: ... } pattern if present
-		if (candidate?.agent && isLikelyAgentInstance(candidate.agent)) {
-			candidate = candidate.agent;
+
+		if (candidate && typeof candidate === "object" && "agent" in candidate) {
+			const container = candidate as Record<string, unknown>;
+			const containerAgent = await extractBaseAgent(container.agent);
+			if (containerAgent) {
+				return containerAgent;
+			}
 		}
-		if (!candidate || !isLikelyAgentInstance(candidate)) {
-			throw new Error(
-				"No agent export resolved (expected variable, function, or function returning an agent)",
-			);
-		}
-		return { agent: candidate as LlmAgent };
+
+		throw new Error(
+			"No agent export resolved (expected LlmAgent/BaseAgent, AgentBuilder, or BuiltAgent)",
+		);
 	}
 }
 
@@ -444,40 +493,29 @@ export class AgentManager {
 			const agentFileUrl = pathToFileURL(agentFilePath).href;
 
 			// Use dynamic import to load the agent (TS path uses esbuild wrapper returning { agent })
-			const agentModule: any = agentFilePath.endsWith(".ts")
+			const agentModule: Record<string, unknown> = agentFilePath.endsWith(".ts")
 				? await this.loader.importTypeScriptFile(agentFilePath)
-				: await import(agentFileUrl);
+				: ((await import(agentFileUrl)) as Record<string, unknown>);
 
-			const resolved = await this.loader.resolveAgentExport(agentModule);
-			const exportedAgent = resolved.agent;
+			const exportedAgent = await this.loader.resolveAgentExport(agentModule);
 
 			// Validate basic shape
 			if (!exportedAgent?.name) {
 				throw new Error(
-					`Invalid agent export in ${agentFilePath}. Expected an LlmAgent instance with a name property.`,
+					`Invalid agent export in ${agentFilePath}. Expected a BaseAgent instance with a name property.`,
 				);
 			}
 			// Soft validation of optional fields (model/instruction not strictly required for all custom agents)
 
-			// Build runner/session while preserving the exact exported agent (including subAgents, tools, callbacks, etc.)
-			// We use withAgent() so we don't accidentally drop configuration like subAgents which was happening before
+			// Always use the session created by the agent builder; ignore any session from the exported agent.
 			const agentBuilder = AgentBuilder.create(exportedAgent.name).withAgent(
-				exportedAgent as any,
+				exportedAgent,
 			);
-
-			// Always use the CLI-provided InMemorySessionService. Do not attempt to
-			// reuse or extract a session service/state from the exported agent. We
-			// will always wire the provided `this.sessionService` into the built
-			// agent so session management is consistent across the CLI.
-			const initialState: Record<string, any> | undefined = undefined;
-
-			// Configure with CLI session service and pass extracted initial state
 			agentBuilder.withSessionService(this.sessionService, {
 				userId: `user_${agentPath}`,
 				appName: "adk-server",
-				state: initialState,
+				state: undefined,
 			});
-
 			const { runner, session } = await agentBuilder.build();
 			this.logger.info("Agent started with session: %o", {
 				sessionId: session.id,
@@ -485,8 +523,7 @@ export class AgentManager {
 				stateKeys: session.state ? Object.keys(session.state) : [],
 				stateContent: session.state,
 			});
-
-			// Store the loaded agent with its runner
+			// Store the loaded agent with its runner and the session from the builder only
 			const loadedAgent: LoadedAgent = {
 				agent: exportedAgent,
 				runner: runner,
@@ -494,22 +531,17 @@ export class AgentManager {
 				userId: `user_${agentPath}`,
 				appName: "adk-server",
 			};
-
 			this.loadedAgents.set(agentPath, loadedAgent);
 			agent.instance = exportedAgent;
 			agent.name = exportedAgent.name;
-
 			// Ensure the session is stored in the session service
 			try {
-				// Check if session already exists
 				const existingSession = await this.sessionService.getSession(
 					loadedAgent.appName,
 					loadedAgent.userId,
 					session.id,
 				);
-
 				if (!existingSession) {
-					// Create and store the session if it doesn't exist
 					this.logger.info(
 						"Creating session in sessionService: %s",
 						session.id,
@@ -801,7 +833,8 @@ export class SessionManager {
 
 			const events = session.events.map((event: any) => {
 				// Handle both Event class instances and plain objects
-				const isEventInstance = typeof event.getFunctionCalls === "function";
+				const isEventInstance =
+					typeof (event as any).getFunctionCalls === "function";
 
 				return {
 					id: event.id,
@@ -987,7 +1020,11 @@ export class SessionManager {
 	/**
 	 * Helper method to set nested values using dot notation
 	 */
-	private setNestedValue(obj: any, path: string, value: any): void {
+	private setNestedValue(
+		obj: Record<string, any>,
+		path: string,
+		value: unknown,
+	): void {
 		const keys = path.split(".");
 		const lastKey = keys.pop()!;
 		const target = keys.reduce((current, key) => {

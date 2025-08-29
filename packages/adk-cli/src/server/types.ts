@@ -1,14 +1,14 @@
-import type { EnhancedRunner, LlmAgent } from "@iqai/adk";
+import type { EnhancedRunner, BaseAgent } from "@iqai/adk";
 
 export interface Agent {
 	relativePath: string;
 	name: string;
 	absolutePath: string;
-	instance?: LlmAgent; // Store the loaded agent instance
+	instance?: BaseAgent; // Store the loaded agent instance
 }
 
 export interface LoadedAgent {
-	agent: LlmAgent;
+	agent: BaseAgent;
 	runner: EnhancedRunner; // AgentBuilder's enhanced runner
 	sessionId: string; // Session ID for this agent instance
 	userId: string; // User ID for session management
