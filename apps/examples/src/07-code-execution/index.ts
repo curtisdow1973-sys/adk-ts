@@ -1,8 +1,6 @@
 import { env } from "node:process";
 import {
 	InMemorySessionService,
-	LlmAgent,
-	Runner,
 	AgentBuilder,
 } from "@iqai/adk";
 import { BuiltInCodeExecutor } from "@iqai/adk";
@@ -49,18 +47,16 @@ async function demonstrateBasicCodeExecution() {
 		.build();
 
 	console.log("🧮 Testing basic mathematical computation:");
-	const mathResult = await ask(
+	await ask(
 		runner.ask.bind(runner),
 		"Calculate the sum of squares of all prime numbers less than 100",
 	);
-	console.log(`\n🤖 Agent: ${mathResult}\n`);
 
 	console.log("📊 Testing data manipulation:");
-	const dataResult = await ask(
+    await ask(
 		runner.ask.bind(runner),
 		"Generate a list of the first 10 Fibonacci numbers and calculate their average",
 	);
-	console.log(`\n🤖 Agent: ${dataResult}\n`);
 }
 
 async function demonstrateDataAnalysis() {
@@ -89,7 +85,7 @@ async function demonstrateDataAnalysis() {
 		.build();
 
 	console.log("📈 Testing statistical analysis:");
-	const statsResult = await ask(
+	await ask(
 		runner.ask.bind(runner),
 		dedent`
 			Create a dataset of 100 random sales figures (between 1000 and 10000),
@@ -100,10 +96,9 @@ async function demonstrateDataAnalysis() {
 			4. Identify any outliers
 		`,
 	);
-	console.log(`\n🤖 Agent: ${statsResult}\n`);
 
 	console.log("🔍 Testing pattern analysis:");
-	const patternResult = await ask(
+	await ask(
 		runner.ask.bind(runner),
 		dedent`
 			Generate a time series dataset representing website traffic over 30 days
@@ -114,7 +109,6 @@ async function demonstrateDataAnalysis() {
 			4. Create a simple forecast for next week
 		`,
 	);
-	console.log(`\n🤖 Agent: ${patternResult}\n`);
 }
 
 async function demonstrateAlgorithmImplementation() {
@@ -143,7 +137,7 @@ async function demonstrateAlgorithmImplementation() {
 		.build();
 
 	console.log("🔄 Testing sorting algorithm:");
-	const sortResult = await ask(
+	await ask(
 		runner.ask.bind(runner),
 		dedent`
 			Implement the quicksort algorithm and test it with:
@@ -155,10 +149,9 @@ async function demonstrateAlgorithmImplementation() {
 			Compare the performance and explain the results.
 		`,
 	);
-	console.log(`\n🤖 Agent: ${sortResult}\n`);
 
 	console.log("🌳 Testing graph algorithm:");
-	const graphResult = await ask(
+	await ask(
 		runner.ask.bind(runner),
 		dedent`
 			Implement Dijkstra's shortest path algorithm and use it to find
@@ -171,7 +164,6 @@ async function demonstrateAlgorithmImplementation() {
 			Find the shortest path from A to E and explain the algorithm's steps.
 		`,
 	);
-	console.log(`\n🤖 Agent: ${graphResult}\n`);
 }
 
 async function demonstrateInteractiveCodeSession() {
@@ -211,18 +203,16 @@ async function demonstrateInteractiveCodeSession() {
 		"Problem: Analyze the efficiency of different search algorithms\n",
 	);
 
-	const step1 = await ask(
+	await ask(
 		runner.ask.bind(runner),
 		dedent`
-			Let's start by implementing linear search and binary search algorithms.
-			Create both functions and test them with a sorted list of 1000 numbers.
-			Measure the time taken for each to find a target number.
+		Let's start by implementing linear search and binary search algorithms.
+		Create both functions and test them with a sorted list of 1000 numbers.
+		Measure the time taken for each to find a target number.
 		`,
 	);
-	console.log("Step 1 - Algorithm Implementation:");
-	console.log(`🤖 Agent: ${step1}\n`);
 
-	const step2 = await ask(
+	await ask(
 		runner.ask.bind(runner),
 		dedent`
 			Now let's create a comprehensive performance comparison.
@@ -230,10 +220,8 @@ async function demonstrateInteractiveCodeSession() {
 			and create a performance chart showing how search time scales with list size.
 		`,
 	);
-	console.log("Step 2 - Performance Analysis:");
-	console.log(`🤖 Agent: ${step2}\n`);
 
-	const step3 = await ask(
+	await ask(
 		runner.ask.bind(runner),
 		dedent`
 			Finally, analyze the theoretical vs actual performance:
@@ -243,8 +231,6 @@ async function demonstrateInteractiveCodeSession() {
 			4. Discuss when to use each algorithm
 		`,
 	);
-	console.log("Step 3 - Theoretical Analysis:");
-	console.log(`🤖 Agent: ${step3}\n`);
 }
 
 async function demonstrateCodeSafetyPatterns() {

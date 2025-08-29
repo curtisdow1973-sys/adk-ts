@@ -347,11 +347,7 @@ async function main() {
 	// Start interactive session
 	intro("📝 Todo Assistant");
 
-	const initialStats = await ask(
-		runner.ask.bind(runner),
-		"Show me my current todos and stats",
-	);
-	console.log(`🤖 Agent: ${initialStats}\n`);
+	await ask(runner.ask.bind(runner), "Show me my current todos and stats");
 
 	// Interactive loop
 	while (true) {
@@ -372,8 +368,7 @@ async function main() {
 		}
 
 		try {
-			const response = await ask(runner.ask.bind(runner), userInput);
-			console.log(`🤖 Agent: ${response}`);
+			await ask(runner.ask.bind(runner), userInput);
 
 			const updatedSession = await sessionService.getSession(
 				session.appName,

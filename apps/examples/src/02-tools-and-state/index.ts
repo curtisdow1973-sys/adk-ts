@@ -107,28 +107,18 @@ async function demonstrateToolsAndState() {
 		.build();
 
 	// Test adding items
-	const item1 = await ask(
-		runner.ask.bind(runner),
-		"Add 2 apples to my cart at $1.50 each",
-	);
-	console.log(`🤖 Agent: ${item1}`);
+	await ask(runner.ask.bind(runner), "Add 2 apples to my cart at $1.50 each");
 
-	const item2 = await ask(runner.ask.bind(runner), "Add 1 banana for $0.75");
-	console.log(`🤖 Agent: ${item2}`);
+	await ask(runner.ask.bind(runner), "Add 1 banana for $0.75");
 
 	// Test state injection - ask about cart without using tools
-	const stateCheck = await ask(
+	await ask(
 		runner.ask.bind(runner),
 		"How many items are in my cart and what are they? Use the state information from your instructions, don't call any tools.",
 	);
-	console.log(`🤖 Agent: ${stateCheck}`);
 
 	// Test viewing cart with tools
-	const cartView = await ask(
-		runner.ask.bind(runner),
-		"Show me my complete cart with total",
-	);
-	console.log(`🤖 Agent: ${cartView}`);
+	await ask(runner.ask.bind(runner), "Show me my complete cart with total");
 }
 
 async function main() {

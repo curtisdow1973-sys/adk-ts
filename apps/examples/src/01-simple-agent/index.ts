@@ -34,7 +34,7 @@ async function main() {
 			.withOutputSchema(outputSchema)
 			.ask(question);
 
-	const response = await ask(runner, "What is the capital of France?");
+	const response = await ask(runner, "What is the capital of France?", true);
 
 	console.log(
 		dedent`

@@ -146,11 +146,10 @@ async function demonstrateBasicWorkflow() {
 		.withSubAgents([coordinator, researchAgent, analysisAgent])
 		.build();
 
-	const response = await ask(
+	await ask(
 		runner.ask.bind(runner),
 		"Create a market analysis for electric vehicle charging stations. Break this into research and analysis stages, tracking progress through each step.",
 	);
-	console.log(`🤖 Agent: ${response}\n`);
 }
 
 async function demonstrateLangGraphStyleWorkflow() {
@@ -231,11 +230,10 @@ async function demonstrateLangGraphStyleWorkflow() {
 		)
 		.build();
 
-	const response = await ask(
+	await ask(
 		runner.ask.bind(runner),
 		"Create a customer onboarding system. Analyze complexity and route to appropriate processing.",
 	);
-	console.log(`🤖 Agent: ${response}\n`);
 }
 
 async function demonstrateErrorRecoveryWorkflow() {
@@ -269,11 +267,10 @@ async function demonstrateErrorRecoveryWorkflow() {
 		.withSubAgents([errorRecoveryAgent, resilientWorker])
 		.build();
 
-	const response = await ask(
+	await ask(
 		runner.ask.bind(runner),
 		"Simulate processing customer data with potential failures. Show retry logic, alternative approaches, and escalation patterns.",
 	);
-	console.log(`🤖 Agent: ${response}\n`);
 }
 
 async function main() {

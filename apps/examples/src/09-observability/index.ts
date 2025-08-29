@@ -84,13 +84,11 @@ async function main() {
 		)
 		.build();
 
-	console.log("🤖 Asking agent about weather:");
-	const response = await ask(
+	console.log("\nAsking agent about weather:");
+	await ask(
 		runner.ask.bind(runner),
 		"What's the weather like in San Francisco? Also, can you give me some tips for what to wear in that weather?",
 	);
-
-	console.log(`🤖 Agent: ${response}`);
 
 	console.log(
 		"\n 💡 Check your Langfuse dashboard to see traces, tool usage, and metrics",

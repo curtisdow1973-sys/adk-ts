@@ -142,11 +142,10 @@ async function demonstrateOutputKeys() {
 		.build();
 
 	console.log("🍽️ Restaurant order processing:");
-	const finalOrder = await ask(
+	await ask(
 		runner.ask.bind(runner),
 		"I'd like to order something vegetarian, not too spicy, around $20. Maybe a salad or pasta?",
 	);
-	console.log(`🤖 Agent: ${finalOrder}`);
 }
 
 async function demonstrateSharedMemory() {
@@ -195,23 +194,25 @@ async function demonstrateSharedMemory() {
 	const aliceResponse1 = await ask(
 		alice.ask.bind(alice),
 		"What's your favorite book and why?",
+		true,
 	);
 	console.log(`🤖 Alice: ${aliceResponse1}\n`);
 
 	console.log("🎬 Bob's favorite movie:");
 	const bobQuery1 = "What's your favorite movie and why?";
-	const bobResponse1 = await ask(bob.ask.bind(bob), bobQuery1);
+	const bobResponse1 = await ask(bob.ask.bind(bob), bobQuery1, true);
 	console.log(`🤖 Bob: ${bobResponse1}\n`);
 
 	console.log("🤝 Alice recalls Bob's movie:");
 	const aliceQuery2 = "What did Bob say was his favorite movie?";
-	const aliceResponse2 = await ask(alice.ask.bind(alice), aliceQuery2);
+	const aliceResponse2 = await ask(alice.ask.bind(alice), aliceQuery2, true);
 	console.log(`🤖 Alice: ${aliceResponse2}\n`);
 
 	console.log("🤝 Bob recalls Alice's book:");
 	const bobResponse2 = await ask(
 		bob.ask.bind(bob),
 		"What did Alice say was her favorite book?",
+		true,
 	);
 	console.log(`🤖 Bob: ${bobResponse2}\n`);
 }
@@ -278,32 +279,28 @@ async function demonstrateSubAgents() {
 
 	// Test sub-agent delegation
 	console.log("😄 Testing joke delegation:");
-	const jokeResponse = await ask(
+	await ask(
 		runner.ask.bind(runner),
 		"Tell me a programming joke",
 	);
-	console.log(`🤖 Agent: ${jokeResponse}\n`);
 
 	console.log("🧮 Testing math delegation:");
-	const mathResponse = await ask(
+	await ask(
 		runner.ask.bind(runner),
 		"What's 127 multiplied by 43?",
 	);
-	console.log(`🤖 Agent: ${mathResponse}\n`);
 
 	console.log("🌤️ Testing weather delegation:");
-	const weatherResponse = await ask(
+	await ask(
 		runner.ask.bind(runner),
 		"What's the weather like in San Francisco?",
 	);
-	console.log(`🤖 Agent: ${weatherResponse}\n`);
 
 	console.log("💬 Testing general query (no delegation):");
-	const generalResponse = await ask(
+	await ask(
 		runner.ask.bind(runner),
 		"What's the capital of Australia?",
 	);
-	console.log(`🤖 Agent: ${generalResponse}\n`);
 }
 
 async function demonstrateInteractiveMultiAgent() {
@@ -354,8 +351,7 @@ async function demonstrateInteractiveMultiAgent() {
 		}
 
 		try {
-			const response = await ask(runner.ask.bind(runner), userInput);
-			console.log(`🤖 Agent: ${response}`);
+			await ask(runner.ask.bind(runner), userInput);
 			console.log("─".repeat(50));
 		} catch (error) {
 			console.error("❌ Error:", error);

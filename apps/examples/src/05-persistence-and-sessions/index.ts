@@ -159,23 +159,20 @@ async function demonstrateSessionPersistence() {
 
 	// Test session persistence
 	console.log("🧮 Testing counter persistence:");
-	const counter1 = await ask(
+	await ask(
 		runner.ask.bind(runner),
 		"Increment the 'examples_run' counter by 1",
 	);
-	console.log(`🤖 Agent: ${counter1}\n`);
 
-	const counter2 = await ask(
+	await ask(
 		runner.ask.bind(runner),
 		"Increment the 'coffee_breaks' counter by 2",
 	);
-	console.log(`🤖 Agent: ${counter2}\n`);
 
-	const counter3 = await ask(
+	await ask(
 		runner.ask.bind(runner),
 		"Show me all my counters and their values",
 	);
-	console.log(`🤖 Agent: ${counter3}\n`);
 
 	// Demonstrate session retrieval
 	console.log("💾 Current session state:");
@@ -218,7 +215,7 @@ async function demonstrateArtifactPersistence() {
 
 	// Test artifact creation
 	console.log("📄 Creating artifacts:");
-	const saveResponse1 = await ask(
+	await ask(
 		runner.ask.bind(runner),
 		dedent`
 			Save a shopping list with these items:
@@ -231,9 +228,8 @@ async function demonstrateArtifactPersistence() {
 			Save it as "shopping-list.txt"
 		`,
 	);
-	console.log(`🤖 Agent: ${saveResponse1}\n`);
 
-	const saveResponse2 = await ask(
+	await ask(
 		runner.ask.bind(runner),
 		dedent`
 			Create a meeting agenda for tomorrow:
@@ -245,19 +241,17 @@ async function demonstrateArtifactPersistence() {
 			Save it as "meeting-agenda.md"
 		`,
 	);
-	console.log(`🤖 Agent: ${saveResponse2}\n`);
 
 	// Test artifact loading
 	console.log("📖 Loading artifacts:");
-	const loadResponse = await ask(
+	await ask(
 		runner.ask.bind(runner),
 		"Show me all my saved files and their contents",
 	);
-	console.log(`🤖 Agent: ${loadResponse}\n`);
 
 	// Test artifact updating
 	console.log("✏️ Updating artifacts:");
-	const updateResponse = await ask(
+	await ask(
 		runner.ask.bind(runner),
 		dedent`
 			Update the shopping list to add:
@@ -267,15 +261,13 @@ async function demonstrateArtifactPersistence() {
 			And remove milk from the list.
 		`,
 	);
-	console.log(`🤖 Agent: ${updateResponse}\n`);
 
 	// Show final artifact state
 	console.log("📋 Final artifact verification:");
-	const finalCheck = await ask(
+	await ask(
 		runner.ask.bind(runner),
 		"Show me the updated shopping list content",
 	);
-	console.log(`🤖 Agent: ${finalCheck}\n`);
 }
 
 async function demonstrateHybridPersistence() {
@@ -366,7 +358,7 @@ async function demonstrateHybridPersistence() {
 
 	// Test hybrid persistence
 	console.log("🏗️ Creating a project with hybrid persistence:");
-	const projectResponse = await ask(
+	await ask(
 		runner.ask.bind(runner),
 		dedent`
 			Create a new project called "Website Redesign" with description
@@ -378,14 +370,12 @@ async function demonstrateHybridPersistence() {
 			3. timeline.md with project phases
 		`,
 	);
-	console.log(`🤖 Agent: ${projectResponse}\n`);
 
 	console.log("📊 Checking project status:");
-	const statusResponse = await ask(
+	await ask(
 		runner.ask.bind(runner),
 		"Show me all my projects and their files",
 	);
-	console.log(`🤖 Agent: ${statusResponse}\n`);
 }
 
 async function demonstratePersistencePatterns() {

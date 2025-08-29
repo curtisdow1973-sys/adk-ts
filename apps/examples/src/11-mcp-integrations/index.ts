@@ -84,19 +84,17 @@ async function demonstrateCustomMcpServer() {
 
 		// Test the sampling-enabled greeting
 		console.log("� Testing personalized greeting with sampling:");
-		const greetingResponse = await ask(
+		await ask(
 			runner.ask.bind(runner),
 			"Please greet me using the greeting tool.",
 		);
-		console.log(`🤖 Agent: ${greetingResponse}\n`);
 
 		// Test calculator tool
 		console.log("🧮 Testing calculator functionality:");
-		const calcResponse = await ask(
+		await ask(
 			runner.ask.bind(runner),
 			"What's 25 multiplied by 8?",
 		);
-		console.log(`🤖 Agent: ${calcResponse}\n`);
 
 		await greetingToolset.close();
 	} catch (error) {
