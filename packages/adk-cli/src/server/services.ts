@@ -405,20 +405,20 @@ export class AgentManager {
 	}
 
 	scanAgents(agentsDir: string): void {
-		console.log("Scanning agents in directory:", agentsDir);
+		this.logger.info("Scanning agents in directory: %s", agentsDir);
 		this.agents = this.scanner.scanAgents(agentsDir, this.loadedAgents);
-		console.log("Found agents:", Array.from(this.agents.keys()));
+		this.logger.info("Found agents: %o", Array.from(this.agents.keys()));
 	}
 
 	async startAgent(agentPath: string): Promise<void> {
-		console.log("Starting agent:", agentPath);
+		this.logger.info("Starting agent: %s", agentPath);
 		const agent = this.agents.get(agentPath);
 		if (!agent) {
-			console.error("Agent not found in agents map:", agentPath);
-			console.log("Available agents:", Array.from(this.agents.keys()));
+			this.logger.error("Agent not found in agents map: %s", agentPath);
+			this.logger.debug("Available agents: %o", Array.from(this.agents.keys()));
 			throw new Error(`Agent not found: ${agentPath}`);
 		}
-		console.log("Agent found, proceeding to load...");
+		this.logger.info("Agent found, proceeding to load...");
 
 		if (this.loadedAgents.has(agentPath)) {
 			return; // Already running
@@ -479,7 +479,7 @@ export class AgentManager {
 			});
 
 			const { runner, session } = await agentBuilder.build();
-			console.log("Agent started with session:", {
+			this.logger.info("Agent started with session: %o", {
 				sessionId: session.id,
 				hasState: !!session.state,
 				stateKeys: session.state ? Object.keys(session.state) : [],
@@ -510,7 +510,10 @@ export class AgentManager {
 
 				if (!existingSession) {
 					// Create and store the session if it doesn't exist
-					console.log("Creating session in sessionService:", session.id);
+					this.logger.info(
+						"Creating session in sessionService: %s",
+						session.id,
+					);
 					await this.sessionService.createSession(
 						loadedAgent.appName,
 						loadedAgent.userId,
@@ -518,10 +521,13 @@ export class AgentManager {
 						session.id,
 					);
 				} else {
-					console.log("Session already exists in sessionService:", session.id);
+					this.logger.info(
+						"Session already exists in sessionService: %s",
+						session.id,
+					);
 				}
 			} catch (error) {
-				console.error("Error ensuring session exists:", error);
+				this.logger.error("Error ensuring session exists: %o", error);
 			}
 		} catch (error) {
 			// agent might be undefined if lookup failed earlier
@@ -662,8 +668,8 @@ export class SessionManager {
 	 */
 	async getAgentSessions(loadedAgent: LoadedAgent): Promise<SessionsResponse> {
 		try {
-			console.log(
-				"Listing sessions for:",
+			this.logger.info(
+				"Listing sessions for: %s %s",
 				loadedAgent.appName,
 				loadedAgent.userId,
 			);
@@ -671,7 +677,10 @@ export class SessionManager {
 				loadedAgent.appName,
 				loadedAgent.userId,
 			);
-			console.log("Raw sessions from service:", listResponse.sessions.length);
+			this.logger.info(
+				"Raw sessions from service: %d",
+				listResponse.sessions.length,
+			);
 
 			const sessions: SessionResponse[] = [];
 			for (const s of listResponse.sessions) {
@@ -700,10 +709,10 @@ export class SessionManager {
 				});
 			}
 
-			console.log("Processed sessions:", sessions.length);
+			this.logger.info("Processed sessions: %d", sessions.length);
 			return { sessions };
 		} catch (error) {
-			console.error("Error fetching sessions:", error);
+			this.logger.error("Error fetching sessions: %o", error);
 			return { sessions: [] };
 		}
 	}
@@ -716,7 +725,7 @@ export class SessionManager {
 		request?: CreateSessionRequest,
 	): Promise<SessionResponse> {
 		try {
-			console.log("Creating agent session:", {
+			this.logger.info("Creating agent session: %o", {
 				appName: loadedAgent.appName,
 				userId: loadedAgent.userId,
 				hasState: !!request?.state,
@@ -731,7 +740,7 @@ export class SessionManager {
 				request?.sessionId,
 			);
 
-			console.log("Session created with state:", {
+			this.logger.info("Session created with state: %o", {
 				sessionId: newSession.id,
 				hasState: !!newSession.state,
 				stateKeys: newSession.state ? Object.keys(newSession.state) : [],
@@ -748,7 +757,7 @@ export class SessionManager {
 				createdAt: newSession.lastUpdateTime,
 			};
 		} catch (error) {
-			console.error("Error creating session:", error);
+			this.logger.error("Error creating session: %o", error);
 			throw error;
 		}
 	}
@@ -767,7 +776,7 @@ export class SessionManager {
 				sessionId,
 			);
 		} catch (error) {
-			console.error("Error deleting session:", error);
+			this.logger.error("Error deleting session: %o", error);
 			throw error;
 		}
 	}
@@ -822,7 +831,7 @@ export class SessionManager {
 				totalCount: events.length,
 			};
 		} catch (error) {
-			console.error("Error fetching session events:", error);
+			this.logger.error("Error fetching session events: %o", error);
 			return { events: [], totalCount: 0 };
 		}
 	}
@@ -849,7 +858,7 @@ export class SessionManager {
 			// Update the loaded agent's session ID
 			(loadedAgent as any).sessionId = sessionId;
 		} catch (error) {
-			console.error("Error switching session:", error);
+			this.logger.error("Error switching session: %o", error);
 			throw error;
 		}
 	}
@@ -862,7 +871,7 @@ export class SessionManager {
 		sessionId: string,
 	): Promise<StateResponse> {
 		try {
-			console.log("Getting session state:", sessionId);
+			this.logger.info("Getting session state: %s", sessionId);
 
 			const session = await this.sessionService.getSession(
 				loadedAgent.appName,
@@ -878,7 +887,7 @@ export class SessionManager {
 			const userState: Record<string, any> = {};
 			const sessionState = session.state || {};
 
-			console.log("Session state retrieved:", {
+			this.logger.info("Session state retrieved: %o", {
 				sessionId,
 				hasSessionState: !!session.state,
 				sessionStateKeys: Object.keys(sessionState),
@@ -902,7 +911,7 @@ export class SessionManager {
 				},
 			};
 
-			console.log("Returning state response:", {
+			this.logger.info("Returning state response: %o", {
 				hasAgentState:
 					!!response.agentState && Object.keys(response.agentState).length > 0,
 				hasUserState:
@@ -916,7 +925,7 @@ export class SessionManager {
 
 			return response;
 		} catch (error) {
-			console.error("Error getting session state:", error);
+			this.logger.error("Error getting session state: %o", error);
 			return {
 				agentState: {},
 				userState: {},
@@ -941,7 +950,12 @@ export class SessionManager {
 		value: any,
 	): Promise<void> {
 		try {
-			console.log("Updating session state:", sessionId, path, "=", value);
+			this.logger.info(
+				"Updating session state: %s %s = %o",
+				sessionId,
+				path,
+				value,
+			);
 
 			const session = await this.sessionService.getSession(
 				loadedAgent.appName,
@@ -963,9 +977,9 @@ export class SessionManager {
 				sessionId,
 			);
 
-			console.log("Session state updated successfully");
+			this.logger.info("Session state updated successfully");
 		} catch (error) {
-			console.error("Error updating session state:", error);
+			this.logger.error("Error updating session state: %o", error);
 			throw error;
 		}
 	}
