@@ -71,5 +71,12 @@ export function useEvents(
 		});
 	};
 
-	return { events, totalCount, isLoading, error, refetchEvents, invalidateEvents };
+	return {
+		events,
+		totalCount,
+		isLoading,
+		error,
+		refetchEvents,
+		invalidateEvents,
+	};
 }
