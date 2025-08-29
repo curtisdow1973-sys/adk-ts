@@ -1,5 +1,6 @@
 import type { Hono } from "hono";
 import { cors } from "hono/cors";
+import { Logger } from "./logger.js";
 import type { AgentManager, SessionManager } from "./services.js";
 import type {
 	AgentListResponse,
@@ -18,6 +19,8 @@ export function setupRoutes(
 ): void {
 	// CORS middleware
 	app.use("/*", cors());
+
+	const logger = new Logger({ name: "routes", quiet: false });
 
 	// Health check
 	app.get("/health", (c) => c.json({ status: "ok" }));
@@ -78,33 +81,33 @@ export function setupRoutes(
 	// Get sessions for agent
 	app.get("/api/agents/:id/sessions", async (c) => {
 		const agentPath = decodeURIComponent(c.req.param("id"));
-		console.log("Getting sessions for agent path:", agentPath);
-		console.log(
-			"Available loaded agents:",
+		logger.info("Getting sessions for agent path: %s", agentPath);
+		logger.debug(
+			"Available loaded agents: %o",
 			Array.from(agentManager.getLoadedAgents().keys()),
 		);
 
 		// Try to load the agent if it's not already loaded
 		if (!agentManager.getLoadedAgents().has(agentPath)) {
-			console.log("Agent not loaded, trying to start it:", agentPath);
+			logger.info("Agent not loaded, trying to start it: %s", agentPath);
 			try {
 				await agentManager.startAgent(agentPath);
-				console.log("Agent started successfully:", agentPath);
+				logger.info("Agent started successfully: %s", agentPath);
 			} catch (error) {
-				console.error("Failed to start agent:", agentPath, error);
+				logger.error("Failed to start agent: %s - %o", agentPath, error);
 				return c.json({ sessions: [] });
 			}
 		}
 
 		const loadedAgent = agentManager.getLoadedAgents().get(agentPath);
 		if (!loadedAgent) {
-			console.log("Agent still not loaded after starting:", agentPath);
+			logger.warn("Agent still not loaded after starting: %s", agentPath);
 			return c.json({ sessions: [] });
 		}
 
-		console.log("Fetching sessions for loaded agent:", agentPath);
+		logger.info("Fetching sessions for loaded agent: %s", agentPath);
 		const sessions = await sessionManager.getAgentSessions(loadedAgent);
-		console.log("Returning sessions:", sessions.sessions.length);
+		logger.info("Returning sessions: %d", sessions.sessions.length);
 		return c.json(sessions);
 	});
 
@@ -112,20 +115,20 @@ export function setupRoutes(
 	app.post("/api/agents/:id/sessions", async (c) => {
 		const agentPath = decodeURIComponent(c.req.param("id"));
 		const request: CreateSessionRequest = await c.req.json();
-		console.log("Creating session for agent path:", agentPath);
+		logger.info("Creating session for agent path: %s", agentPath);
 
 		// Try to load the agent if it's not already loaded
 		if (!agentManager.getLoadedAgents().has(agentPath)) {
-			console.log("Agent not loaded, trying to start it:", agentPath);
+			logger.info("Agent not loaded, trying to start it: %s", agentPath);
 			try {
 				await agentManager.startAgent(agentPath);
-				console.log(
-					"Agent started successfully for session creation:",
+				logger.info(
+					"Agent started successfully for session creation: %s",
 					agentPath,
 				);
 			} catch (error) {
-				console.error(
-					"Failed to start agent for session creation:",
+				logger.error(
+					"Failed to start agent for session creation: %s - %o",
 					agentPath,
 					error,
 				);
@@ -135,20 +138,20 @@ export function setupRoutes(
 
 		const loadedAgent = agentManager.getLoadedAgents().get(agentPath);
 		if (!loadedAgent) {
-			console.error("Agent still not loaded after starting:", agentPath);
+			logger.error("Agent still not loaded after starting: %s", agentPath);
 			return c.json({ error: "Agent not loaded" }, 404);
 		}
 
 		try {
-			console.log("Creating session for agent:", agentPath);
+			logger.info("Creating session for agent: %s", agentPath);
 			const newSession = await sessionManager.createAgentSession(
 				loadedAgent,
 				request,
 			);
-			console.log("Session created successfully:", newSession.id);
+			logger.info("Session created successfully: %s", newSession.id);
 			return c.json(newSession);
 		} catch (error) {
-			console.error("Error creating session:", error);
+			logger.error("Error creating session: %o", error);
 			return c.json({ error: "Failed to create session" }, 500);
 		}
 	});
@@ -163,8 +166,8 @@ export function setupRoutes(
 			try {
 				await agentManager.startAgent(agentPath);
 			} catch (error) {
-				console.error(
-					"Failed to start agent for session deletion:",
+				logger.error(
+					"Failed to start agent for session deletion: %s - %o",
 					agentPath,
 					error,
 				);
@@ -181,7 +184,7 @@ export function setupRoutes(
 			await sessionManager.deleteAgentSession(loadedAgent, sessionId);
 			return c.json({ success: true });
 		} catch (error) {
-			console.error("Error deleting session:", error);
+			logger.error("Error deleting session: %o", error);
 			return c.json({ error: "Failed to delete session" }, 500);
 		}
 	});
@@ -196,8 +199,8 @@ export function setupRoutes(
 			try {
 				await agentManager.startAgent(agentPath);
 			} catch (error) {
-				console.error(
-					"Failed to start agent for session switch:",
+				logger.error(
+					"Failed to start agent for session switch: %s - %o",
 					agentPath,
 					error,
 				);
@@ -214,7 +217,7 @@ export function setupRoutes(
 			await sessionManager.switchAgentSession(loadedAgent, sessionId);
 			return c.json({ success: true });
 		} catch (error) {
-			console.error("Error switching session:", error);
+			logger.error("Error switching session: %o", error);
 			return c.json({ error: "Failed to switch session" }, 500);
 		}
 	});
@@ -229,7 +232,11 @@ export function setupRoutes(
 			try {
 				await agentManager.startAgent(agentPath);
 			} catch (error) {
-				console.error("Failed to start agent for events:", agentPath, error);
+				logger.error(
+					"Failed to start agent for events: %s - %o",
+					agentPath,
+					error,
+				);
 				return c.json({ events: [], totalCount: 0 });
 			}
 		}
@@ -256,8 +263,8 @@ export function setupRoutes(
 			try {
 				await agentManager.startAgent(agentPath);
 			} catch (error) {
-				console.error(
-					"Failed to start agent for session state:",
+				logger.error(
+					"Failed to start agent for session state: %s - %o",
 					agentPath,
 					error,
 				);
@@ -285,8 +292,8 @@ export function setupRoutes(
 			try {
 				await agentManager.startAgent(agentPath);
 			} catch (error) {
-				console.error(
-					"Failed to start agent for session state update:",
+				logger.error(
+					"Failed to start agent for session state update: %s - %o",
 					agentPath,
 					error,
 				);
@@ -308,7 +315,7 @@ export function setupRoutes(
 			);
 			return c.json({ success: true });
 		} catch (error) {
-			console.error("Error updating session state:", error);
+			logger.error("Error updating session state: %o", error);
 			return c.json({ error: "Failed to update state" }, 500);
 		}
 	});
