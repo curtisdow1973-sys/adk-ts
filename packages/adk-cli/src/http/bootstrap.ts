@@ -1,5 +1,8 @@
 import "reflect-metadata";
 
+import { watch } from "node:fs";
+import type { FSWatcher } from "node:fs";
+import { resolve } from "node:path";
 import { NestFactory } from "@nestjs/core";
 import type { NestExpressApplication } from "@nestjs/platform-express";
 
@@ -39,6 +42,59 @@ export async function startHttpServer(
 	const agentManager = app.get(AgentManager, { strict: false });
 	agentManager.scanAgents(config.agentsDir);
 
+	// Hot reloading: watch agent directories and optional watchPaths to refresh agents on change
+	const watchers: FSWatcher[] = [];
+	const debouncers: NodeJS.Timeout[] = [];
+	const shouldWatch = config.hotReload ?? process.env.NODE_ENV !== "production";
+	if (shouldWatch) {
+		const rawPaths =
+			Array.isArray(config.watchPaths) && config.watchPaths.length > 0
+				? config.watchPaths
+				: [config.agentsDir];
+		const paths = rawPaths.filter(Boolean).map((p) => resolve(p as string));
+		for (const p of paths) {
+			try {
+				const watcher = watch(
+					p,
+					// recursive is supported on macOS and Windows; best-effort on others
+					{ recursive: true },
+					(_event, filename) => {
+						// Simple global debounce: clear pending reloads and schedule a new one
+						while (debouncers.length) {
+							const t = debouncers.pop();
+							if (t) clearTimeout(t);
+						}
+						const t = setTimeout(async () => {
+							try {
+								// Clear running agents so next use reloads fresh code, then rescan
+								agentManager.stopAllAgents();
+								agentManager.scanAgents(config.agentsDir);
+								if (!config.quiet) {
+									console.log(
+										`[hot-reload] Reloaded agents after change in ${filename ?? p}`,
+									);
+								}
+							} catch (e) {
+								console.error("[hot-reload] Error during reload:", e);
+							}
+						}, 300);
+						debouncers.push(t);
+					},
+				);
+				watchers.push(watcher);
+				if (!config.quiet) {
+					console.log(`[hot-reload] Watching ${p}`);
+				}
+			} catch (e) {
+				console.warn(
+					`[hot-reload] Failed to watch ${p}: ${
+						e instanceof Error ? e.message : String(e)
+					}`,
+				);
+			}
+		}
+	}
+
 	await app.listen(config.port, config.host);
 	const url = `http://${config.host}:${config.port}`;
 
@@ -47,6 +103,15 @@ export async function startHttpServer(
 			// Graceful shutdown: stop all agents first
 			agentManager.stopAllAgents();
 		} finally {
+			// Tear down file watchers and any pending timers
+			for (const t of debouncers) {
+				clearTimeout(t);
+			}
+			for (const w of watchers) {
+				try {
+					w.close();
+				} catch {}
+			}
 			await app.close();
 		}
 	};
