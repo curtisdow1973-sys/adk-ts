@@ -3,10 +3,12 @@ import { dirname, join } from "node:path";
 import { pathToFileURL } from "node:url";
 import type { BaseAgent, BuiltAgent } from "@iqai/adk";
 import type { AgentBuilder } from "@iqai/adk";
-import { Logger } from "../logger.js";
+import { Injectable } from "@nestjs/common";
+import { Logger } from "../../common/logger";
 
 const ADK_CACHE_DIR = ".adk-cache";
 
+@Injectable()
 export class AgentLoader {
 	private logger: Logger;
 
@@ -88,10 +90,10 @@ export class AgentLoader {
 			const mod = (await import(
 				`${pathToFileURL(outFile).href}?t=${Date.now()}`
 			)) as Record<string, unknown>;
-			let agentExport = mod?.agent;
-			if (!agentExport && mod?.default) {
-				const defaultExport = mod.default as Record<string, unknown>;
-				agentExport = defaultExport?.agent ?? defaultExport;
+			let agentExport = (mod as any)?.agent;
+			if (!agentExport && (mod as any)?.default) {
+				const defaultExport = (mod as any).default as Record<string, unknown>;
+				agentExport = (defaultExport as any)?.agent ?? defaultExport;
 			}
 			try {
 				unlinkSync(outFile);
@@ -108,14 +110,16 @@ export class AgentLoader {
 					);
 				} else {
 					this.logger.info(`TS agent imported via esbuild: ${filePath} ✅`);
-					return { agent: agentExport };
+					return { agent: agentExport as unknown };
 				}
 			}
 			// Fallback: return full module so downstream resolver can inspect named exports (e.g., getFooAgent)
 			return mod;
 		} catch (e) {
 			throw new Error(
-				`Failed to import TS agent via esbuild: ${e instanceof Error ? e.message : String(e)}`,
+				`Failed to import TS agent via esbuild: ${
+					e instanceof Error ? e.message : String(e)
+				}`,
 			);
 		}
 	}
@@ -164,7 +168,9 @@ export class AgentLoader {
 					}
 				} catch (error) {
 					this.logger.warn(
-						`Warning: Could not load ${envFile} file: ${error instanceof Error ? error.message : String(error)}`,
+						`Warning: Could not load ${envFile} file: ${
+							error instanceof Error ? error.message : String(error)
+						}`,
 					);
 				}
 			}
@@ -202,9 +208,9 @@ export class AgentLoader {
 		return (
 			obj != null &&
 			typeof obj === "object" &&
-			"agent" in obj &&
-			"runner" in obj &&
-			"session" in obj
+			"agent" in (obj as any) &&
+			"runner" in (obj as any) &&
+			"session" in (obj as any)
 		);
 	}
 
@@ -222,8 +228,8 @@ export class AgentLoader {
 	 */
 	private async invokeFunctionSafely(fn: () => unknown): Promise<unknown> {
 		let result = fn();
-		if (result && typeof result === "object" && "then" in result) {
-			result = await result;
+		if (result && typeof result === "object" && "then" in (result as any)) {
+			result = await (result as any);
 		}
 		return result;
 	}
@@ -233,16 +239,16 @@ export class AgentLoader {
 	 */
 	private async extractBaseAgent(item: unknown): Promise<BaseAgent | null> {
 		if (this.isLikelyAgentInstance(item)) {
-			return item; // Already a BaseAgent
+			return item as BaseAgent; // Already a BaseAgent
 		}
 		if (this.isAgentBuilder(item)) {
 			// Build the AgentBuilder to get BuiltAgent, then extract agent
-			const built = await item.build();
+			const built = await (item as AgentBuilder).build();
 			return built.agent;
 		}
 		if (this.isBuiltAgent(item)) {
 			// Extract agent from BuiltAgent
-			return item.agent;
+			return (item as BuiltAgent).agent;
 		}
 		return null;
 	}
@@ -264,9 +270,11 @@ export class AgentLoader {
 			}
 
 			// Handle static container object: export const container = { agent: <BaseAgent> }
-			if (value && typeof value === "object" && "agent" in value) {
+			if (value && typeof value === "object" && "agent" in (value as any)) {
 				const container = value as Record<string, unknown>;
-				const containerAgent = await this.extractBaseAgent(container.agent);
+				const containerAgent = await this.extractBaseAgent(
+					(container as any).agent,
+				);
 				if (containerAgent) {
 					return containerAgent;
 				}
@@ -275,9 +283,13 @@ export class AgentLoader {
 			// Handle function exports that might return agents
 			if (
 				typeof value === "function" &&
-				(/(agent|build|create)/i.test(keyLower) ||
-					(value.name &&
-						/(agent|build|create)/i.test(value.name.toLowerCase())))
+				(() => {
+					if (/(agent|build|create)/i.test(keyLower)) return true;
+					const fnName = (value as { name?: string })?.name;
+					return !!(
+						fnName && /(agent|build|create)/i.test(fnName.toLowerCase())
+					);
+				})()
 			) {
 				try {
 					const functionResult = await this.invokeFunctionSafely(
@@ -291,10 +303,12 @@ export class AgentLoader {
 					if (
 						functionResult &&
 						typeof functionResult === "object" &&
-						"agent" in functionResult
+						"agent" in (functionResult as any)
 					) {
 						const container = functionResult as Record<string, unknown>;
-						const containerAgent = await this.extractBaseAgent(container.agent);
+						const containerAgent = await this.extractBaseAgent(
+							(container as any).agent,
+						);
 						if (containerAgent) {
 							return containerAgent;
 						}
@@ -310,9 +324,14 @@ export class AgentLoader {
 
 	// Enhanced resolution logic for agent exports: always returns BaseAgent
 	async resolveAgentExport(mod: Record<string, unknown>): Promise<BaseAgent> {
-		const moduleDefault = mod?.default as Record<string, unknown> | undefined;
+		const moduleDefault = (mod as any)?.default as
+			| Record<string, unknown>
+			| undefined;
 		const candidateToResolve: unknown =
-			mod?.agent ?? moduleDefault?.agent ?? moduleDefault ?? mod;
+			(mod as any)?.agent ??
+			(moduleDefault as any)?.agent ??
+			moduleDefault ??
+			mod;
 
 		// Try to extract from the initial candidate
 		const directResult = await this.tryResolvingDirectCandidate(
@@ -353,7 +372,7 @@ export class AgentLoader {
 		// Skip if candidate is primitive or represents the whole module
 		if (
 			this.isPrimitive(candidateToResolve) ||
-			(candidateToResolve && candidateToResolve === mod)
+			(candidateToResolve && candidateToResolve === (mod as unknown))
 		) {
 			return null;
 		}
@@ -368,10 +387,10 @@ export class AgentLoader {
 		if (
 			candidateToResolve &&
 			typeof candidateToResolve === "object" &&
-			"agent" in candidateToResolve
+			"agent" in (candidateToResolve as any)
 		) {
 			const container = candidateToResolve as Record<string, unknown>;
-			return await this.extractBaseAgent(container.agent);
+			return await this.extractBaseAgent((container as any).agent);
 		}
 
 		return null;
@@ -398,14 +417,16 @@ export class AgentLoader {
 			if (
 				functionResult &&
 				typeof functionResult === "object" &&
-				"agent" in functionResult
+				"agent" in (functionResult as any)
 			) {
 				const container = functionResult as Record<string, unknown>;
-				return await this.extractBaseAgent(container.agent);
+				return await this.extractBaseAgent((container as any).agent);
 			}
 		} catch (e) {
 			throw new Error(
-				`Failed executing exported agent function: ${e instanceof Error ? e.message : String(e)}`,
+				`Failed executing exported agent function: ${
+					e instanceof Error ? e.message : String(e)
+				}`,
 			);
 		}
 

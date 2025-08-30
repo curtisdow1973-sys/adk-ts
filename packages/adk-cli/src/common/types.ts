@@ -1,4 +1,4 @@
-import type { EnhancedRunner, BaseAgent } from "@iqai/adk";
+import type { BaseAgent, EnhancedRunner } from "@iqai/adk";
 
 export interface Agent {
 	relativePath: string;

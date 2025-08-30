@@ -1,7 +1,8 @@
 import { existsSync, readFileSync, readdirSync, statSync } from "node:fs";
 import { join, relative } from "node:path";
-import { Logger } from "../logger.js";
-import type { Agent, LoadedAgent } from "../types.js";
+import { Injectable } from "@nestjs/common";
+import { Logger } from "../../common/logger";
+import type { Agent, LoadedAgent } from "../../common/types";
 
 const DIRECTORIES_TO_SKIP = [
 	"node_modules",
@@ -17,6 +18,7 @@ const DIRECTORIES_TO_SKIP = [
 
 const AGENT_FILENAMES = ["agent.ts", "agent.js"] as const;
 
+@Injectable()
 export class AgentScanner {
 	private logger: Logger;
 

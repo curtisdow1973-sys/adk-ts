@@ -1,5 +1,6 @@
 import type { InMemorySessionService } from "@iqai/adk";
-import { Logger } from "../logger.js";
+import { Injectable } from "@nestjs/common";
+import { Logger } from "../../common/logger";
 import type {
 	CreateSessionRequest,
 	EventsResponse,
@@ -7,8 +8,10 @@ import type {
 	SessionResponse,
 	SessionsResponse,
 	StateResponse,
-} from "../types.js";
+	StateUpdateRequest,
+} from "../../common/types";
 
+@Injectable()
 export class SessionManager {
 	private logger: Logger;
 
@@ -46,7 +49,9 @@ export class SessionManager {
 				content:
 					event.content?.parts
 						?.map((part) =>
-							typeof part === "object" && "text" in part ? part.text : "",
+							typeof part === "object" && "text" in part
+								? (part as any).text
+								: "",
 						)
 						.join("") || "",
 				timestamp: new Date(event.timestamp || Date.now()).toISOString(),
@@ -400,10 +405,10 @@ export class SessionManager {
 				typeof current[key] !== "object" ||
 				current[key] === null
 			) {
-				current[key] = {};
+				(current as any)[key] = {};
 			}
-			return current[key];
-		}, obj);
-		target[lastKey] = value;
+			return (current as any)[key];
+		}, obj as any);
+		(target as any)[lastKey] = value;
 	}
 }

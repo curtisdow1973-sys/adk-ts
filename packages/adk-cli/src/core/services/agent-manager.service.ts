@@ -3,14 +3,16 @@ import { join } from "node:path";
 import { pathToFileURL } from "node:url";
 import type { FullMessage, InMemorySessionService } from "@iqai/adk";
 import { AgentBuilder } from "@iqai/adk";
-import { Logger } from "../logger.js";
-import type { Agent, LoadedAgent } from "../types.js";
-import { AgentLoader } from "./agent-loader.js";
-import { AgentScanner } from "./agent-scanner.js";
+import { Injectable } from "@nestjs/common";
+import { Logger } from "../../common/logger";
+import type { Agent, LoadedAgent } from "../../common/types";
+import { AgentLoader } from "./agent-loader.service";
+import { AgentScanner } from "./agent-scanner.service";
 
 const DEFAULT_APP_NAME = "adk-server";
 const USER_ID_PREFIX = "user_";
 
+@Injectable()
 export class AgentManager {
 	private agents = new Map<string, Agent>();
 	private loadedAgents = new Map<string, LoadedAgent>();
@@ -82,7 +84,7 @@ export class AgentManager {
 			const exportedAgent = await this.loader.resolveAgentExport(agentModule);
 
 			// Validate basic shape
-			if (!exportedAgent?.name) {
+			if (!(exportedAgent as any)?.name) {
 				throw new Error(
 					`Invalid agent export in ${agentFilePath}. Expected a BaseAgent instance with a name property.`,
 				);
@@ -90,9 +92,9 @@ export class AgentManager {
 			// Soft validation of optional fields (model/instruction not strictly required for all custom agents)
 
 			// Always use the session created by the agent builder; ignore any session from the exported agent.
-			const agentBuilder = AgentBuilder.create(exportedAgent.name).withAgent(
-				exportedAgent,
-			);
+			const agentBuilder = AgentBuilder.create(
+				(exportedAgent as any).name,
+			).withAgent(exportedAgent as any);
 			agentBuilder.withSessionService(this.sessionService, {
 				userId: `${USER_ID_PREFIX}${agentPath}`,
 				appName: DEFAULT_APP_NAME,
@@ -107,15 +109,15 @@ export class AgentManager {
 			});
 			// Store the loaded agent with its runner and the session from the builder only
 			const loadedAgent: LoadedAgent = {
-				agent: exportedAgent,
-				runner: runner,
+				agent: exportedAgent as any,
+				runner: runner as any,
 				sessionId: session.id,
 				userId: `${USER_ID_PREFIX}${agentPath}`,
 				appName: DEFAULT_APP_NAME,
 			};
 			this.loadedAgents.set(agentPath, loadedAgent);
-			agent.instance = exportedAgent;
-			agent.name = exportedAgent.name;
+			(agent as any).instance = exportedAgent;
+			(agent as any).name = (exportedAgent as any).name;
 			// Ensure the session is stored in the session service
 			try {
 				const existingSession = await this.sessionService.getSession(
@@ -145,7 +147,7 @@ export class AgentManager {
 			}
 		} catch (error) {
 			// agent might be undefined if lookup failed earlier
-			const agentName = agent?.name ?? agentPath;
+			const agentName = (agent as any)?.name ?? agentPath;
 			this.logger.error(
 				`Failed to load agent "${agentName}": ${error instanceof Error ? error.message : String(error)}`,
 			);
@@ -160,7 +162,7 @@ export class AgentManager {
 		this.loadedAgents.delete(agentPath);
 		const agent = this.agents.get(agentPath);
 		if (agent) {
-			agent.instance = undefined;
+			(agent as any).instance = undefined;
 		}
 	}
 
@@ -192,7 +194,7 @@ export class AgentManager {
 
 			// Always run against the CURRENT loadedAgent.sessionId (switchable)
 			let accumulated = "";
-			for await (const event of loadedAgent.runner.runAsync({
+			for await (const event of (loadedAgent as any).runner.runAsync({
 				userId: loadedAgent.userId,
 				sessionId: loadedAgent.sessionId,
 				newMessage: fullMessage,
@@ -201,7 +203,7 @@ export class AgentManager {
 				if (Array.isArray(parts)) {
 					accumulated += parts
 						.map((p: any) =>
-							p && typeof p === "object" && "text" in p ? p.text : "",
+							p && typeof p === "object" && "text" in p ? (p as any).text : "",
 						)
 						.join("");
 				}
