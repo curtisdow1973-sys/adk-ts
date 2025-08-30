@@ -2,8 +2,8 @@ import { type ServerType, serve } from "@hono/node-server";
 import { InMemorySessionService } from "@iqai/adk";
 import { Hono } from "hono";
 import { Logger } from "./logger.js";
-import { setupRoutes } from "./routes.js";
-import { AgentManager, SessionManager } from "./services.js";
+import { setupRoutes } from "./routes/index.js";
+import { AgentManager, SessionManager } from "./services/index.js";
 import type { ServerConfig } from "./types.js";
 
 // Constants

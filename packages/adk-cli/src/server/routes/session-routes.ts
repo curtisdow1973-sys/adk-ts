@@ -1,16 +1,11 @@
 import type { Hono } from "hono";
-import { cors } from "hono/cors";
-import { Logger } from "./logger.js";
-import type { AgentManager, SessionManager } from "./services.js";
+import { Logger } from "../logger.js";
+import type { AgentManager, SessionManager } from "../services/index.js";
 import type {
-	AgentListResponse,
 	CreateSessionRequest,
 	LoadedAgent,
-	MessageRequest,
-	MessageResponse,
-	MessagesResponse,
 	StateUpdateRequest,
-} from "./types.js";
+} from "../types.js";
 
 /**
  * Helper function to ensure an agent is loaded
@@ -42,18 +37,6 @@ async function ensureAgentLoaded(
 }
 
 /**
- * Helper function to map agents to response format
- */
-function mapAgentsToResponse(agents: Map<string, any>): AgentListResponse[] {
-	return Array.from(agents.values()).map((agent) => ({
-		path: agent.absolutePath,
-		name: agent.name,
-		directory: agent.absolutePath,
-		relativePath: agent.relativePath,
-	}));
-}
-
-/**
  * Helper function to create standardized error responses
  */
 function createErrorResponse(c: any, message: string, statusCode = 500) {
@@ -63,70 +46,22 @@ function createErrorResponse(c: any, message: string, statusCode = 500) {
 /**
  * Helper function to create empty collection responses
  */
-function createEmptyResponse(type: "sessions" | "events" | "messages") {
+function createEmptyResponse(type: "sessions" | "events") {
 	switch (type) {
 		case "sessions":
 			return { sessions: [] };
 		case "events":
 			return { events: [], totalCount: 0 };
-		case "messages":
-			return { messages: [] };
 	}
 }
 
-export function setupRoutes(
+export function setupSessionRoutes(
 	app: Hono,
 	agentManager: AgentManager,
 	sessionManager: SessionManager,
-	agentsDir: string,
 	quiet = false,
 ): void {
-	// CORS middleware
-	app.use("/*", cors());
-
-	const logger = new Logger({ name: "routes", quiet });
-
-	// Health check
-	app.get("/health", (c) => c.json({ status: "ok" }));
-
-	// List agents
-	app.get("/api/agents", (c) => {
-		const agentsList = mapAgentsToResponse(agentManager.getAgents());
-		return c.json({ agents: agentsList });
-	});
-
-	// Refresh agents list
-	app.post("/api/agents/refresh", (c) => {
-		agentManager.scanAgents(agentsDir);
-		const agentsList = mapAgentsToResponse(agentManager.getAgents());
-		return c.json({ agents: agentsList });
-	});
-
-	// Get agent messages
-	app.get("/api/agents/:id/messages", async (c) => {
-		const agentPath = decodeURIComponent(c.req.param("id"));
-		const loadedAgent = agentManager.getLoadedAgents().get(agentPath);
-		if (!loadedAgent) {
-			return c.json(createEmptyResponse("messages"));
-		}
-
-		const messages = await sessionManager.getSessionMessages(loadedAgent);
-		const response: MessagesResponse = { messages };
-		return c.json(response);
-	});
-
-	// Send message to agent
-	app.post("/api/agents/:id/message", async (c) => {
-		const agentPath = decodeURIComponent(c.req.param("id"));
-		const { message, attachments }: MessageRequest = await c.req.json();
-		const response = await agentManager.sendMessageToAgent(
-			agentPath,
-			message,
-			attachments,
-		);
-		const messageResponse: MessageResponse = { response };
-		return c.json(messageResponse);
-	});
+	const logger = new Logger({ name: "session-routes", quiet });
 
 	// Get sessions for agent
 	app.get("/api/agents/:id/sessions", async (c) => {
