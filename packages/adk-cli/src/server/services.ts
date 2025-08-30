@@ -27,14 +27,30 @@ import type {
 	StateResponse,
 } from "./types.js";
 
+// Constants
+const DIRECTORIES_TO_SKIP = [
+	"node_modules",
+	".git",
+	".next",
+	"dist",
+	"build",
+	".turbo",
+	"coverage",
+	".vscode",
+	".idea",
+] as const;
+
+const AGENT_FILENAMES = ["agent.ts", "agent.js"] as const;
+const ADK_CACHE_DIR = ".adk-cache";
+const DEFAULT_APP_NAME = "adk-server";
+const USER_ID_PREFIX = "user_";
+
 export class AgentScanner {
 	private logger: Logger;
 
 	constructor(private quiet = false) {
-		this.logger = new Logger({ name: "session-manager", quiet: this.quiet });
+		this.logger = new Logger({ name: "agent-scanner", quiet: this.quiet });
 	}
-
-	async getSessionMessages(loadedAgent: LoadedAgent) {}
 
 	scanAgents(
 		agentsDir: string,
@@ -47,18 +63,9 @@ export class AgentScanner {
 			!agentsDir || !existsSync(agentsDir) ? process.cwd() : agentsDir;
 
 		const shouldSkipDirectory = (dirName: string): boolean => {
-			const skipDirs = [
-				"node_modules",
-				".git",
-				".next",
-				"dist",
-				"build",
-				".turbo",
-				"coverage",
-				".vscode",
-				".idea",
-			];
-			return skipDirs.includes(dirName);
+			return DIRECTORIES_TO_SKIP.includes(
+				dirName as (typeof DIRECTORIES_TO_SKIP)[number],
+			);
 		};
 
 		const scanDirectory = (dir: string): void => {
@@ -72,7 +79,9 @@ export class AgentScanner {
 					if (!shouldSkipDirectory(item)) {
 						scanDirectory(fullPath);
 					}
-				} else if (item === "agent.ts" || item === "agent.js") {
+				} else if (
+					AGENT_FILENAMES.includes(item as (typeof AGENT_FILENAMES)[number])
+				) {
 					const relativePath = relative(scanDir, dir);
 
 					// Try to get the actual agent name if it's already loaded
@@ -160,7 +169,7 @@ export class AgentLoader {
 		// Transpile with esbuild and import (bundles local files, preserves tools)
 		try {
 			const { build } = await import("esbuild");
-			const cacheDir = join(projectRoot, ".adk-cache");
+			const cacheDir = join(projectRoot, ADK_CACHE_DIR);
 			if (!existsSync(cacheDir)) {
 				mkdirSync(cacheDir, { recursive: true });
 			}
@@ -291,141 +300,245 @@ export class AgentLoader {
 		}
 	}
 
-	// Enhanced resolution logic for agent exports: always returns BaseAgent
-	async resolveAgentExport(mod: Record<string, unknown>): Promise<BaseAgent> {
-		const moduleDefault = mod?.default as Record<string, unknown> | undefined;
-		let candidate: unknown =
-			mod?.agent ?? moduleDefault?.agent ?? moduleDefault ?? mod;
-
-		// Type guards
-		const isLikelyAgentInstance = (obj: unknown): obj is BaseAgent =>
+	/**
+	 * Type guard to check if object is likely a BaseAgent instance
+	 */
+	private isLikelyAgentInstance(obj: unknown): obj is BaseAgent {
+		return (
 			obj != null &&
 			typeof obj === "object" &&
 			typeof (obj as BaseAgent).name === "string" &&
-			typeof (obj as BaseAgent).runAsync === "function";
+			typeof (obj as BaseAgent).runAsync === "function"
+		);
+	}
 
-		const isAgentBuilder = (obj: unknown): obj is AgentBuilder =>
+	/**
+	 * Type guard to check if object is an AgentBuilder
+	 */
+	private isAgentBuilder(obj: unknown): obj is AgentBuilder {
+		return (
 			obj != null &&
 			typeof obj === "object" &&
 			typeof (obj as AgentBuilder).build === "function" &&
-			typeof (obj as AgentBuilder).withModel === "function";
+			typeof (obj as AgentBuilder).withModel === "function"
+		);
+	}
 
-		const isBuiltAgent = (obj: unknown): obj is BuiltAgent =>
+	/**
+	 * Type guard to check if object is a BuiltAgent
+	 */
+	private isBuiltAgent(obj: unknown): obj is BuiltAgent {
+		return (
 			obj != null &&
 			typeof obj === "object" &&
 			"agent" in obj &&
 			"runner" in obj &&
-			"session" in obj;
+			"session" in obj
+		);
+	}
 
-		const isPrimitive = (
-			v: unknown,
-		): v is null | undefined | string | number | boolean =>
-			v == null || ["string", "number", "boolean"].includes(typeof v);
+	/**
+	 * Type guard to check if value is a primitive type
+	 */
+	private isPrimitive(
+		v: unknown,
+	): v is null | undefined | string | number | boolean {
+		return v == null || ["string", "number", "boolean"].includes(typeof v);
+	}
 
-		const invokeMaybe = async (fn: () => unknown): Promise<unknown> => {
-			let out = fn();
-			if (out && typeof out === "object" && "then" in out) {
-				out = await out;
+	/**
+	 * Safely invoke a function, handling both sync and async results
+	 */
+	private async invokeFunctionSafely(fn: () => unknown): Promise<unknown> {
+		let result = fn();
+		if (result && typeof result === "object" && "then" in result) {
+			result = await result;
+		}
+		return result;
+	}
+
+	/**
+	 * Extract BaseAgent from different possible types
+	 */
+	private async extractBaseAgent(item: unknown): Promise<BaseAgent | null> {
+		if (this.isLikelyAgentInstance(item)) {
+			return item; // Already a BaseAgent
+		}
+		if (this.isAgentBuilder(item)) {
+			// Build the AgentBuilder to get BuiltAgent, then extract agent
+			const built = await item.build();
+			return built.agent;
+		}
+		if (this.isBuiltAgent(item)) {
+			// Extract agent from BuiltAgent
+			return item.agent;
+		}
+		return null;
+	}
+
+	/**
+	 * Search through module exports to find potential agent exports
+	 */
+	private async scanModuleExports(
+		mod: Record<string, unknown>,
+	): Promise<BaseAgent | null> {
+		for (const [key, value] of Object.entries(mod)) {
+			if (key === "default") continue;
+			const keyLower = key.toLowerCase();
+			if (this.isPrimitive(value)) continue;
+
+			const baseAgent = await this.extractBaseAgent(value);
+			if (baseAgent) {
+				return baseAgent;
 			}
-			return out;
-		};
 
-		// Helper to extract BaseAgent from different types
-		const extractBaseAgent = async (
-			item: unknown,
-		): Promise<BaseAgent | null> => {
-			if (isLikelyAgentInstance(item)) {
-				return item; // Already a BaseAgent
-			}
-			if (isAgentBuilder(item)) {
-				// Build the AgentBuilder to get BuiltAgent, then extract agent
-				const built = await item.build();
-				return built.agent;
-			}
-			if (isBuiltAgent(item)) {
-				// Extract agent from BuiltAgent
-				return item.agent;
-			}
-			return null;
-		};
-
-		// Probe named exports if initial candidate is not valid
-		if (isPrimitive(candidate) || (candidate && candidate === mod)) {
-			candidate = mod;
-			for (const [key, value] of Object.entries(mod)) {
-				if (key === "default") continue;
-				const keyLower = key.toLowerCase();
-				if (isPrimitive(value)) continue;
-
-				const baseAgent = await extractBaseAgent(value);
-				if (baseAgent) {
-					return baseAgent;
+			// Handle static container object: export const container = { agent: <BaseAgent> }
+			if (value && typeof value === "object" && "agent" in value) {
+				const container = value as Record<string, unknown>;
+				const containerAgent = await this.extractBaseAgent(container.agent);
+				if (containerAgent) {
+					return containerAgent;
 				}
+			}
 
-				// Handle static container object: export const container = { agent: <LlmAgent> }
-				if (value && typeof value === "object" && "agent" in value) {
-					const container = value as Record<string, unknown>;
-					const containerAgent = await extractBaseAgent(container.agent);
-					if (containerAgent) {
-						return containerAgent;
+			// Handle function exports that might return agents
+			if (
+				typeof value === "function" &&
+				(/(agent|build|create)/i.test(keyLower) ||
+					(value.name &&
+						/(agent|build|create)/i.test(value.name.toLowerCase())))
+			) {
+				try {
+					const functionResult = await this.invokeFunctionSafely(
+						value as () => unknown,
+					);
+					const baseAgent = await this.extractBaseAgent(functionResult);
+					if (baseAgent) {
+						return baseAgent;
 					}
-				}
 
-				if (
-					typeof value === "function" &&
-					(/(agent|build|create)/i.test(keyLower) ||
-						(value.name &&
-							/(agent|build|create)/i.test(value.name.toLowerCase())))
-				) {
-					try {
-						const maybe = await invokeMaybe(value as () => unknown);
-						const baseAgent = await extractBaseAgent(maybe);
-						if (baseAgent) {
-							return baseAgent;
+					if (
+						functionResult &&
+						typeof functionResult === "object" &&
+						"agent" in functionResult
+					) {
+						const container = functionResult as Record<string, unknown>;
+						const containerAgent = await this.extractBaseAgent(container.agent);
+						if (containerAgent) {
+							return containerAgent;
 						}
-
-						if (maybe && typeof maybe === "object" && "agent" in maybe) {
-							const container = maybe as Record<string, unknown>;
-							const containerAgent = await extractBaseAgent(container.agent);
-							if (containerAgent) {
-								return containerAgent;
-							}
-						}
-					} catch (e) {
-						// Swallow and continue
 					}
+				} catch (e) {
+					// Swallow and continue searching
 				}
 			}
 		}
 
-		// If candidate is a function (sync or async), invoke it
-		if (typeof candidate === "function") {
-			try {
-				candidate = await invokeMaybe(candidate as () => unknown);
-			} catch (e) {
-				throw new Error(
-					`Failed executing exported agent function: ${e instanceof Error ? e.message : String(e)}`,
-				);
-			}
+		return null;
+	}
+
+	// Enhanced resolution logic for agent exports: always returns BaseAgent
+	async resolveAgentExport(mod: Record<string, unknown>): Promise<BaseAgent> {
+		const moduleDefault = mod?.default as Record<string, unknown> | undefined;
+		const candidateToResolve: unknown =
+			mod?.agent ?? moduleDefault?.agent ?? moduleDefault ?? mod;
+
+		// Try to extract from the initial candidate
+		const directResult = await this.tryResolvingDirectCandidate(
+			candidateToResolve,
+			mod,
+		);
+		if (directResult) {
+			return directResult;
 		}
 
-		// Extract BaseAgent from the final candidate
-		const baseAgent = await extractBaseAgent(candidate);
-		if (baseAgent) {
-			return baseAgent;
+		// Search through module exports if no direct candidate found
+		const exportResult = await this.scanModuleExports(mod);
+		if (exportResult) {
+			return exportResult;
 		}
 
-		if (candidate && typeof candidate === "object" && "agent" in candidate) {
-			const container = candidate as Record<string, unknown>;
-			const containerAgent = await extractBaseAgent(container.agent);
-			if (containerAgent) {
-				return containerAgent;
+		// Final attempt: handle function candidate
+		if (typeof candidateToResolve === "function") {
+			const functionResult =
+				await this.tryResolvingFunctionCandidate(candidateToResolve);
+			if (functionResult) {
+				return functionResult;
 			}
 		}
 
 		throw new Error(
-			"No agent export resolved (expected LlmAgent/BaseAgent, AgentBuilder, or BuiltAgent)",
+			"No agent export resolved (expected BaseAgent, AgentBuilder, or BuiltAgent)",
 		);
+	}
+
+	/**
+	 * Try to resolve a direct candidate (not from scanning exports)
+	 */
+	private async tryResolvingDirectCandidate(
+		candidateToResolve: unknown,
+		mod: Record<string, unknown>,
+	): Promise<BaseAgent | null> {
+		// Skip if candidate is primitive or represents the whole module
+		if (
+			this.isPrimitive(candidateToResolve) ||
+			(candidateToResolve && candidateToResolve === mod)
+		) {
+			return null;
+		}
+
+		// Try direct extraction
+		const directAgent = await this.extractBaseAgent(candidateToResolve);
+		if (directAgent) {
+			return directAgent;
+		}
+
+		// Check if it's a container object
+		if (
+			candidateToResolve &&
+			typeof candidateToResolve === "object" &&
+			"agent" in candidateToResolve
+		) {
+			const container = candidateToResolve as Record<string, unknown>;
+			return await this.extractBaseAgent(container.agent);
+		}
+
+		return null;
+	}
+
+	/**
+	 * Try to resolve a function candidate by invoking it
+	 */
+	private async tryResolvingFunctionCandidate(
+		functionCandidate: unknown,
+	): Promise<BaseAgent | null> {
+		try {
+			const functionResult = await this.invokeFunctionSafely(
+				functionCandidate as () => unknown,
+			);
+
+			// Try direct extraction from function result
+			const directAgent = await this.extractBaseAgent(functionResult);
+			if (directAgent) {
+				return directAgent;
+			}
+
+			// Check if function result is a container
+			if (
+				functionResult &&
+				typeof functionResult === "object" &&
+				"agent" in functionResult
+			) {
+				const container = functionResult as Record<string, unknown>;
+				return await this.extractBaseAgent(container.agent);
+			}
+		} catch (e) {
+			throw new Error(
+				`Failed executing exported agent function: ${e instanceof Error ? e.message : String(e)}`,
+			);
+		}
+
+		return null;
 	}
 }
 
@@ -512,8 +625,8 @@ export class AgentManager {
 				exportedAgent,
 			);
 			agentBuilder.withSessionService(this.sessionService, {
-				userId: `user_${agentPath}`,
-				appName: "adk-server",
+				userId: `${USER_ID_PREFIX}${agentPath}`,
+				appName: DEFAULT_APP_NAME,
 				state: undefined,
 			});
 			const { runner, session } = await agentBuilder.build();
@@ -528,8 +641,8 @@ export class AgentManager {
 				agent: exportedAgent,
 				runner: runner,
 				sessionId: session.id,
-				userId: `user_${agentPath}`,
-				appName: "adk-server",
+				userId: `${USER_ID_PREFIX}${agentPath}`,
+				appName: DEFAULT_APP_NAME,
 			};
 			this.loadedAgents.set(agentPath, loadedAgent);
 			agent.instance = exportedAgent;

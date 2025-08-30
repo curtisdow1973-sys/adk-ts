@@ -5,50 +5,100 @@ import type { AgentManager, SessionManager } from "./services.js";
 import type {
 	AgentListResponse,
 	CreateSessionRequest,
+	LoadedAgent,
 	MessageRequest,
 	MessageResponse,
 	MessagesResponse,
 	StateUpdateRequest,
 } from "./types.js";
 
+/**
+ * Helper function to ensure an agent is loaded
+ */
+async function ensureAgentLoaded(
+	agentManager: AgentManager,
+	agentPath: string,
+	logger: Logger,
+): Promise<LoadedAgent | null> {
+	// Try to load the agent if it's not already loaded
+	if (!agentManager.getLoadedAgents().has(agentPath)) {
+		logger.info("Agent not loaded, trying to start it: %s", agentPath);
+		try {
+			await agentManager.startAgent(agentPath);
+			logger.info("Agent started successfully: %s", agentPath);
+		} catch (error) {
+			logger.error("Failed to start agent: %s - %o", agentPath, error);
+			return null;
+		}
+	}
+
+	const loadedAgent = agentManager.getLoadedAgents().get(agentPath);
+	if (!loadedAgent) {
+		logger.warn("Agent still not loaded after starting: %s", agentPath);
+		return null;
+	}
+
+	return loadedAgent;
+}
+
+/**
+ * Helper function to map agents to response format
+ */
+function mapAgentsToResponse(agents: Map<string, any>): AgentListResponse[] {
+	return Array.from(agents.values()).map((agent) => ({
+		path: agent.absolutePath,
+		name: agent.name,
+		directory: agent.absolutePath,
+		relativePath: agent.relativePath,
+	}));
+}
+
+/**
+ * Helper function to create standardized error responses
+ */
+function createErrorResponse(c: any, message: string, statusCode = 500) {
+	return c.json({ error: message }, statusCode);
+}
+
+/**
+ * Helper function to create empty collection responses
+ */
+function createEmptyResponse(type: "sessions" | "events" | "messages") {
+	switch (type) {
+		case "sessions":
+			return { sessions: [] };
+		case "events":
+			return { events: [], totalCount: 0 };
+		case "messages":
+			return { messages: [] };
+	}
+}
+
 export function setupRoutes(
 	app: Hono,
 	agentManager: AgentManager,
 	sessionManager: SessionManager,
 	agentsDir: string,
+	quiet = false,
 ): void {
 	// CORS middleware
 	app.use("/*", cors());
 
-	const logger = new Logger({ name: "routes", quiet: false });
+	const logger = new Logger({ name: "routes", quiet });
 
 	// Health check
 	app.get("/health", (c) => c.json({ status: "ok" }));
 
 	// List agents
 	app.get("/api/agents", (c) => {
-		const agentsList: AgentListResponse[] = Array.from(
-			agentManager.getAgents().values(),
-		).map((agent) => ({
-			path: agent.absolutePath,
-			name: agent.name,
-			directory: agent.absolutePath,
-			relativePath: agent.relativePath,
-		}));
+		const agentsList = mapAgentsToResponse(agentManager.getAgents());
 		return c.json({ agents: agentsList });
 	});
 
 	// Refresh agents list
 	app.post("/api/agents/refresh", (c) => {
 		agentManager.scanAgents(agentsDir);
-		const agentsList: AgentListResponse[] = Array.from(
-			agentManager.getAgents().values(),
-		).map((agent) => ({
-			path: agent.absolutePath,
-			name: agent.name,
-			directory: agent.absolutePath,
-			relativePath: agent.relativePath,
-		}));
+		const agentsList = mapAgentsToResponse(agentManager.getAgents());
 		return c.json({ agents: agentsList });
 	});
 
@@ -57,7 +107,7 @@ export function setupRoutes(
 		const agentPath = decodeURIComponent(c.req.param("id"));
 		const loadedAgent = agentManager.getLoadedAgents().get(agentPath);
 		if (!loadedAgent) {
-			return c.json({ messages: [] });
+			return c.json(createEmptyResponse("messages"));
 		}
 
 		const messages = await sessionManager.getSessionMessages(loadedAgent);
@@ -87,22 +137,13 @@ export function setupRoutes(
 			Array.from(agentManager.getLoadedAgents().keys()),
 		);
 
-		// Try to load the agent if it's not already loaded
-		if (!agentManager.getLoadedAgents().has(agentPath)) {
-			logger.info("Agent not loaded, trying to start it: %s", agentPath);
-			try {
-				await agentManager.startAgent(agentPath);
-				logger.info("Agent started successfully: %s", agentPath);
-			} catch (error) {
-				logger.error("Failed to start agent: %s - %o", agentPath, error);
-				return c.json({ sessions: [] });
-			}
-		}
-
-		const loadedAgent = agentManager.getLoadedAgents().get(agentPath);
+		const loadedAgent = await ensureAgentLoaded(
+			agentManager,
+			agentPath,
+			logger,
+		);
 		if (!loadedAgent) {
-			logger.warn("Agent still not loaded after starting: %s", agentPath);
-			return c.json({ sessions: [] });
+			return c.json(createEmptyResponse("sessions"));
 		}
 
 		logger.info("Fetching sessions for loaded agent: %s", agentPath);
@@ -117,29 +158,13 @@ export function setupRoutes(
 		const request: CreateSessionRequest = await c.req.json();
 		logger.info("Creating session for agent path: %s", agentPath);
 
-		// Try to load the agent if it's not already loaded
-		if (!agentManager.getLoadedAgents().has(agentPath)) {
-			logger.info("Agent not loaded, trying to start it: %s", agentPath);
-			try {
-				await agentManager.startAgent(agentPath);
-				logger.info(
-					"Agent started successfully for session creation: %s",
-					agentPath,
-				);
-			} catch (error) {
-				logger.error(
-					"Failed to start agent for session creation: %s - %o",
-					agentPath,
-					error,
-				);
-				return c.json({ error: "Failed to load agent" }, 404);
-			}
-		}
-
-		const loadedAgent = agentManager.getLoadedAgents().get(agentPath);
+		const loadedAgent = await ensureAgentLoaded(
+			agentManager,
+			agentPath,
+			logger,
+		);
 		if (!loadedAgent) {
-			logger.error("Agent still not loaded after starting: %s", agentPath);
-			return c.json({ error: "Agent not loaded" }, 404);
+			return createErrorResponse(c, "Failed to load agent", 404);
 		}
 
 		try {
@@ -152,7 +177,7 @@ export function setupRoutes(
 			return c.json(newSession);
 		} catch (error) {
 			logger.error("Error creating session: %o", error);
-			return c.json({ error: "Failed to create session" }, 500);
+			return createErrorResponse(c, "Failed to create session", 500);
 		}
 	});
 
@@ -161,23 +186,13 @@ export function setupRoutes(
 		const agentPath = decodeURIComponent(c.req.param("id"));
 		const sessionId = c.req.param("sessionId");
 
-		// Try to load the agent if it's not already loaded
-		if (!agentManager.getLoadedAgents().has(agentPath)) {
-			try {
-				await agentManager.startAgent(agentPath);
-			} catch (error) {
-				logger.error(
-					"Failed to start agent for session deletion: %s - %o",
-					agentPath,
-					error,
-				);
-				return c.json({ error: "Failed to load agent" }, 404);
-			}
-		}
-
-		const loadedAgent = agentManager.getLoadedAgents().get(agentPath);
+		const loadedAgent = await ensureAgentLoaded(
+			agentManager,
+			agentPath,
+			logger,
+		);
 		if (!loadedAgent) {
-			return c.json({ error: "Agent not loaded" }, 404);
+			return createErrorResponse(c, "Failed to load agent", 404);
 		}
 
 		try {
@@ -185,7 +200,7 @@ export function setupRoutes(
 			return c.json({ success: true });
 		} catch (error) {
 			logger.error("Error deleting session: %o", error);
-			return c.json({ error: "Failed to delete session" }, 500);
+			return createErrorResponse(c, "Failed to delete session", 500);
 		}
 	});
 
@@ -194,23 +209,13 @@ export function setupRoutes(
 		const agentPath = decodeURIComponent(c.req.param("id"));
 		const sessionId = c.req.param("sessionId");
 
-		// Try to load the agent if it's not already loaded
-		if (!agentManager.getLoadedAgents().has(agentPath)) {
-			try {
-				await agentManager.startAgent(agentPath);
-			} catch (error) {
-				logger.error(
-					"Failed to start agent for session switch: %s - %o",
-					agentPath,
-					error,
-				);
-				return c.json({ error: "Failed to load agent" }, 404);
-			}
-		}
-
-		const loadedAgent = agentManager.getLoadedAgents().get(agentPath);
+		const loadedAgent = await ensureAgentLoaded(
+			agentManager,
+			agentPath,
+			logger,
+		);
 		if (!loadedAgent) {
-			return c.json({ error: "Agent not loaded" }, 404);
+			return createErrorResponse(c, "Failed to load agent", 404);
 		}
 
 		try {
@@ -218,7 +223,7 @@ export function setupRoutes(
 			return c.json({ success: true });
 		} catch (error) {
 			logger.error("Error switching session: %o", error);
-			return c.json({ error: "Failed to switch session" }, 500);
+			return createErrorResponse(c, "Failed to switch session", 500);
 		}
 	});
 
@@ -227,23 +232,13 @@ export function setupRoutes(
 		const agentPath = decodeURIComponent(c.req.param("id"));
 		const sessionId = c.req.param("sessionId");
 
-		// Try to load the agent if it's not already loaded
-		if (!agentManager.getLoadedAgents().has(agentPath)) {
-			try {
-				await agentManager.startAgent(agentPath);
-			} catch (error) {
-				logger.error(
-					"Failed to start agent for events: %s - %o",
-					agentPath,
-					error,
-				);
-				return c.json({ events: [], totalCount: 0 });
-			}
-		}
-
-		const loadedAgent = agentManager.getLoadedAgents().get(agentPath);
+		const loadedAgent = await ensureAgentLoaded(
+			agentManager,
+			agentPath,
+			logger,
+		);
 		if (!loadedAgent) {
-			return c.json({ events: [], totalCount: 0 });
+			return c.json(createEmptyResponse("events"));
 		}
 
 		const events = await sessionManager.getSessionEvents(
@@ -258,23 +253,13 @@ export function setupRoutes(
 		const agentPath = decodeURIComponent(c.req.param("id"));
 		const sessionId = c.req.param("sessionId");
 
-		// Try to load the agent if it's not already loaded
-		if (!agentManager.getLoadedAgents().has(agentPath)) {
-			try {
-				await agentManager.startAgent(agentPath);
-			} catch (error) {
-				logger.error(
-					"Failed to start agent for session state: %s - %o",
-					agentPath,
-					error,
-				);
-				return c.json({ error: "Failed to load agent" }, 404);
-			}
-		}
-
-		const loadedAgent = agentManager.getLoadedAgents().get(agentPath);
+		const loadedAgent = await ensureAgentLoaded(
+			agentManager,
+			agentPath,
+			logger,
+		);
 		if (!loadedAgent) {
-			return c.json({ error: "Agent not loaded" }, 404);
+			return createErrorResponse(c, "Failed to load agent", 404);
 		}
 
 		const state = await sessionManager.getSessionState(loadedAgent, sessionId);
@@ -287,23 +272,13 @@ export function setupRoutes(
 		const sessionId = c.req.param("sessionId");
 		const request: StateUpdateRequest = await c.req.json();
 
-		// Try to load the agent if it's not already loaded
-		if (!agentManager.getLoadedAgents().has(agentPath)) {
-			try {
-				await agentManager.startAgent(agentPath);
-			} catch (error) {
-				logger.error(
-					"Failed to start agent for session state update: %s - %o",
-					agentPath,
-					error,
-				);
-				return c.json({ error: "Failed to load agent" }, 404);
-			}
-		}
-
-		const loadedAgent = agentManager.getLoadedAgents().get(agentPath);
+		const loadedAgent = await ensureAgentLoaded(
+			agentManager,
+			agentPath,
+			logger,
+		);
 		if (!loadedAgent) {
-			return c.json({ error: "Agent not loaded" }, 404);
+			return createErrorResponse(c, "Failed to load agent", 404);
 		}
 
 		try {
@@ -316,7 +291,7 @@ export function setupRoutes(
 			return c.json({ success: true });
 		} catch (error) {
 			logger.error("Error updating session state: %o", error);
-			return c.json({ error: "Failed to update state" }, 500);
+			return createErrorResponse(c, "Failed to update state", 500);
 		}
 	});
 }
