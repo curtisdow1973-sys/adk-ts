@@ -1,13 +1,23 @@
 import * as p from "@clack/prompts";
 import { spinner } from "@clack/prompts";
 import chalk from "chalk";
+import { marked } from "marked";
+import * as markedTerminal from "marked-terminal";
 import { Command, CommandRunner, Option } from "nest-commander";
 import { startHttpServer } from "../../http/bootstrap";
 
-// Simple markdown passthrough; original used marked-terminal,
-// keep plain text to avoid extra deps in the CLI runtime path here.
+const mt: any =
+	(markedTerminal as any).markedTerminal ?? (markedTerminal as any);
+marked.use(mt() as any);
+
+/**
+ * Render markdown to ANSI for terminal using 'marked' + 'marked-terminal'.
+ * Simple static import and configuration as per package docs.
+ */
 async function render(text: string): Promise<string> {
-	return text ?? "";
+	const input = text ?? "";
+	const out = marked.parse(input);
+	return typeof out === "string" ? out : String(out ?? "");
 }
 
 interface ServeLikeOptions {
