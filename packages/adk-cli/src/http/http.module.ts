@@ -5,6 +5,7 @@ import { EventsModule } from "./modules/events/events.module";
 import { HealthModule } from "./modules/health/health.module";
 import { MessagingModule } from "./modules/messaging/messaging.module";
 import { ProvidersModule } from "./modules/providers/providers.module";
+import { ReloadModule } from "./modules/reload/reload.module";
 import { SessionsModule } from "./modules/sessions/sessions.module";
 import { StateModule } from "./modules/state/state.module";
 import type { RuntimeConfig } from "./runtime-config";
@@ -22,6 +23,7 @@ export class HttpModule {
 				SessionsModule,
 				EventsModule,
 				StateModule,
+				ReloadModule,
 				HealthModule,
 			],
 		};

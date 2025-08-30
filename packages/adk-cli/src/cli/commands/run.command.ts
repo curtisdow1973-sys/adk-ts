@@ -17,6 +17,8 @@ interface ServeLikeOptions {
 interface RunOptions extends ServeLikeOptions {
 	server?: boolean;
 	verbose?: boolean;
+	hot?: boolean;
+	watch?: string[];
 }
 
 interface Agent {
@@ -181,6 +183,8 @@ export class RunCommand extends CommandRunner {
 				host,
 				agentsDir: process.cwd(),
 				quiet: !isVerbose,
+				hotReload: options?.hot,
+				watchPaths: options?.watch,
 			});
 
 			console.log(chalk.cyan("Press Ctrl+C to stop the server"));
@@ -209,6 +213,8 @@ export class RunCommand extends CommandRunner {
 				host: options?.host || "localhost",
 				agentsDir: process.cwd(),
 				quiet: !isVerbose,
+				hotReload: options?.hot,
+				watchPaths: options?.watch,
 			});
 
 			await new Promise((resolve) => setTimeout(resolve, 1000));
@@ -286,5 +292,25 @@ export class RunCommand extends CommandRunner {
 	})
 	parseVerbose(): boolean {
 		return true;
+	}
+
+	@Option({
+		flags: "--hot",
+		description: "Enable hot reloading (watches agents and optional paths)",
+	})
+	parseHot(): boolean {
+		return true;
+	}
+
+	@Option({
+		flags: "--watch <paths>",
+		description:
+			"Comma-separated list of additional paths to watch for reloads",
+	})
+	parseWatch(val: string): string[] {
+		return (val || "")
+			.split(",")
+			.map((s) => s.trim())
+			.filter(Boolean);
 	}
 }
