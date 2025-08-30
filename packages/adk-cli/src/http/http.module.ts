@@ -1,26 +1,29 @@
 import { type DynamicModule, Module } from "@nestjs/common";
-import { TOKENS } from "../common/tokens";
-import { CoreModule } from "../core/core.module";
-import { RUNTIME_CONFIG, type RuntimeConfig } from "./runtime-config";
-
-// Controllers
-import { AgentsController } from "./controllers/agents.controller";
-import { HealthController } from "./controllers/health.controller";
-import { SessionsController } from "./controllers/sessions.controller";
+import { ConfigModule } from "./modules/config/config.module";
+import { DiscoveryModule } from "./modules/discovery/discovery.module";
+import { EventsModule } from "./modules/events/events.module";
+import { HealthModule } from "./modules/health/health.module";
+import { MessagingModule } from "./modules/messaging/messaging.module";
+import { ProvidersModule } from "./modules/providers/providers.module";
+import { SessionsModule } from "./modules/sessions/sessions.module";
+import { StateModule } from "./modules/state/state.module";
+import type { RuntimeConfig } from "./runtime-config";
 
 @Module({})
 export class HttpModule {
 	static register(config: RuntimeConfig): DynamicModule {
 		return {
 			module: HttpModule,
-			imports: [CoreModule],
-			controllers: [AgentsController, SessionsController, HealthController],
-			providers: [
-				{ provide: RUNTIME_CONFIG, useValue: config },
-				{ provide: TOKENS.AGENTS_DIR, useValue: config.agentsDir },
-				{ provide: TOKENS.QUIET, useValue: config.quiet },
+			imports: [
+				ConfigModule.register(config),
+				ProvidersModule,
+				DiscoveryModule,
+				MessagingModule,
+				SessionsModule,
+				EventsModule,
+				StateModule,
+				HealthModule,
 			],
-			exports: [],
 		};
 	}
 }

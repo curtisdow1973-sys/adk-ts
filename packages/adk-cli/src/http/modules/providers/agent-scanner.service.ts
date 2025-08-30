@@ -1,8 +1,8 @@
 import { existsSync, readFileSync, readdirSync, statSync } from "node:fs";
 import { join, relative } from "node:path";
 import { Injectable } from "@nestjs/common";
-import { Logger } from "../../common/logger";
-import type { Agent, LoadedAgent } from "../../common/types";
+import { Logger } from "../../../common/logger";
+import type { Agent, LoadedAgent } from "../../../common/types";
 
 const DIRECTORIES_TO_SKIP = [
 	"node_modules",

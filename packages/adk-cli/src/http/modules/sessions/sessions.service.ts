@@ -1,6 +1,7 @@
-import type { InMemorySessionService } from "@iqai/adk";
-import { Injectable } from "@nestjs/common";
-import { Logger } from "../../common/logger";
+import { InMemorySessionService } from "@iqai/adk";
+import { Inject, Injectable } from "@nestjs/common";
+import { Logger } from "../../../common/logger";
+import { TOKENS } from "../../../common/tokens";
 import type {
 	CreateSessionRequest,
 	EventsResponse,
@@ -9,18 +10,74 @@ import type {
 	SessionsResponse,
 	StateResponse,
 	StateUpdateRequest,
-} from "../../common/types";
+} from "../../../common/types";
+import { AgentManager } from "../providers/agent-manager.service";
 
 @Injectable()
-export class SessionManager {
+export class SessionsService {
 	private logger: Logger;
 
 	constructor(
-		private sessionService: InMemorySessionService,
-		private quiet = false,
+		@Inject(AgentManager) private readonly agentManager: AgentManager,
+		@Inject(InMemorySessionService)
+		private readonly sessionService: InMemorySessionService,
+		@Inject(TOKENS.QUIET) private readonly quiet: boolean,
 	) {
-		this.logger = new Logger({ name: "session-manager", quiet: this.quiet });
+		this.logger = new Logger({ name: "sessions-service", quiet: this.quiet });
 	}
+
+	// Centralized agent loader for reuse across modules
+	public async ensureAgentLoaded(
+		agentPath: string,
+	): Promise<LoadedAgent | null> {
+		if (!this.agentManager.getLoadedAgents().has(agentPath)) {
+			try {
+				await this.agentManager.startAgent(agentPath);
+			} catch {
+				return null;
+			}
+		}
+		const loaded = this.agentManager.getLoadedAgents().get(agentPath);
+		return loaded ?? null;
+	}
+
+	// ----- Public API used by controllers (compat with previous shape) -----
+
+	async listSessions(agentPath: string): Promise<SessionsResponse> {
+		const loaded = await this.ensureAgentLoaded(agentPath);
+		if (!loaded) {
+			return { sessions: [] };
+		}
+		return this.getAgentSessions(loaded);
+	}
+
+	async createSession(agentPath: string, request: CreateSessionRequest) {
+		const loaded = await this.ensureAgentLoaded(agentPath);
+		if (!loaded) {
+			return { error: "Failed to load agent" } as any;
+		}
+		return this.createAgentSession(loaded, request);
+	}
+
+	async deleteSession(agentPath: string, sessionId: string) {
+		const loaded = await this.ensureAgentLoaded(agentPath);
+		if (!loaded) {
+			return { error: "Failed to load agent" } as any;
+		}
+		await this.deleteAgentSession(loaded, sessionId);
+		return { success: true };
+	}
+
+	async switchSession(agentPath: string, sessionId: string) {
+		const loaded = await this.ensureAgentLoaded(agentPath);
+		if (!loaded) {
+			return { error: "Failed to load agent" } as any;
+		}
+		await this.switchAgentSession(loaded, sessionId);
+		return { success: true };
+	}
+
+	// ----- Inlined former SessionManager functionality -----
 
 	async getSessionMessages(loadedAgent: LoadedAgent) {
 		try {
@@ -36,12 +93,7 @@ export class SessionManager {
 			}
 
 			// Convert session events to message format
-			// TODO(adk-web/tool-calls): Enhance this endpoint to better represent tool activity.
-			// - Option A: Do not persist or return assistant events with empty text (current web filters these client-side).
-			// - Option B: Keep raw history but add a query flag like `includeEmpty=false` to suppress blanks for clients that want clean text-only history.
-			// - Option C (preferred): Emit explicit tool events, e.g., { type: "tool", name, args, output, status, timestamps } derived from non-text parts.
-			//   This enables the web UI to render compact "Used tool: <name>" chips and show outputs, instead of blank assistant messages.
-			//   When implemented, maintain backward compatibility by keeping the current shape under a flag (e.g., `format=legacy`).
+			// See TODO notes in previous implementation regarding tool call representation.
 			const messages = session.events.map((event, index) => ({
 				id: index + 1,
 				type:

@@ -4,8 +4,8 @@ import { pathToFileURL } from "node:url";
 import type { FullMessage, InMemorySessionService } from "@iqai/adk";
 import { AgentBuilder } from "@iqai/adk";
 import { Injectable } from "@nestjs/common";
-import { Logger } from "../../common/logger";
-import type { Agent, LoadedAgent } from "../../common/types";
+import { Logger } from "../../../common/logger";
+import type { Agent, LoadedAgent } from "../../../common/types";
 import { AgentLoader } from "./agent-loader.service";
 import { AgentScanner } from "./agent-scanner.service";
 
@@ -36,6 +36,8 @@ export class AgentManager {
 	getLoadedAgents(): Map<string, LoadedAgent> {
 		return this.loadedAgents;
 	}
+
+	skanAgents?(agentsDir: string): void; // backward-compat typo guard (no-op if called)
 
 	scanAgents(agentsDir: string): void {
 		this.logger.info("Scanning agents in directory: %s", agentsDir);

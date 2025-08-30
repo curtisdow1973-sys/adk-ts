@@ -3,8 +3,8 @@ import "reflect-metadata";
 import { NestFactory } from "@nestjs/core";
 import type { NestExpressApplication } from "@nestjs/platform-express";
 
-import { AgentManager } from "../core/services/agent-manager.service";
 import { HttpModule } from "./http.module";
+import { AgentManager } from "./modules/providers/agent-manager.service";
 import type { RuntimeConfig } from "./runtime-config";
 
 export interface StartedHttpServer {

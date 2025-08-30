@@ -4,7 +4,7 @@ import { pathToFileURL } from "node:url";
 import type { BaseAgent, BuiltAgent } from "@iqai/adk";
 import type { AgentBuilder } from "@iqai/adk";
 import { Injectable } from "@nestjs/common";
-import { Logger } from "../../common/logger";
+import { Logger } from "../../../common/logger";
 
 const ADK_CACHE_DIR = ".adk-cache";
 
