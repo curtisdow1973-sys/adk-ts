@@ -26,6 +26,7 @@ After running the tool, you can see headlines:
 You must and should only respond with one word. whether the overall sentiment is positive, negative, or neutral.`,
 		model: env.LLM_MODEL || "gemini-2.5-flash",
 		tools: [ethHeadlinesTool],
+		disallowTransferToParent: true,
 		outputKey: "sentiment",
 	});
 

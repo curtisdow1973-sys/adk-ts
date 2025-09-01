@@ -17,6 +17,7 @@ export const getEthPriceAgent = () => {
 		description: "provides the current Ethereum (ETH) price",
 		instruction: "when asked about ethereum, provide its price",
 		model: env.LLM_MODEL || "gemini-2.5-flash",
+		disallowTransferToParent: true,
 		tools: [ethPriceTool],
 	});
 
