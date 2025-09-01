@@ -90,6 +90,7 @@ export interface BuiltAgent<T = string> {
 	agent: BaseAgent;
 	runner: EnhancedRunner<T>;
 	session: Session;
+	sessionService: BaseSessionService; // newly exposed for external session operations
 }
 
 /**
@@ -515,7 +516,12 @@ export class AgentBuilder {
 			runner = this.createEnhancedRunner<T>(baseRunner, session);
 		}
 
-		return { agent, runner, session } as BuiltAgent<T>;
+		return {
+			agent,
+			runner: runner!,
+			session: session!,
+			sessionService: this.sessionService!,
+		} as BuiltAgent<T>;
 	}
 
 	/**

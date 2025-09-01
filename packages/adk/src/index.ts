@@ -5,6 +5,8 @@
 
 // Re-export all exports from each module
 export * from "./agents";
+// Explicit re-exports to ensure types are preserved in bundled declarations
+export { AgentBuilder, type BuiltAgent } from "./agents/agent-builder";
 export * from "./tools";
 export * from "./models";
 export * from "./memory";
