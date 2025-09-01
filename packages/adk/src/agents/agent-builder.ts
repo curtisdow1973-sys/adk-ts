@@ -264,6 +264,12 @@ export class AgentBuilder<TOut = string, TMulti extends boolean = false> {
 		schema: import("zod").ZodType<T>,
 	): AgentBuilderWithSchema<T, TMulti> {
 		this.warnIfLocked("withOutputSchema");
+		// Disallow setting an output schema directly on multi-agent aggregators
+		if (this.agentType === "sequential" || this.agentType === "parallel") {
+			throw new Error(
+				"Output schemas cannot be applied to sequential or parallel agents. Define output schemas on each sub-agent instead.",
+			);
+		}
 		this.config.outputSchema = schema;
 		return this as unknown as AgentBuilderWithSchema<T, TMulti>;
 	}
