@@ -18,6 +18,7 @@ export const getEthPriceAgent = () => {
 		instruction: "when asked about ethereum, provide its price",
 		model: env.LLM_MODEL || "gemini-2.5-flash",
 		disallowTransferToParent: true,
+		disallowTransferToPeers: true,
 		tools: [ethPriceTool],
 	});
 

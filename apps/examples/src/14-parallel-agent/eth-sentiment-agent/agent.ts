@@ -27,6 +27,7 @@ You must and should only respond with one word. whether the overall sentiment is
 		model: env.LLM_MODEL || "gemini-2.5-flash",
 		tools: [ethHeadlinesTool],
 		disallowTransferToParent: true,
+		disallowTransferToPeers: true,
 		outputKey: "sentiment",
 	});
 
