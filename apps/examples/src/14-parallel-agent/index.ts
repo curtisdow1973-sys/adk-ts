@@ -50,7 +50,13 @@ export const main = async () => {
 		sentiment: string;
 	};
 
-	console.log({ price, sentiment, state: currentSession.state, response });
+	console.log({
+		price,
+		sentiment,
+		state: currentSession.state,
+		response,
+		responseShape: Array.isArray(response) ? "array" : "string",
+	});
 
 	// Keep the process alive
 	process.on("SIGINT", () => {

@@ -71,10 +71,23 @@ export interface FullMessage extends Content {
 }
 
 /**
- * Enhanced runner interface with simplified API
+ * Multi-agent standardized response type
  */
-export interface EnhancedRunner<T = string> {
-	ask(message: string | FullMessage | LlmRequest): Promise<T>;
+export type MultiAgentResponse = { agent: string; response: string }[];
+
+/** Helper conditional type for ask() return */
+export type RunnerAskReturn<T, M extends boolean> = M extends true
+	? MultiAgentResponse
+	: T;
+
+/**
+ * Enhanced runner interface with simplified API and conditional typing.
+ * M (multi) flag determines if ask() returns a multi-agent response array.
+ */
+export interface EnhancedRunner<T = string, M extends boolean = false> {
+	ask(
+		message: string | FullMessage | LlmRequest,
+	): Promise<RunnerAskReturn<T, M>>;
 	runAsync(params: {
 		userId: string;
 		sessionId: string;
@@ -86,9 +99,9 @@ export interface EnhancedRunner<T = string> {
 /**
  * Built agent result containing the agent and runner/session
  */
-export interface BuiltAgent<T = string> {
+export interface BuiltAgent<T = string, M extends boolean = false> {
 	agent: BaseAgent;
-	runner: EnhancedRunner<T>;
+	runner: EnhancedRunner<T, M>;
 	session: Session;
 	sessionService: BaseSessionService; // newly exposed for external session operations
 }
@@ -106,11 +119,11 @@ export type AgentType =
 /**
  * AgentBuilder with typed output schema
  */
-export interface AgentBuilderWithSchema<T>
-	extends Omit<AgentBuilder, "build" | "ask"> {
-	build(): Promise<BuiltAgent<T>>;
-	buildWithSchema<U = T>(): Promise<BuiltAgent<U>>;
-	ask(message: string | FullMessage): Promise<T>;
+export interface AgentBuilderWithSchema<T, M extends boolean = false>
+	extends Omit<AgentBuilder<any, any>, "build" | "ask" | "withOutputSchema"> {
+	build(): Promise<BuiltAgent<T, M>>;
+	buildWithSchema<U = T>(): Promise<BuiltAgent<U, M>>;
+	ask(message: string | FullMessage): Promise<RunnerAskReturn<T, M>>;
 }
 
 /**
@@ -168,7 +181,7 @@ interface RunnerConfig {
  *   .build();
  * ```
  */
-export class AgentBuilder {
+export class AgentBuilder<TOut = string, TMulti extends boolean = false> {
 	private config: AgentBuilderConfig;
 	private sessionService?: BaseSessionService;
 	private sessionOptions?: SessionOptions;
@@ -193,7 +206,7 @@ export class AgentBuilder {
 	 * @param name The name of the agent (defaults to "default_agent")
 	 * @returns New AgentBuilder instance
 	 */
-	static create(name = "default_agent"): AgentBuilder {
+	static create(name = "default_agent"): AgentBuilder<string, false> {
 		return new AgentBuilder(name);
 	}
 
@@ -202,7 +215,9 @@ export class AgentBuilder {
 	 * @param model The model identifier (e.g., "gemini-2.5-flash")
 	 * @returns New AgentBuilder instance with model set
 	 */
-	static withModel(model: string | BaseLlm | LanguageModel): AgentBuilder {
+	static withModel(
+		model: string | BaseLlm | LanguageModel,
+	): AgentBuilder<string, false> {
 		return new AgentBuilder("default_agent").withModel(model);
 	}
 
@@ -247,10 +262,10 @@ export class AgentBuilder {
 
 	withOutputSchema<T>(
 		schema: import("zod").ZodType<T>,
-	): AgentBuilderWithSchema<T> {
+	): AgentBuilderWithSchema<T, TMulti> {
 		this.warnIfLocked("withOutputSchema");
 		this.config.outputSchema = schema;
-		return this as unknown as AgentBuilderWithSchema<T>;
+		return this as unknown as AgentBuilderWithSchema<T, TMulti>;
 	}
 
 	/**
@@ -349,11 +364,11 @@ export class AgentBuilder {
 	 * @param subAgents Sub-agents to execute in sequence
 	 * @returns This builder instance for chaining
 	 */
-	asSequential(subAgents: BaseAgent[]): this {
+	asSequential(subAgents: BaseAgent[]): AgentBuilder<TOut, true> {
 		this.warnIfLocked("asSequential");
 		this.agentType = "sequential";
 		this.config.subAgents = subAgents;
-		return this;
+		return this as unknown as AgentBuilder<TOut, true>;
 	}
 
 	/**
@@ -361,11 +376,11 @@ export class AgentBuilder {
 	 * @param subAgents Sub-agents to execute in parallel
 	 * @returns This builder instance for chaining
 	 */
-	asParallel(subAgents: BaseAgent[]): this {
+	asParallel(subAgents: BaseAgent[]): AgentBuilder<TOut, true> {
 		this.warnIfLocked("asParallel");
 		this.agentType = "parallel";
 		this.config.subAgents = subAgents;
-		return this;
+		return this as unknown as AgentBuilder<TOut, true>;
 	}
 
 	/**
@@ -479,9 +494,9 @@ export class AgentBuilder {
 	 * Build the agent and optionally create runner and session
 	 * @returns Built agent with optional runner and session
 	 */
-	async build<T = string>(): Promise<BuiltAgent<T>> {
+	async build<T = TOut>(): Promise<BuiltAgent<T, TMulti>> {
 		const agent = this.createAgent();
-		let runner: EnhancedRunner<T> | undefined;
+		let runner: EnhancedRunner<T, any> | undefined;
 		let session: Session | undefined;
 
 		// If no session service is provided, create a default in-memory session
@@ -518,19 +533,19 @@ export class AgentBuilder {
 
 		return {
 			agent,
-			runner: runner!,
+			runner: runner! as EnhancedRunner<T, TMulti>,
 			session: session!,
 			sessionService: this.sessionService!,
-		} as BuiltAgent<T>;
+		} as BuiltAgent<T, TMulti>;
 	}
 
 	/**
 	 * Type-safe build method for agents with output schemas
 	 * Provides better type inference for the ask method return type
 	 */
-	async buildWithSchema<T>(): Promise<BuiltAgent<T>> {
+	async buildWithSchema<T>(): Promise<BuiltAgent<T, TMulti>> {
 		const result = await this.build();
-		return result as BuiltAgent<T>;
+		return result as unknown as BuiltAgent<T, TMulti>;
 	}
 
 	/**
@@ -538,9 +553,11 @@ export class AgentBuilder {
 	 * @param message Message to send to the agent (string or full message object)
 	 * @returns Agent response
 	 */
-	async ask(message: string | FullMessage): Promise<string> {
+	async ask(
+		message: string | FullMessage,
+	): Promise<RunnerAskReturn<TOut, TMulti>> {
 		const { runner } = await this.build();
-		return runner.ask(message);
+		return runner.ask(message) as Promise<RunnerAskReturn<TOut, TMulti>>;
 	}
 
 	/**
@@ -664,20 +681,27 @@ export class AgentBuilder {
 	private createEnhancedRunner<T>(
 		baseRunner: Runner,
 		session: Session,
-	): EnhancedRunner<T> {
+	): EnhancedRunner<T, TMulti> {
 		const sessionOptions = this.sessionOptions; // Capture sessionOptions in closure
 		const outputSchema = this.config.outputSchema;
+		const agentType = this.agentType; // capture agent type for aggregation logic
+		const isMulti = agentType === "parallel" || agentType === "sequential";
+		const subAgentNames = this.config.subAgents?.map((a) => a.name) || [];
 
 		return {
 			__outputSchema: outputSchema,
-			async ask(message: string | FullMessage | LlmRequest): Promise<T> {
+			async ask(message: string | FullMessage | LlmRequest): Promise<any> {
 				const newMessage: FullMessage =
 					typeof message === "string"
 						? { parts: [{ text: message }] }
 						: typeof message === "object" && "contents" in message
 							? { parts: message.contents[message.contents.length - 1].parts }
 							: message;
-				let response = "";
+				let combinedResponse = "";
+				// Track per-agent incremental text
+				const perAgentBuffers: Record<string, string> = {};
+				// Track authors that produced any text (excluding 'user')
+				const authors: Set<string> = new Set();
 
 				if (!sessionOptions?.userId) {
 					throw new Error("Session configuration is required");
@@ -698,29 +722,40 @@ export class AgentBuilder {
 							)
 							.join("");
 						if (content) {
-							response += content;
+							combinedResponse += content;
+							const author = event.author || "";
+							if (author && author !== "user") {
+								authors.add(author);
+								perAgentBuffers[author] =
+									(perAgentBuffers[author] || "") + content;
+							}
 						}
 					}
 				}
 
-				// If we have an output schema, the response should already be validated by the processor
-				// and formatted as JSON. Try to parse it, otherwise return the raw response.
+				if (isMulti) {
+					// Always return ordered array for multi-agent
+					return subAgentNames.map((name) => ({
+						agent: name,
+						response: (perAgentBuffers[name] || "").trim(),
+					}));
+				}
+
+				// Single-agent path with optional schema parsing
 				if (outputSchema) {
 					try {
-						const parsed = JSON.parse(response);
+						const parsed = JSON.parse(combinedResponse);
 						return outputSchema.parse(parsed) as T;
 					} catch (parseError) {
-						// If parsing fails, try to validate the raw response
 						try {
-							return outputSchema.parse(response) as T;
+							return outputSchema.parse(combinedResponse) as T;
 						} catch (validationError) {
-							// If both fail, return the raw response as type T (casting)
-							return response.trim() as T;
+							return combinedResponse.trim() as T;
 						}
 					}
 				}
 
-				return response.trim() as T;
+				return combinedResponse.trim() as T;
 			},
 
 			runAsync(params: {
