@@ -78,8 +78,12 @@ export async function* mergeAgentRun(
 			.filter((e): e is { index: number; promise: Promise<any> } => !!e)
 			.map((e) => e.promise);
 
-	while (activePromises().length > 0) {
-		const { index, result, error } = await Promise.race(activePromises());
+	while (true) {
+		const currentActivePromises = activePromises();
+		if (currentActivePromises.length === 0) {
+			break;
+		}
+		const { index, result, error } = await Promise.race(currentActivePromises);
 
 		if (error) {
 			console.error(`Error in parallel agent ${index}:`, error);

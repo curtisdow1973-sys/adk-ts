@@ -756,7 +756,12 @@ export class AgentBuilder<TOut = string, TMulti extends boolean = false> {
 						try {
 							return outputSchema.parse(combinedResponse) as T;
 						} catch (validationError) {
-							return combinedResponse.trim() as T;
+							throw new Error(
+								`Failed to parse and validate LLM output against the schema.\n` +
+								`JSON parse error: ${parseError instanceof Error ? parseError.message : String(parseError)}\n` +
+								`Zod validation error: ${validationError instanceof Error ? validationError.message : String(validationError)}\n` +
+								`Raw output: "${combinedResponse}"`
+							);
 						}
 					}
 				}
