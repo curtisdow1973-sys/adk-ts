@@ -1,4 +1,4 @@
-import { AgentBuilder } from "@iqai/adk";
+import { AgentBuilder, InMemorySessionService } from "@iqai/adk";
 import { env } from "../env";
 import { getEthPriceAgent } from "./eth-price-agent/agent";
 import { getEthSentimentAgent } from "./eth-sentiment-agent/agent";
@@ -13,18 +13,26 @@ import { getEthSentimentAgent } from "./eth-sentiment-agent/agent";
  *
  * @returns The fully constructed root agent instance ready to process requests
  */
-export const getRootAgent = () => {
+export const getRootAgent = async () => {
 	const ethPriceAgent = getEthPriceAgent();
 	const ethSentimentAgent = getEthSentimentAgent();
+	const sessionService = new InMemorySessionService();
+	const session = await sessionService.createSession("default", "default", {
+		headlines: "",
+		price: 0,
+		sentiment: "",
+	});
 
-	return AgentBuilder.create("root_agent")
+	const { runner } = await AgentBuilder.create("root_agent")
 		.withDescription(
-			"Root agent that delegates tasks to sub-agents for fetching Ethereum price and sentiment information.",
+			"Delegates tasks to sub-agents for Ethereum price and sentiment.",
 		)
-		.withInstruction(
-			"Use the ETH price sub-agent for price requests and the ETH sentiment sub-agent for sentiment-related queries. Route user requests to the appropriate sub-agent.",
-		)
+		.withInstruction("Check Ethereum price, then sentiment when asked.")
 		.withModel(env.LLM_MODEL)
-		.asSequential([ethPriceAgent, ethSentimentAgent])
+		.asParallel([ethSentimentAgent, ethPriceAgent])
+		.withSessionService(sessionService)
+		.withSession(session)
 		.build();
+
+	return { runner, sessionService, session };
 };

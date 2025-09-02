@@ -9,13 +9,15 @@ import { createTool } from "@iqai/adk";
 export const ethPriceTool = createTool({
 	name: "get_eth_price",
 	description: "Fetches the current Ethereum (ETH) price in USD",
-	fn: async () => {
+	fn: async (_, context) => {
 		try {
 			const response = await fetch(
 				"https://api.coingecko.com/api/v3/simple/price?ids=ethereum&vs_currencies=usd",
 			);
 			const data = await response.json();
+			const price = data?.ethereum?.usd;
 			if (data?.ethereum?.usd) {
+				context.state.set("price", price);
 				return `Current Ethereum price: $${data.ethereum.usd} USD`;
 			}
 			return "Unable to fetch Ethereum price right now.";
