@@ -28,14 +28,11 @@ async function main() {
 		fun_fact: z.string().describe("An interesting fact about the city"),
 	});
 
-	const response = await AgentBuilder.withModel(
-		env.LLM_MODEL || "gemini-2.5-flash",
-	)
+	const response = await AgentBuilder.create("asd")
 		.asSequential([
 			new LlmAgent({
 				name: "dnt_selct",
 				description: "don't select",
-				model: env.LLM_MODEL || "gemini-2.5-flash",
 			}),
 		])
 		.withOutputKey("sd")

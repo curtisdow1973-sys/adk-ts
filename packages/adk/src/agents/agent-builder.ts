@@ -2,6 +2,7 @@ import { Logger } from "@adk/logger/index.js";
 import type { LlmRequest } from "@adk/models";
 import type { Content, Part } from "@google/genai";
 import { type LanguageModel, generateId } from "ai";
+import chalk from "chalk";
 import type { ZodSchema, ZodType } from "zod";
 import type { BaseArtifactService } from "../artifacts/base-artifact-service.js";
 import type { BaseCodeExecutor } from "../code-executors/base-code-executor.js";
@@ -219,6 +220,18 @@ export class AgentBuilder<TOut = string, TMulti extends boolean = false> {
 		);
 	}
 
+	private emitError(
+		message: string,
+		suggestion?: string,
+		context?: Record<string, any>,
+	) {
+		// Use structured args; logger.error will render boxed output including details.
+		const meta: Record<string, any> = {};
+		if (suggestion) meta.suggestion = suggestion;
+		if (context) meta.context = context;
+		this.logger.error(message, Object.keys(meta).length ? meta : undefined);
+	}
+
 	/**
 	 * Warn (once per method) if the definition has been locked by withAgent().
 	 */
@@ -301,9 +314,16 @@ export class AgentBuilder<TOut = string, TMulti extends boolean = false> {
 		this.warnIfLocked("withOutputSchema");
 		// Disallow setting an output schema directly on multi-agent aggregators
 		if (this.agentType === "sequential" || this.agentType === "parallel") {
-			throw new Error(
-				"Output schemas cannot be applied to sequential or parallel agents. Define output schemas on each sub-agent instead.",
+			const msg =
+				"Output schemas cannot be applied to sequential or parallel agents. Define output schemas on each sub-agent instead.";
+			this.emitError(
+				msg,
+				"Apply outputSchema to each sub-agent individually.",
+				{
+					agentType: this.agentType,
+				},
 			);
+			throw new Error(msg);
 		}
 		this.config.outputSchema = schema;
 		return this as unknown as AgentBuilderWithSchema<T, TMulti>;
@@ -535,10 +555,13 @@ export class AgentBuilder<TOut = string, TMulti extends boolean = false> {
 	withSession(session: Session): this {
 		// Require that withSessionService() was called first
 		if (!this.sessionService) {
-			throw new Error(
-				"Session service must be configured before using withSession(). " +
-					"Call withSessionService() first, or use withQuickSession() for in-memory sessions.",
+			const msg =
+				"Session service must be configured before using withSession(). Call withSessionService() first, or use withQuickSession() for in-memory sessions.";
+			this.emitError(
+				msg,
+				"Invoke withSessionService() prior to withSession().",
 			);
+			throw new Error(msg);
 		}
 
 		// Update session options with the session details
@@ -664,7 +687,9 @@ export class AgentBuilder<TOut = string, TMulti extends boolean = false> {
 		switch (this.agentType) {
 			case "llm": {
 				if (!this.config.model) {
-					throw new Error("Model is required for LLM agent");
+					const msg = "Model is required for LLM agent";
+					this.emitError(msg, "Call withModel() before build().");
+					throw new Error(msg);
 				}
 
 				const model = this.config.model;
@@ -694,7 +719,9 @@ export class AgentBuilder<TOut = string, TMulti extends boolean = false> {
 					!Array.isArray(this.config.subAgents) ||
 					this.config.subAgents.length === 0
 				) {
-					throw new Error("Sub-agents required for sequential agent");
+					const msg = "Sub-agents required for sequential agent";
+					this.emitError(msg, "Provide at least one sub-agent.");
+					throw new Error(msg);
 				}
 				return new SequentialAgent({
 					name: this.config.name,
@@ -708,7 +735,9 @@ export class AgentBuilder<TOut = string, TMulti extends boolean = false> {
 					!Array.isArray(this.config.subAgents) ||
 					this.config.subAgents.length === 0
 				) {
-					throw new Error("Sub-agents required for parallel agent");
+					const msg = "Sub-agents required for parallel agent";
+					this.emitError(msg, "Provide at least one sub-agent.");
+					throw new Error(msg);
 				}
 				return new ParallelAgent({
 					name: this.config.name,
@@ -722,7 +751,9 @@ export class AgentBuilder<TOut = string, TMulti extends boolean = false> {
 					!Array.isArray(this.config.subAgents) ||
 					this.config.subAgents.length === 0
 				) {
-					throw new Error("Sub-agents required for loop agent");
+					const msg = "Sub-agents required for loop agent";
+					this.emitError(msg, "Provide at least one sub-agent.");
+					throw new Error(msg);
 				}
 				return new LoopAgent({
 					name: this.config.name,
@@ -739,7 +770,9 @@ export class AgentBuilder<TOut = string, TMulti extends boolean = false> {
 					!this.config.rootNode ||
 					typeof this.config.rootNode !== "string"
 				) {
-					throw new Error("Nodes and root node required for LangGraph agent");
+					const msg = "Nodes and root node required for LangGraph agent";
+					this.emitError(msg, "Provide nodes[] and a valid rootNode string.");
+					throw new Error(msg);
 				}
 				return new LangGraphAgent({
 					name: this.config.name,

@@ -235,8 +235,58 @@ export class Logger {
 	}
 
 	error(message: string, ...args: any[]) {
+		// Convert extra args into structured lines.
+		const lines: string[] = [];
+		const cwd = process.cwd();
+		const maxFrames = Number(process.env.ADK_ERROR_STACK_FRAMES || 8);
+		const shortenFrame = (frame: string) => {
+			// Remove leading 'at ' for compactness
+			let f = frame.trim().replace(/^at\s+/, "");
+			// Replace absolute cwd path with '.' for brevity (handle spaces in path)
+			if (f.includes(cwd)) f = f.split(cwd).join(".");
+			return f;
+		};
+		for (const arg of args) {
+			if (!arg) continue;
+			if (arg instanceof Error) {
+				lines.push(`• ${arg.name}: ${arg.message}`);
+				if (arg.stack) {
+					const frames = arg.stack
+						.split(/\n/)
+						.slice(1) // skip error message line
+						.map((l) => l.trim())
+						.filter(Boolean)
+						.slice(0, maxFrames);
+					if (frames.length) {
+						lines.push("• Stack:");
+						for (const fr of frames) {
+							lines.push(`  ↳ ${shortenFrame(fr)}`);
+						}
+						if (arg.stack.split(/\n/).length - 1 > frames.length) {
+							lines.push(
+								`  ↳ … ${arg.stack.split(/\n/).length - 1 - frames.length} more frames`,
+							);
+						}
+					}
+				}
+			} else if (typeof arg === "object") {
+				try {
+					lines.push(`• ${JSON.stringify(arg)}`);
+				} catch {
+					lines.push(`• ${String(arg)}`);
+				}
+			} else {
+				lines.push(`• ${String(arg)}`);
+			}
+		}
 		const time = new Date().toLocaleTimeString();
-		console.error(chalk.red(`[${time}] ❌ [${this.name}] ${message}`), ...args);
+		const box = this.formatBox({
+			title: `❌ Error @ ${time} (${this.name})`,
+			description: message.endsWith(":") ? message : `${message}`,
+			lines,
+			color: (txt: string) => chalk.red(txt),
+		});
+		console.error(box);
 	}
 
 	/**
