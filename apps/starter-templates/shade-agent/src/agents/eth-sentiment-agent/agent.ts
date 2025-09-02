@@ -21,7 +21,7 @@ export const getEthSentimentAgent = () => {
 		{headlines}
 		</headlines>
 
-		You must and should only respond with one word. whether the overall sentiment is positive, negative, or neutral.
+		You must and should only respond with one word. whether the overall sentiment is "positive", "negative", or "neutral".
 	`;
 
 	const ethSentimentAgent = new LlmAgent({

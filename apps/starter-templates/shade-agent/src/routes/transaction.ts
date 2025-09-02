@@ -27,9 +27,11 @@ app.get("/", async (c) => {
 
 		// Run models to get price and sentiment
 		const response = await runner.ask("Give ethereum's price and sentiment");
+
+		// Get the latest state after the agent run is complete
 		const currentSession = await sessionService.getSession(
-			session.userId,
 			session.appName,
+			session.userId,
 			session.id,
 		);
 
@@ -37,12 +39,11 @@ app.get("/", async (c) => {
 			throw Error("session not found");
 		}
 
+		// The state contains price set by price tool and sentiment set by sentiment agent
 		const { price, sentiment } = currentSession.state as {
 			price: number;
 			sentiment: string;
 		};
-
-		console.log({ price, sentiment, state: currentSession.state, response });
 
 		if (!price) {
 			return c.json({ error: "Failed to fetch ETH price" }, 500);
