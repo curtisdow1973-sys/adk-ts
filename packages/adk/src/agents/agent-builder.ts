@@ -194,6 +194,24 @@ export class AgentBuilder<TOut = string, TMulti extends boolean = false> {
 	private warnedMethods: Set<string> = new Set();
 	private logger = new Logger({ name: "AgentBuilder" });
 
+	/** Basic warn helper respecting NODE_ENV */
+	private warn(msg: string) {
+		if (process.env.NODE_ENV === "production") return;
+		if (this.logger && typeof (this.logger as any).warn === "function") {
+			(this.logger as any).warn(msg);
+		} else {
+			// eslint-disable-next-line no-console
+			console.warn(msg);
+		}
+	}
+
+	/** Warn only once per key */
+	private warnOnce(key: string, msg: string) {
+		if (this.warnedMethods.has(key)) return;
+		this.warnedMethods.add(key);
+		this.warn(msg);
+	}
+
 	/**
 	 * Private constructor - use static create() method
 	 */
@@ -314,6 +332,14 @@ export class AgentBuilder<TOut = string, TMulti extends boolean = false> {
 	 */
 	withOutputKey(outputKey: string): this {
 		this.warnIfLocked("withOutputKey");
+		// Ignore for aggregator agent types
+		if (this.agentType === "sequential" || this.agentType === "parallel") {
+			this.warnOnce(
+				"withOutputKey-multi",
+				"AgentBuilder: outputKey is ignored for sequential/parallel aggregators. Set outputKey on individual sub-agents instead.",
+			);
+			return this;
+		}
 		this.config.outputKey = outputKey;
 		return this;
 	}
@@ -371,9 +397,30 @@ export class AgentBuilder<TOut = string, TMulti extends boolean = false> {
 	 * @returns This builder instance for chaining
 	 */
 	asSequential(subAgents: BaseAgent[]): AgentBuilder<TOut, true> {
-		this.warnIfLocked("asSequential");
+		if (this.definitionLocked) {
+			this.warnOnce(
+				"asSequential-locked",
+				"AgentBuilder: asSequential() ignored because builder is locked by withAgent().",
+			);
+			return this as unknown as AgentBuilder<TOut, true>;
+		}
 		this.agentType = "sequential";
 		this.config.subAgents = subAgents;
+		// Remove incompatible keys
+		if (this.config.outputKey) {
+			this.warnOnce(
+				"sequential-outputKey",
+				"AgentBuilder: outputKey was set but is ignored for sequential agents. It has been removed.",
+			);
+			this.config.outputKey = undefined;
+		}
+		if (this.config.outputSchema) {
+			this.warnOnce(
+				"sequential-outputSchema",
+				"AgentBuilder: outputSchema was set but cannot be applied to sequential agents. It has been removed.",
+			);
+			this.config.outputSchema = undefined;
+		}
 		return this as unknown as AgentBuilder<TOut, true>;
 	}
 
@@ -383,9 +430,29 @@ export class AgentBuilder<TOut = string, TMulti extends boolean = false> {
 	 * @returns This builder instance for chaining
 	 */
 	asParallel(subAgents: BaseAgent[]): AgentBuilder<TOut, true> {
-		this.warnIfLocked("asParallel");
+		if (this.definitionLocked) {
+			this.warnOnce(
+				"asParallel-locked",
+				"AgentBuilder: asParallel() ignored because builder is locked by withAgent().",
+			);
+			return this as unknown as AgentBuilder<TOut, true>;
+		}
 		this.agentType = "parallel";
 		this.config.subAgents = subAgents;
+		if (this.config.outputKey) {
+			this.warnOnce(
+				"parallel-outputKey",
+				"AgentBuilder: outputKey was set but is ignored for parallel agents. It has been removed.",
+			);
+			this.config.outputKey = undefined;
+		}
+		if (this.config.outputSchema) {
+			this.warnOnce(
+				"parallel-outputSchema",
+				"AgentBuilder: outputSchema was set but cannot be applied to parallel agents. It has been removed.",
+			);
+			this.config.outputSchema = undefined;
+		}
 		return this as unknown as AgentBuilder<TOut, true>;
 	}
 
@@ -786,13 +853,8 @@ export class AgentBuilder<TOut = string, TMulti extends boolean = false> {
 		if (!this.definitionLocked) return;
 		if (this.warnedMethods.has(method)) return;
 		this.warnedMethods.add(method);
-		if (process.env.NODE_ENV !== "production") {
-			const msg = `AgentBuilder: attempted to call ${method} after withAgent(); ignoring. (Wrap the agent first OR configure before withAgent).`;
-			if (this.logger && typeof this.logger.warn === "function") {
-				this.logger.warn(msg);
-			} else {
-				console.warn(msg);
-			}
-		}
+		this.warn(
+			`AgentBuilder: attempted to call ${method} after withAgent(); ignoring. (Wrap the agent first OR configure before withAgent).`,
+		);
 	}
 }
