@@ -14,11 +14,19 @@ export const getEthSentimentAgent = () => {
 	const ethSentimentAgent = new LlmAgent({
 		name: "eth_sentiment_agent",
 		description: "provides Ethereum sentiment based on latest headlines",
-		instruction: `You have access to the get_eth_headlines tool.
+		instruction: `
+When asked about ethereum, provide its sentiment. You have access to the get_eth_headlines tool.
 Call this tool to fetch the latest Ethereum-related headlines.
-Analyze the sentiment of the headlines and respond with whether the overall sentiment is positive, negative, or neutral.`,
+After running the tool, you can see headlines:
+
+<headlines>
+{headlines}
+</headlines>
+
+You must and should only respond with one word. whether the overall sentiment is positive, negative, or neutral.`,
 		model: env.LLM_MODEL,
 		tools: [ethHeadlinesTool],
+		outputKey: "sentiment",
 	});
 
 	return ethSentimentAgent;

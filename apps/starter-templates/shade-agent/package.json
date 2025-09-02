@@ -29,7 +29,7 @@
 	"homepage": "https://github.com/IQAICOM/adk-agent-starter#readme",
 	"dependencies": {
 		"@hono/node-server": "^1.15.0",
-		"@iqai/adk": "^0.2.5",
+		"@iqai/adk": "^0.3.0",
 		"@neardefi/shade-agent-js": "^1.0.0",
 		"chainsig.js": "^1.1.9",
 		"cors": "^2.8.5",

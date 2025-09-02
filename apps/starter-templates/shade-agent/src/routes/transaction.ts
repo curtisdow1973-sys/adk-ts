@@ -3,13 +3,13 @@ import { utils } from "chainsig.js";
 import { Contract, JsonRpcProvider } from "ethers";
 import { Hono } from "hono";
 import { getRootAgent } from "../agents/agent";
-import { getFormatAgent } from "../agents/format-agent/agent";
 import {
 	Evm,
 	ethContractAbi,
 	ethContractAddress,
 	ethRpcUrl,
 } from "../utils/ethereum";
+
 const { toRSV, uint8ArrayToHex } = utils.cryptography;
 
 const app = new Hono();
@@ -23,14 +23,26 @@ app.get("/", async (c) => {
 		}
 
 		// Get the data from agent
-		const rootAgent = await getRootAgent();
-		const formatAgent = await getFormatAgent();
+		const { sessionService, runner, session } = await getRootAgent();
 
 		// Run models to get price and sentiment
-		const response = await rootAgent.runner.ask(
-			"What is current price and sentiment of eth?",
+		const response = await runner.ask("Give ethereum's price and sentiment");
+		const currentSession = await sessionService.getSession(
+			session.userId,
+			session.appName,
+			session.id,
 		);
-		const { price, sentiment } = await formatAgent.runner.ask(response);
+
+		if (!currentSession) {
+			throw Error("session not found");
+		}
+
+		const { price, sentiment } = currentSession.state as {
+			price: number;
+			sentiment: string;
+		};
+
+		console.log({ price, sentiment, state: currentSession.state, response });
 
 		if (!price) {
 			return c.json({ error: "Failed to fetch ETH price" }, 500);
