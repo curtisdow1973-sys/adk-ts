@@ -42,6 +42,70 @@ export class Logger {
 		);
 	}
 
+	/**
+	 * Structured warning with code, suggestion, context.
+	 * Options via env:
+	 *  ADK_WARN_FORMAT=pretty|json|text (default pretty when structured)
+	 *  ADK_AGENT_BUILDER_WARN=verbose to include context always
+	 */
+	warnStructured(
+		warning: {
+			code: string;
+			message: string;
+			suggestion?: string;
+			context?: Record<string, any>;
+			severity?: "warn" | "info" | "error";
+			timestamp?: string;
+		},
+		opts: { format?: "pretty" | "json" | "text"; verbose?: boolean } = {},
+	): void {
+		const format = (
+			opts.format ||
+			process.env.ADK_WARN_FORMAT ||
+			"pretty"
+		).toLowerCase() as "pretty" | "json" | "text";
+		const verbose =
+			opts.verbose || process.env.ADK_AGENT_BUILDER_WARN === "verbose";
+		const timestamp = warning.timestamp || new Date().toISOString();
+		const sev = warning.severity || "warn";
+
+		if (format === "json") {
+			this.warn(
+				JSON.stringify({
+					level: sev,
+					source: this.name,
+					timestamp,
+					...warning,
+				}),
+			);
+			return;
+		}
+
+		const icon = sev === "error" ? "⛔" : sev === "info" ? "ℹ️" : "⚠️";
+		const base = `${icon} ${warning.code} ${warning.message}`;
+		const suggestion = warning.suggestion
+			? `\n   • Suggestion: ${warning.suggestion}`
+			: "";
+		let contextBlock = "";
+		if (verbose && warning.context && Object.keys(warning.context).length) {
+			const pairs = Object.entries(warning.context)
+				.map(
+					([k, v]) =>
+						`${k}=${typeof v === "object" ? JSON.stringify(v) : String(v)}`,
+				)
+				.join("  ");
+			contextBlock = `\n   • Context: ${pairs}`;
+		}
+		if (format === "pretty") {
+			this.warn(base + suggestion + contextBlock);
+		} else {
+			// text
+			this.warn(
+				`[${warning.code}] ${warning.message}${warning.suggestion ? `\n  -> ${warning.suggestion}` : ""}${contextBlock}`,
+			);
+		}
+	}
+
 	error(message: string, ...args: any[]) {
 		const time = new Date().toLocaleTimeString();
 		console.error(

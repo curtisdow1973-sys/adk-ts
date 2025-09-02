@@ -22,31 +22,27 @@ export class Logger {
 		return new Date().toLocaleTimeString();
 	}
 
-	private colorize(message: string): string {
-		return chalk.blue(message);
-	}
-
 	private prefix(icon: string, message: string): string {
 		return `${this.time()} ${icon} [${this.name}] ${message}`;
 	}
 
 	debug(message: string, ...args: any[]) {
 		if (!this.debugEnabled || this.quiet) return;
-		console.debug(this.colorize(this.prefix("🐛", message)), ...args);
+		console.debug(chalk.blue(this.prefix("🐛", message)), ...args);
 	}
 
 	info(message: string, ...args: any[]) {
 		if (this.quiet) return;
-		console.info(this.colorize(this.prefix("ℹ️", message)), ...args);
+		console.info(chalk.cyan(this.prefix("ℹ️", message)), ...args);
 	}
 
 	warn(message: string, ...args: any[]) {
 		if (this.quiet) return;
-		console.warn(this.colorize(this.prefix("🚧", message)), ...args);
+		console.warn(chalk.yellow(this.prefix("🚧", message)), ...args);
 	}
 
 	error(message: string, ...args: any[]) {
 		if (this.quiet) return;
-		console.error(this.colorize(this.prefix("❌", message)), ...args);
+		console.error(chalk.red(this.prefix("❌", message)), ...args);
 	}
 }
