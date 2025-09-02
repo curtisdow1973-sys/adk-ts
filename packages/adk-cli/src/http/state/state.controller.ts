@@ -1,10 +1,13 @@
-import { Body, Controller, Get, Param, Put } from "@nestjs/common";
-import type { StateResponse, StateUpdateRequest } from "../../common/types";
-import type { StateService } from "./state.service";
+import { Body, Controller, Get, Inject, Param, Put } from "@nestjs/common";
+import { StateResponse, StateUpdateRequest } from "../../common/types";
+import { StateService } from "./state.service";
 
 @Controller("api/agents/:id/sessions/:sessionId")
 export class StateController {
-	constructor(private readonly state: StateService) {}
+	constructor(
+		@Inject(StateService)
+		private readonly state: StateService,
+	) {}
 
 	@Get("state")
 	async getState(

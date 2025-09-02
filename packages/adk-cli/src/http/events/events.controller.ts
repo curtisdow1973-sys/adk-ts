@@ -1,10 +1,13 @@
-import { Controller, Get, Param } from "@nestjs/common";
-import type { EventsResponse } from "../../common/types";
-import type { EventsService } from "./events.service";
+import { Controller, Get, Inject, Param } from "@nestjs/common";
+import { EventsResponse } from "../../common/types";
+import { EventsService } from "./events.service";
 
 @Controller("api/agents/:id/sessions/:sessionId")
 export class EventsController {
-	constructor(private readonly events: EventsService) {}
+	constructor(
+		@Inject(EventsService)
+		private readonly events: EventsService,
+	) {}
 
 	@Get("events")
 	async getEvents(

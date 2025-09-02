@@ -1,14 +1,17 @@
-import { Body, Controller, Get, Param, Post } from "@nestjs/common";
-import type {
+import { Body, Controller, Get, Inject, Param, Post } from "@nestjs/common";
+import {
 	MessageRequest,
 	MessageResponse,
 	MessagesResponse,
 } from "../../common/types";
-import type { MessagingService } from "./messaging.service";
+import { MessagingService } from "./messaging.service";
 
 @Controller("api/agents/:id")
 export class MessagingController {
-	constructor(private readonly messaging: MessagingService) {}
+	constructor(
+		@Inject(MessagingService)
+		private readonly messaging: MessagingService,
+	) {}
 
 	@Get("messages")
 	async getAgentMessages(@Param("id") id: string): Promise<MessagesResponse> {

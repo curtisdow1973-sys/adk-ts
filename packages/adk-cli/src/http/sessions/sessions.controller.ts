@@ -1,13 +1,21 @@
-import { Body, Controller, Delete, Get, Param, Post } from "@nestjs/common";
-import type {
-	CreateSessionRequest,
-	SessionsResponse,
-} from "../../common/types";
-import type { SessionsService } from "./sessions.service";
+import {
+	Body,
+	Controller,
+	Delete,
+	Get,
+	Inject,
+	Param,
+	Post,
+} from "@nestjs/common";
+import { CreateSessionRequest, SessionsResponse } from "../../common/types";
+import { SessionsService } from "./sessions.service";
 
 @Controller("api/agents/:id/sessions")
 export class SessionsController {
-	constructor(private readonly sessions: SessionsService) {}
+	constructor(
+		@Inject(SessionsService)
+		private readonly sessions: SessionsService,
+	) {}
 
 	@Get()
 	async listSessions(@Param("id") id: string): Promise<SessionsResponse> {
