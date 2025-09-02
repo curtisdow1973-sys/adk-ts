@@ -193,7 +193,25 @@ export class AgentBuilder<TOut = string, TMulti extends boolean = false> {
 	private existingAgent?: BaseAgent; // If provided, reuse directly
 	private definitionLocked = false; // Lock further definition mutation after withAgent
 	private logger = new Logger({ name: "AgentBuilder" });
-	private warningManager = new AgentBuilderWarningManager(this.logger);
+
+	private emitWarning(
+		message: string,
+		suggestion?: string,
+		context?: Record<string, any>,
+	) {
+		let msg = `⚠️ ${message}`;
+		if (suggestion) msg += `\n   • Suggestion: ${suggestion}`;
+		if (context && Object.keys(context).length) {
+			const ctxStr = Object.entries(context)
+				.map(
+					([k, v]) =>
+						`${k}=${typeof v === "object" ? JSON.stringify(v) : String(v)}`,
+				)
+				.join("  ");
+			msg += `\n   • Context: ${ctxStr}`;
+		}
+		this.logger.warn(msg);
+	}
 
 	// (Global handler removed for simplicity.)
 
@@ -202,14 +220,11 @@ export class AgentBuilder<TOut = string, TMulti extends boolean = false> {
 	 */
 	private warnIfLocked(method: string): void {
 		if (!this.definitionLocked) return;
-		this.warningManager.emit({
-			key: `locked-${method}`,
-			code: "AB_LOCKED_DEF",
-			message: `${method}() ignored because builder is locked by withAgent()`,
-			suggestion:
-				"Configure model/tools/etc. before calling withAgent(), or avoid withAgent() if you intend to mutate afterwards.",
-			context: { method, agentName: this.config.name },
-		});
+		this.emitWarning(
+			`${method}() ignored because builder is locked by withAgent()`,
+			"Configure model/tools/etc. before calling withAgent(), or avoid withAgent() if you intend to mutate afterwards.",
+			{ method, agentName: this.config.name },
+		);
 	}
 
 	/**
@@ -332,13 +347,11 @@ export class AgentBuilder<TOut = string, TMulti extends boolean = false> {
 		this.warnIfLocked("withOutputKey");
 		// Ignore for aggregator agent types
 		if (this.agentType === "sequential" || this.agentType === "parallel") {
-			this.warningManager.emit({
-				key: "withOutputKey-multi",
-				code: "AB_AGG_OUTKEY_IGNORED",
-				message: "outputKey ignored for sequential/parallel aggregator",
-				suggestion: "Set outputKey on each sub-agent instead.",
-				context: { attemptedOutputKey: outputKey, agentType: this.agentType },
-			});
+			this.emitWarning(
+				"outputKey ignored for sequential/parallel aggregator",
+				"Set outputKey on each sub-agent instead.",
+				{ attemptedOutputKey: outputKey, agentType: this.agentType },
+			);
 			return this;
 		}
 		this.config.outputKey = outputKey;
@@ -399,36 +412,29 @@ export class AgentBuilder<TOut = string, TMulti extends boolean = false> {
 	 */
 	asSequential(subAgents: BaseAgent[]): AgentBuilder<TOut, true> {
 		if (this.definitionLocked) {
-			this.warningManager.emit({
-				key: "asSequential-locked",
-				code: "AB_SEQ_LOCKED",
-				message: "asSequential() ignored; builder locked by withAgent()",
-				suggestion: "Call asSequential() before withAgent().",
-				context: { agentName: this.config.name },
-			});
+			this.emitWarning(
+				"asSequential() ignored; builder locked by withAgent()",
+				"Call asSequential() before withAgent().",
+				{ agentName: this.config.name },
+			);
 			return this as unknown as AgentBuilder<TOut, true>;
 		}
 		this.agentType = "sequential";
 		this.config.subAgents = subAgents;
 		// Remove incompatible keys
 		if (this.config.outputKey) {
-			this.warningManager.emit({
-				key: "sequential-outputKey",
-				code: "AB_SEQ_OUTKEY_IGNORED",
-				message: "outputKey ignored for sequential agent aggregator; removed",
-				suggestion: "Assign outputKey on individual sub-agents if needed.",
-				context: { previousValue: this.config.outputKey },
-			});
+			this.emitWarning(
+				"outputKey ignored for sequential agent aggregator; removed",
+				"Assign outputKey on individual sub-agents if needed.",
+				{ previousValue: this.config.outputKey },
+			);
 			this.config.outputKey = undefined;
 		}
 		if (this.config.outputSchema) {
-			this.warningManager.emit({
-				key: "sequential-outputSchema",
-				code: "AB_SEQ_SCHEMA_IGNORED",
-				message:
-					"outputSchema cannot be applied to sequential aggregator; removed",
-				suggestion: "Apply schemas to sub-agents individually.",
-			});
+			this.emitWarning(
+				"outputSchema cannot be applied to sequential aggregator; removed",
+				"Apply schemas to sub-agents individually.",
+			);
 			this.config.outputSchema = undefined;
 		}
 		return this as unknown as AgentBuilder<TOut, true>;
@@ -441,35 +447,28 @@ export class AgentBuilder<TOut = string, TMulti extends boolean = false> {
 	 */
 	asParallel(subAgents: BaseAgent[]): AgentBuilder<TOut, true> {
 		if (this.definitionLocked) {
-			this.warningManager.emit({
-				key: "asParallel-locked",
-				code: "AB_PAR_LOCKED",
-				message: "asParallel() ignored; builder locked by withAgent()",
-				suggestion: "Call asParallel() before withAgent().",
-				context: { agentName: this.config.name },
-			});
+			this.emitWarning(
+				"asParallel() ignored; builder locked by withAgent()",
+				"Call asParallel() before withAgent().",
+				{ agentName: this.config.name },
+			);
 			return this as unknown as AgentBuilder<TOut, true>;
 		}
 		this.agentType = "parallel";
 		this.config.subAgents = subAgents;
 		if (this.config.outputKey) {
-			this.warningManager.emit({
-				key: "parallel-outputKey",
-				code: "AB_PAR_OUTKEY_IGNORED",
-				message: "outputKey ignored for parallel agent aggregator; removed",
-				suggestion: "Assign outputKey on individual sub-agents if needed.",
-				context: { previousValue: this.config.outputKey },
-			});
+			this.emitWarning(
+				"outputKey ignored for parallel agent aggregator; removed",
+				"Assign outputKey on individual sub-agents if needed.",
+				{ previousValue: this.config.outputKey },
+			);
 			this.config.outputKey = undefined;
 		}
 		if (this.config.outputSchema) {
-			this.warningManager.emit({
-				key: "parallel-outputSchema",
-				code: "AB_PAR_SCHEMA_IGNORED",
-				message:
-					"outputSchema cannot be applied to parallel aggregator; removed",
-				suggestion: "Apply schemas to sub-agents individually.",
-			});
+			this.emitWarning(
+				"outputSchema cannot be applied to parallel aggregator; removed",
+				"Apply schemas to sub-agents individually.",
+			);
 			this.config.outputSchema = undefined;
 		}
 		return this as unknown as AgentBuilder<TOut, true>;
@@ -863,45 +862,5 @@ export class AgentBuilder<TOut = string, TMulti extends boolean = false> {
 				return baseRunner.runAsync(params);
 			},
 		};
-	}
-}
-
-// Structured warning emitted externally or to console
-export interface FormattedWarning {
-	code: string;
-	message: string;
-	suggestion?: string;
-	context?: Record<string, any>;
-	severity?: "warn" | "info" | "error";
-	timestamp: string; // ISO 8601
-}
-
-/** Formatting + emission manager for AgentBuilder warnings */
-class AgentBuilderWarningManager {
-	private emittedKeys = new Set<string>();
-	private logger: Logger;
-
-	constructor(logger: Logger) {
-		this.logger = logger;
-	}
-
-	emit(params: Omit<FormattedWarning, "timestamp"> & { key?: string }) {
-		if (params.key && this.emittedKeys.has(params.key)) return; // still dedupe
-		if (params.key) this.emittedKeys.add(params.key);
-
-		const warning: FormattedWarning = {
-			code: params.code,
-			message: params.message,
-			suggestion: params.suggestion,
-			context: params.context || {},
-			severity: params.severity || "warn",
-			timestamp: new Date().toISOString(),
-		};
-
-		// Always use structured warning (logger guarantees warnStructured exists)
-		this.logger.warnStructured(warning, {
-			format: "pretty",
-			verbose: true,
-		});
 	}
 }
