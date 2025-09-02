@@ -1,6 +1,6 @@
 {
 	"name": "@iqai/adk-cli",
-	"version": "0.2.8",
+	"version": "0.2.9",
 	"description": "CLI tool for creating, running, and testing ADK agents",
 	"main": "dist/index.js",
 	"types": "dist/index.d.ts",
@@ -18,7 +18,14 @@
 		"url": "https://github.com/IQAIcom/adk-ts.git",
 		"directory": "packages/adk-cli"
 	},
-	"keywords": ["ai", "llm", "agent", "cli", "adk", "typescript"],
+	"keywords": [
+		"ai",
+		"llm",
+		"agent",
+		"cli",
+		"adk",
+		"typescript"
+	],
 	"author": "IQAI",
 	"license": "MIT",
 	"dependencies": {
