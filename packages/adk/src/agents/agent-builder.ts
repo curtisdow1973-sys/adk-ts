@@ -2,6 +2,7 @@ import { Logger } from "@adk/logger/index.js";
 import type { LlmRequest } from "@adk/models";
 import type { Content, Part } from "@google/genai";
 import { type LanguageModel, generateId } from "ai";
+import type { ZodSchema, ZodType } from "zod";
 import type { BaseArtifactService } from "../artifacts/base-artifact-service.js";
 import type { BaseCodeExecutor } from "../code-executors/base-code-executor.js";
 import type { Event } from "../events/event.js";
@@ -42,8 +43,8 @@ export interface AgentBuilderConfig {
 	nodes?: LangGraphNode[];
 	rootNode?: string;
 	outputKey?: string;
-	inputSchema?: import("zod").ZodSchema;
-	outputSchema?: import("zod").ZodSchema;
+	inputSchema?: ZodSchema;
+	outputSchema?: ZodSchema;
 }
 
 /**
@@ -93,7 +94,7 @@ export interface EnhancedRunner<T = string, M extends boolean = false> {
 		sessionId: string;
 		newMessage: FullMessage;
 	}): AsyncIterable<Event>;
-	__outputSchema?: import("zod").ZodSchema;
+	__outputSchema?: ZodSchema;
 }
 
 /**
@@ -272,15 +273,13 @@ export class AgentBuilder<TOut = string, TMulti extends boolean = false> {
 		return this;
 	}
 
-	withInputSchema(schema: import("zod").ZodSchema): this {
+	withInputSchema(schema: ZodSchema): this {
 		this.warnIfLocked("withInputSchema");
 		this.config.inputSchema = schema;
 		return this;
 	}
 
-	withOutputSchema<T>(
-		schema: import("zod").ZodType<T>,
-	): AgentBuilderWithSchema<T, TMulti> {
+	withOutputSchema<T>(schema: ZodType<T>): AgentBuilderWithSchema<T, TMulti> {
 		this.warnIfLocked("withOutputSchema");
 		// Disallow setting an output schema directly on multi-agent aggregators
 		if (this.agentType === "sequential" || this.agentType === "parallel") {
