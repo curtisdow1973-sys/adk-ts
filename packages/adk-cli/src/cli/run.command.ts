@@ -4,7 +4,7 @@ import chalk from "chalk";
 import { marked } from "marked";
 import * as markedTerminal from "marked-terminal";
 import { Command, CommandRunner, Option } from "nest-commander";
-import { startHttpServer } from "../../http/bootstrap";
+import { startHttpServer } from "../http/bootstrap";
 
 const mt: any =
 	(markedTerminal as any).markedTerminal ?? (markedTerminal as any);

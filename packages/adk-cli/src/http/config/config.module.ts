@@ -1,6 +1,6 @@
 import { type DynamicModule, Global, Module } from "@nestjs/common";
-import { TOKENS } from "../../../common/tokens";
-import { RUNTIME_CONFIG, type RuntimeConfig } from "../../runtime-config";
+import { TOKENS } from "../../common/tokens";
+import { RUNTIME_CONFIG, type RuntimeConfig } from "../runtime-config";
 
 @Global()
 @Module({})

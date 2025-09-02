@@ -1,8 +1,8 @@
 import { Module } from "@nestjs/common";
-import { NewCommand } from "./commands/new.command";
-import { RunCommand } from "./commands/run.command";
-import { ServeCommand } from "./commands/serve.command";
-import { WebCommand } from "./commands/web.command";
+import { NewCommand } from "./new.command";
+import { RunCommand } from "./run.command";
+import { ServeCommand } from "./serve.command";
+import { WebCommand } from "./web.command";
 
 @Module({
 	imports: [],

@@ -1,5 +1,5 @@
 import { Controller, Get, Param } from "@nestjs/common";
-import type { EventsResponse } from "../../../common/types";
+import type { EventsResponse } from "../../common/types";
 import type { EventsService } from "./events.service";
 
 @Controller("api/agents/:id/sessions/:sessionId")

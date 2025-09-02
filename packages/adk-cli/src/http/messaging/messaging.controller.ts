@@ -3,7 +3,7 @@ import type {
 	MessageRequest,
 	MessageResponse,
 	MessagesResponse,
-} from "../../../common/types";
+} from "../../common/types";
 import type { MessagingService } from "./messaging.service";
 
 @Controller("api/agents/:id")

@@ -7,8 +7,8 @@ import { NestFactory } from "@nestjs/core";
 import type { NestExpressApplication } from "@nestjs/platform-express";
 
 import { HttpModule } from "./http.module";
-import { AgentManager } from "./modules/providers/agent-manager.service";
-import { HotReloadService } from "./modules/reload/hot-reload.service";
+import { AgentManager } from "./providers/agent-manager.service";
+import { HotReloadService } from "./reload/hot-reload.service";
 import type { RuntimeConfig } from "./runtime-config";
 
 // Reuse the same well-known skips used by AgentScanner

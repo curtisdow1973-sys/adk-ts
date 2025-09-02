@@ -1,6 +1,6 @@
 import { InMemorySessionService } from "@iqai/adk";
 import { Module } from "@nestjs/common";
-import { TOKENS } from "../../../common/tokens";
+import { TOKENS } from "../../common/tokens";
 import { AgentLoader } from "./agent-loader.service";
 import { AgentManager } from "./agent-manager.service";
 import { AgentScanner } from "./agent-scanner.service";

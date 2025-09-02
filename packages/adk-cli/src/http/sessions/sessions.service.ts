@@ -1,7 +1,7 @@
 import { InMemorySessionService } from "@iqai/adk";
 import { Inject, Injectable } from "@nestjs/common";
-import { Logger } from "../../../common/logger";
-import { TOKENS } from "../../../common/tokens";
+import { Logger } from "../../common/logger";
+import { TOKENS } from "../../common/tokens";
 import type {
 	CreateSessionRequest,
 	EventsResponse,
@@ -10,7 +10,7 @@ import type {
 	SessionsResponse,
 	StateResponse,
 	StateUpdateRequest,
-} from "../../../common/types";
+} from "../../common/types";
 import { AgentManager } from "../providers/agent-manager.service";
 
 @Injectable()

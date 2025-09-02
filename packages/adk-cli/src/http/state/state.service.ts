@@ -1,5 +1,5 @@
 import { Inject, Injectable } from "@nestjs/common";
-import type { StateResponse } from "../../../common/types";
+import type { StateResponse } from "../../common/types";
 import { SessionsService } from "../sessions/sessions.service";
 
 @Injectable()

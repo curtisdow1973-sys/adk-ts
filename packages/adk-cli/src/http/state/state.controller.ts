@@ -1,5 +1,5 @@
 import { Body, Controller, Get, Param, Put } from "@nestjs/common";
-import type { StateResponse, StateUpdateRequest } from "../../../common/types";
+import type { StateResponse, StateUpdateRequest } from "../../common/types";
 import type { StateService } from "./state.service";
 
 @Controller("api/agents/:id/sessions/:sessionId")

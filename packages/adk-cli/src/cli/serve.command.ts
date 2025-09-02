@@ -1,6 +1,6 @@
 import chalk from "chalk";
 import { Command, CommandRunner, Option } from "nest-commander";
-import { startHttpServer } from "../../http/bootstrap";
+import { startHttpServer } from "../http/bootstrap";
 
 interface ServeCommandOptions {
 	port?: number;

@@ -4,7 +4,7 @@ import type {
 	MessageRequest,
 	MessageResponse,
 	MessagesResponse,
-} from "../../../common/types";
+} from "../../common/types";
 import { AgentManager } from "../providers/agent-manager.service";
 import { SessionsService } from "../sessions/sessions.service";
 

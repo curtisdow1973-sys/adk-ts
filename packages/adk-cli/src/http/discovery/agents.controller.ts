@@ -1,5 +1,5 @@
 import { Controller, Get, Inject, Post } from "@nestjs/common";
-import type { AgentListResponse } from "../../../common/types";
+import type { AgentListResponse } from "../../common/types";
 import { AgentManager } from "../providers/agent-manager.service";
 
 function mapAgentsToResponse(agents: Map<string, any>): AgentListResponse[] {

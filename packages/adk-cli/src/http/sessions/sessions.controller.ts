@@ -2,7 +2,7 @@ import { Body, Controller, Delete, Get, Param, Post } from "@nestjs/common";
 import type {
 	CreateSessionRequest,
 	SessionsResponse,
-} from "../../../common/types";
+} from "../../common/types";
 import type { SessionsService } from "./sessions.service";
 
 @Controller("api/agents/:id/sessions")
