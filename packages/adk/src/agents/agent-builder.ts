@@ -199,8 +199,8 @@ export class AgentBuilder<TOut = string, TMulti extends boolean = false> {
 		suggestion?: string,
 		context?: Record<string, any>,
 	) {
-		let msg = message;
-		if (suggestion) msg += `\n   • Suggestion: ${suggestion}`;
+		const lines: string[] = [];
+		if (suggestion) lines.push(`• Suggestion: ${suggestion}`);
 		if (context && Object.keys(context).length) {
 			const ctxStr = Object.entries(context)
 				.map(
@@ -208,12 +208,16 @@ export class AgentBuilder<TOut = string, TMulti extends boolean = false> {
 						`${k}=${typeof v === "object" ? JSON.stringify(v) : String(v)}`,
 				)
 				.join("  ");
-			msg += `\n   • Context: ${ctxStr}`;
+			lines.push(`• Context: ${ctxStr}`);
 		}
-		this.logger.warn(msg);
+		this.logger.warn(
+			this.logger.formatBox({
+				title: "🚧 AgentBuilder Warning",
+				description: message,
+				lines,
+			}),
+		);
 	}
-
-	// (Global handler removed for simplicity.)
 
 	/**
 	 * Warn (once per method) if the definition has been locked by withAgent().
