@@ -3,6 +3,25 @@ import chalk from "chalk";
 interface LoggerOpts {
 	name: string;
 }
+
+interface LogMeta {
+	suggestion?: string;
+	context?: Record<string, any>;
+}
+
+interface LogLevel {
+	icon: string;
+	color: (txt: string) => string;
+	method: typeof console.log;
+}
+
+const LOG_LEVELS: Record<string, LogLevel> = {
+	debug: { icon: "🐛", color: chalk.blue, method: console.log },
+	info: { icon: "ℹ️", color: chalk.cyan, method: console.debug },
+	warn: { icon: "🚧", color: chalk.yellow, method: console.warn },
+	error: { icon: "❌", color: chalk.red, method: console.error },
+};
+
 export class Logger {
 	name: string;
 	isDebugEnabled = isDebugEnabled();
@@ -13,112 +32,163 @@ export class Logger {
 
 	debug(message: string, ...args: any[]) {
 		if (this.isDebugEnabled) {
-			const time = new Date().toLocaleTimeString();
-			console.log(
-				chalk.blue(`[${time}] 🐛 [${this.name}] ${message}`),
-				...args,
-			);
+			this.log("debug", message, ...args);
 		}
 	}
 
 	info(message: string, ...args: any[]) {
-		const time = new Date().toLocaleTimeString();
-		console.debug(chalk.cyan(`[${time}] ℹ️ [${this.name}] ${message}`), ...args);
+		this.log("info", message, ...args);
 	}
 
 	warn(message: string, ...args: any[]) {
+		this.log("warn", message, ...args);
+	}
+
+	error(message: string, ...args: any[]) {
+		this.log("error", message, ...args);
+	}
+
+	private log(level: keyof typeof LOG_LEVELS, message: string, ...args: any[]) {
+		const { icon, color, method } = LOG_LEVELS[level];
 		const time = new Date().toLocaleTimeString();
 		const isProd = process.env.NODE_ENV === "production";
 		const forceBoxes = process.env.ADK_FORCE_BOXES === "true";
-		const icon = "⚠️"; // consistent warning icon
-		const lines: string[] = [];
-		let handledMeta = false;
+
+		const { meta, otherArgs } = this.extractMeta(args);
+		const lines = this.formatArgs(otherArgs, level === "error");
+
+		// Add meta info to lines
+		if (meta.suggestion) lines.unshift(`• Suggestion: ${meta.suggestion}`);
+		if (meta.context && Object.keys(meta.context).length) {
+			const contextStr = Object.entries(meta.context)
+				.map(([k, v]) => `${k}=${this.stringify(v)}`)
+				.join("  ");
+			lines.unshift(`• Context: ${contextStr}`);
+		}
+
+		if (isProd && !forceBoxes) {
+			// Simple production format
+			const header = `[${time}] ${icon} [${this.name}] ${message}`;
+			const output = lines.length ? [header, ...lines].join("\n") : header;
+			method(color(output));
+			return;
+		}
+
+		// Boxed format for warn and error
+		if (level === "warn" || level === "error") {
+			const box = this.formatBox({
+				title: `${icon} ${this.capitalize(level)} @ ${time} (${this.name})`,
+				description: message,
+				lines,
+				color,
+			});
+			method(box);
+		} else {
+			// Simple format for info and debug
+			const header = `[${time}] ${icon} [${this.name}] ${message}`;
+			const output = lines.length ? [header, ...lines].join("\n") : header;
+			method(color(output));
+		}
+	}
+
+	private extractMeta(args: any[]): { meta: LogMeta; otherArgs: any[] } {
+		const meta: LogMeta = {};
+		const otherArgs: any[] = [];
+		let metaFound = false;
+
 		for (const arg of args) {
 			if (!arg) continue;
-			// Special-case meta object with suggestion/context keys
+
+			// Check for meta object (only take the first one)
 			if (
-				!handledMeta &&
+				!metaFound &&
 				typeof arg === "object" &&
 				!(arg instanceof Error) &&
 				("suggestion" in arg || "context" in arg)
 			) {
-				const { suggestion, context } = arg as {
-					suggestion?: string;
-					context?: Record<string, any>;
-				};
-				if (suggestion) lines.push(`• Suggestion: ${suggestion}`);
-				if (context && Object.keys(context).length) {
-					const ctxStr = Object.entries(context)
-						.map(
-							([k, v]) =>
-								`${k}=${typeof v === "object" ? JSON.stringify(v) : String(v)}`,
-						)
-						.join("  ");
-					lines.push(`• Context: ${ctxStr}`);
-				}
-				handledMeta = true;
-				continue;
-			}
-			if (arg instanceof Error) {
-				lines.push(`• ${arg.name}: ${arg.message}`);
-				continue;
-			}
-			if (typeof arg === "object") {
-				try {
-					lines.push(`• ${JSON.stringify(arg)}`);
-				} catch {
-					lines.push(`• ${String(arg)}`);
-				}
+				meta.suggestion = arg.suggestion;
+				meta.context = arg.context;
+				metaFound = true;
 			} else {
-				lines.push(`• ${String(arg)}`);
+				otherArgs.push(arg);
 			}
 		}
 
-		if (isProd && !forceBoxes) {
-			// Production simplified (no box) but keep colors + consistent prefix
-			const head = `[${time}] ${icon} [${this.name}] ${message}`;
-			if (!lines.length) {
-				console.warn(chalk.yellow(head));
-				return;
-			}
-			const colored = [head, ...lines].map((l) => chalk.yellow(l)).join("\n");
-			console.warn(colored);
-			return;
-		}
-
-		const box = this.formatBox({
-			title: `${icon} Warning @ ${time} (${this.name})`,
-			description: message,
-			lines,
-			color: (txt: string) => chalk.yellow(txt),
-		});
-		console.warn(box);
+		return { meta, otherArgs };
 	}
 
-	/**
-	 * Formats a decorative boxed block with a title, description and optional extra lines.
-	 * Returns the formatted string (does not log automatically) so callers can choose level.
-	 *
-	 * Example:
-	 * logger.warn(logger.formatBox({
-	 *   title: "AgentBuilder Warning",
-	 *   description: "withModel() ignored because builder is locked",
-	 *   lines: ["• Suggestion: Call withAgent() last", "• Context: method=withModel"]
-	 * }));
-	 */
+	private formatArgs(args: any[], includeStack = false): string[] {
+		const lines: string[] = [];
+		const maxFrames = Number(process.env.ADK_ERROR_STACK_FRAMES || 8);
+
+		for (const arg of args) {
+			if (!arg) continue;
+
+			if (arg instanceof Error) {
+				lines.push(`• ${arg.name}: ${arg.message}`);
+
+				if (includeStack && arg.stack) {
+					const frames = this.parseStackFrames(arg.stack, maxFrames);
+					if (frames.length) {
+						lines.push("• Stack:", ...frames);
+					}
+				}
+			} else {
+				lines.push(`• ${this.stringify(arg)}`);
+			}
+		}
+
+		return lines;
+	}
+
+	private parseStackFrames(stack: string, maxFrames: number): string[] {
+		const frames = stack
+			.split(/\n/)
+			.slice(1) // skip error message
+			.map((f) => f.trim())
+			.filter(Boolean)
+			.slice(0, maxFrames);
+
+		const result = frames.map((frame) => {
+			const cleaned = frame.replace(/^at\s+/, "").replace(process.cwd(), ".");
+			return `  ↳ ${cleaned}`;
+		});
+
+		const totalFrames = stack.split(/\n/).length - 1;
+		if (totalFrames > maxFrames) {
+			result.push(`  ↳ … ${totalFrames - maxFrames} more frames`);
+		}
+
+		return result;
+	}
+
+	private stringify(value: any): string {
+		if (typeof value === "string") return value;
+		if (typeof value === "number" || typeof value === "boolean")
+			return String(value);
+		if (value === null || value === undefined) return String(value);
+
+		try {
+			return JSON.stringify(value);
+		} catch {
+			return String(value);
+		}
+	}
+
+	private capitalize(str: string): string {
+		return str.charAt(0).toUpperCase() + str.slice(1);
+	}
+
 	formatBox(params: {
 		title: string;
 		description: string;
-		lines?: string[]; // Additional bullet or info lines (already formatted)
-		width?: number; // Minimum inner width; will auto-expand to content and wrap to terminal width
-		maxWidthPct?: number; // Max percent of terminal width (default 0.9)
-		color?: (txt: string) => string; // Colorizer (default yellow)
-		pad?: number; // Horizontal padding inside box (default 1)
-		borderChar?: string; // Border char (default "─")
-		wrap?: boolean; // Enable soft wrapping (default true)
+		lines?: string[];
+		width?: number;
+		maxWidthPct?: number;
+		color?: (txt: string) => string;
+		pad?: number;
+		borderChar?: string;
 	}): string {
-		const isProd = process.env.NODE_ENV === "production";
-		const forceBoxes = process.env.ADK_FORCE_BOXES === "true";
 		const {
 			title,
 			description,
@@ -128,124 +198,56 @@ export class Logger {
 			color = chalk.yellow,
 			pad = 1,
 			borderChar = "─",
-			wrap = true,
 		} = params;
 
-		// If production and boxes not forced, return simplified plain output
+		const isProd = process.env.NODE_ENV === "production";
+		const forceBoxes = process.env.ADK_FORCE_BOXES === "true";
+
+		// Simple format for production
 		if (isProd && !forceBoxes) {
-			const parts: string[] = [];
-			parts.push(`${title}: ${description}`);
-			if (lines?.length) parts.push(...lines);
-			return parts.join("\n");
+			return [`${title}: ${description}`, ...lines].join("\n");
 		}
 
-		// Terminal width (fallback 80) and max allowed width
+		// Calculate dimensions
 		const termWidth = process.stdout.columns || 80;
-		const maxAllowed = Math.max(20, Math.floor(termWidth * maxWidthPct));
-
-		// Split description & extra lines on explicit newlines to preserve author intent
-		const descParts = description.split(/\r?\n/);
-		const extraParts = lines.flatMap((l) => l.split(/\r?\n/));
-		// Keep blank lines (do not filter) to allow vertical spacing; but trim trailing empties
-		let rawContent = [...descParts, ...extraParts];
-		while (rawContent.length && rawContent[rawContent.length - 1] === "") {
-			rawContent = rawContent.slice(0, -1);
-		}
-
-		// Determine target inner width based on longest raw line but not exceeding maxAllowed - borders - 2 (for leading │ and space)
-		const longestRaw = Math.max(
-			title.length + 2,
-			...rawContent.map((l) => l.length),
+		const maxWidth = Math.floor(termWidth * maxWidthPct);
+		const contentWidth = Math.max(
 			width,
+			title.length + 2,
+			description.length,
+			...lines.map((l) => l.length),
 		);
-		let innerWidth = Math.min(longestRaw + pad * 2, maxAllowed - 2); // -2 because we add the leading │ and space before inner content
-		innerWidth = Math.max(innerWidth, width); // ensure at least requested width
+		const innerWidth = Math.min(contentWidth + pad * 2, maxWidth - 2);
 
-		const wrapLine = (text: string): string[] => {
-			if (!wrap) return [text];
-			if (text === "") return [""]; // preserve blank line
-			const available = innerWidth - pad * 2;
-			if (text.length <= available) return [text];
-			const words = text.split(/\s+/);
-			const lines: string[] = [];
-			let current = "";
-			for (const w of words) {
-				if (!current) {
-					if (w.length > available) {
-						// Hard split long word
-						for (let i = 0; i < w.length; i += available) {
-							const slice = w.slice(i, i + available);
-							if (slice.length === available) lines.push(slice);
-							else current = slice; // remainder
-						}
-					} else {
-						current = w;
-					}
-					continue;
-				}
-				if (`${current} ${w}`.length <= available) {
-					current = current ? `${current} ${w}` : w;
-				} else {
-					lines.push(current);
-					current = w.length > available ? w.slice(0, available) : w;
-					if (w.length > available) {
-						let remainder = w.slice(available);
-						while (remainder.length) {
-							lines.push(remainder.slice(0, available));
-							remainder = remainder.slice(available);
-						}
-						current = "";
-					}
-				}
-			}
-			if (current) lines.push(current);
-			return lines;
-		};
-
-		// Wrap description + extra lines
-		const wrappedContent: string[] = [];
-		for (const line of rawContent) {
-			wrappedContent.push(...wrapLine(line));
-		}
-
-		// Recompute inner width if wrapping created longer segments (unlikely but safe)
-		for (const l of wrappedContent) {
-			if (l.length + pad * 2 > innerWidth) {
-				innerWidth = Math.min(l.length + pad * 2, maxAllowed - 2);
-			}
-		}
-
-		// Horizontal rule spans innerWidth + 2 spaces we reserve inside vertical bars.
+		// Create box parts
 		const horizontal = borderChar.repeat(innerWidth + 2);
 		const top = `┌${horizontal}┐`;
-		const mid = `├${horizontal}┤`;
+		const separator = `├${horizontal}┤`;
 		const bottom = `└${horizontal}┘`;
 
-		// Helper to pad a line
-		const padLine = (raw: string) => {
-			const available = innerWidth - pad * 2;
+		const padLine = (text: string) => {
+			const maxContent = innerWidth - pad * 2;
 			const truncated =
-				raw.length > available ? `${raw.slice(0, available - 1)}…` : raw; // final safeguard
-			const padded = `${" ".repeat(pad)}${truncated}`;
-			return `${padded}${" ".repeat(innerWidth - padded.length)}`;
+				text.length > maxContent ? `${text.slice(0, maxContent - 1)}…` : text;
+			const padded = " ".repeat(pad) + truncated;
+			return padded + " ".repeat(innerWidth - padded.length);
 		};
 
-		let box = "\n"; // Leading newline for visual separation
-		box += `${color(top)}\n`;
-		box += `${color(`│ ${padLine(title)} │`)}\n`;
-		box += `${color(mid)}\n`;
-		for (const line of wrappedContent) {
-			box += `${color(`│ ${padLine(line)} │`)}\n`;
-		}
-		box += color(bottom);
-		return box;
+		// Assemble box
+		const content = [
+			top,
+			`│ ${padLine(title)} │`,
+			separator,
+			`│ ${padLine(description)} │`,
+			...lines.map((line) => `│ ${padLine(line)} │`),
+			bottom,
+		];
+
+		return `\n${content.map((line) => color(line)).join("\n")}`;
 	}
 
 	/**
 	 * Structured warning with code, suggestion, context.
-	 * Options via env:
-	 *  ADK_WARN_FORMAT=pretty|json|text (default pretty when structured)
-	 *  ADK_AGENT_BUILDER_WARN=verbose to include context always
 	 */
 	warnStructured(
 		warning: {
@@ -258,20 +260,19 @@ export class Logger {
 		},
 		opts: { format?: "pretty" | "json" | "text"; verbose?: boolean } = {},
 	): void {
-		const format = (
-			opts.format ||
-			process.env.ADK_WARN_FORMAT ||
-			"pretty"
-		).toLowerCase() as "pretty" | "json" | "text";
+		const format = (opts.format || process.env.ADK_WARN_FORMAT || "pretty") as
+			| "pretty"
+			| "json"
+			| "text";
 		const verbose =
 			opts.verbose || process.env.ADK_AGENT_BUILDER_WARN === "verbose";
 		const timestamp = warning.timestamp || new Date().toISOString();
-		const sev = warning.severity || "warn";
+		const severity = warning.severity || "warn";
 
 		if (format === "json") {
 			this.warn(
 				JSON.stringify({
-					level: sev,
+					level: severity,
 					source: this.name,
 					timestamp,
 					...warning,
@@ -280,105 +281,36 @@ export class Logger {
 			return;
 		}
 
-		const icon = sev === "error" ? "⛔" : sev === "info" ? "ℹ️" : "⚠️";
+		const { icon } = LOG_LEVELS[severity] || LOG_LEVELS.warn;
 		const base = `${icon} ${warning.code} ${warning.message}`;
-		const suggestion = warning.suggestion
-			? `\n   • Suggestion: ${warning.suggestion}`
-			: "";
-		let contextBlock = "";
+
+		const parts = [base];
+		if (warning.suggestion) {
+			parts.push(`   • Suggestion: ${warning.suggestion}`);
+		}
 		if (verbose && warning.context && Object.keys(warning.context).length) {
-			const pairs = Object.entries(warning.context)
-				.map(
-					([k, v]) =>
-						`${k}=${typeof v === "object" ? JSON.stringify(v) : String(v)}`,
-				)
+			const contextStr = Object.entries(warning.context)
+				.map(([k, v]) => `${k}=${this.stringify(v)}`)
 				.join("  ");
-			contextBlock = `\n   • Context: ${pairs}`;
+			parts.push(`   • Context: ${contextStr}`);
 		}
+
 		if (format === "pretty") {
-			this.warn(base + suggestion + contextBlock);
+			this.warn(parts.join("\n"));
 		} else {
-			// text
-			this.warn(
-				`[${warning.code}] ${warning.message}${warning.suggestion ? `\n  -> ${warning.suggestion}` : ""}${contextBlock}`,
-			);
+			// text format
+			const textParts = [`[${warning.code}] ${warning.message}`];
+			if (warning.suggestion) textParts.push(`  -> ${warning.suggestion}`);
+			if (verbose && warning.context && Object.keys(warning.context).length) {
+				const contextStr = Object.entries(warning.context)
+					.map(([k, v]) => `${k}=${this.stringify(v)}`)
+					.join("  ");
+				textParts.push(`   • Context: ${contextStr}`);
+			}
+			this.warn(textParts.join("\n"));
 		}
 	}
 
-	error(message: string, ...args: any[]) {
-		// Convert extra args into structured lines.
-		const lines: string[] = [];
-		const cwd = process.cwd();
-		const maxFrames = Number(process.env.ADK_ERROR_STACK_FRAMES || 8);
-		const isProd = process.env.NODE_ENV === "production";
-		const forceBoxes = process.env.ADK_FORCE_BOXES === "true";
-		const icon = "❌"; // consistent error icon
-		const shortenFrame = (frame: string) => {
-			// Remove leading 'at ' for compactness
-			let f = frame.trim().replace(/^at\s+/, "");
-			// Replace absolute cwd path with '.' for brevity (handle spaces in path)
-			if (f.includes(cwd)) f = f.split(cwd).join(".");
-			return f;
-		};
-		for (const arg of args) {
-			if (!arg) continue;
-			if (arg instanceof Error) {
-				lines.push(`• ${arg.name}: ${arg.message}`);
-				if (arg.stack) {
-					const frames = arg.stack
-						.split(/\n/)
-						.slice(1) // skip error message line
-						.map((l) => l.trim())
-						.filter(Boolean)
-						.slice(0, maxFrames);
-					if (frames.length) {
-						lines.push("• Stack:");
-						for (const fr of frames) {
-							lines.push(`  ↳ ${shortenFrame(fr)}`);
-						}
-						if (arg.stack.split(/\n/).length - 1 > frames.length) {
-							lines.push(
-								`  ↳ … ${arg.stack.split(/\n/).length - 1 - frames.length} more frames`,
-							);
-						}
-					}
-				}
-			} else if (typeof arg === "object") {
-				try {
-					lines.push(`• ${JSON.stringify(arg)}`);
-				} catch {
-					lines.push(`• ${String(arg)}`);
-				}
-			} else {
-				lines.push(`• ${String(arg)}`);
-			}
-		}
-		const time = new Date().toLocaleTimeString();
-		if (isProd && !forceBoxes) {
-			// Production simplified (no box) but keep colors + consistent prefix
-			const head = `[${time}] ${icon} [${this.name}] ${message}`;
-			if (!lines.length) {
-				console.error(chalk.red(head));
-				return;
-			}
-			const colored = [head, ...lines].map((l) => chalk.red(l)).join("\n");
-			console.error(colored);
-			return;
-		}
-		const box = this.formatBox({
-			title: `${icon} Error @ ${time} (${this.name})`,
-			description: message.endsWith(":") ? message : `${message}`,
-			lines,
-			color: (txt: string) => chalk.red(txt),
-		});
-		console.error(box);
-	}
-
-	/**
-	 * Logs structured data in a visually appealing table format.
-	 * (Refactored) Now delegates to formatBox for a unified boxed style with warn/error.
-	 * Previous border/table rendering logic is replaced for consistency & reduced duplication.
-	 */
 	debugStructured(title: string, data: Record<string, any>): void {
 		if (!this.isDebugEnabled) return;
 
@@ -388,109 +320,67 @@ export class Logger {
 			title: `🐛 Debug @ ${time} (${this.name})`,
 			description: title,
 			lines,
-			color: (txt: string) => chalk.blue(txt),
-			width: 60,
+			color: chalk.blue,
 		});
 		console.log(box);
 	}
 
-	/**
-	 * Logs array data in a compact, readable format.
-	 */
 	debugArray(title: string, items: Array<Record<string, any>>): void {
 		if (!this.isDebugEnabled) return;
+
 		const time = new Date().toLocaleTimeString();
-		const lines = this.arrayOfObjectsToLines(items);
+		const lines = this.arrayToLines(items);
 		const box = this.formatBox({
 			title: `🐛 Debug List @ ${time} (${this.name})`,
 			description: title,
 			lines,
-			color: (txt: string) => chalk.blue(txt),
+			color: chalk.blue,
 			width: 78,
 			maxWidthPct: 0.95,
 		});
 		console.log(box);
 	}
 
-	/**
-	 * Converts a record of key-values into aligned lines suitable for formatBox.
-	 * Handles nested objects via JSON.stringify, truncating long values for readability.
-	 */
-	private objectToLines(
-		obj: Record<string, any>,
-		opts: { maxValueLen?: number; maxLines?: number; keyPadMin?: number } = {},
-	): string[] {
-		const { maxValueLen = 140, maxLines = 200, keyPadMin = 6 } = opts;
+	private objectToLines(obj: Record<string, any>): string[] {
 		const entries = Object.entries(obj || {});
 		if (!entries.length) return ["(empty)"];
-		const keyPad = Math.max(
-			keyPadMin,
-			Math.min(
-				30,
-				entries.reduce((m, [k]) => Math.max(m, k.length), 0),
-			),
+
+		const keyWidth = Math.min(
+			30,
+			Math.max(6, ...entries.map(([k]) => k.length)),
 		);
-		const lines: string[] = [];
-		for (const [k, v] of entries) {
-			let val: string;
-			if (typeof v === "string") val = v;
-			else if (typeof v === "number" || typeof v === "boolean") val = String(v);
-			else if (v === null || v === undefined) val = String(v);
-			else {
-				try {
-					val = JSON.stringify(v);
-				} catch {
-					val = String(v);
-				}
-			}
-			if (val.length > maxValueLen) val = `${val.slice(0, maxValueLen - 1)}…`;
-			lines.push(`${k.padEnd(keyPad)}: ${val}`);
-			if (lines.length >= maxLines) {
-				lines.push(`… ${entries.length - lines.length} more omitted`);
-				break;
-			}
-		}
-		return lines;
+
+		return entries.slice(0, 200).map(([k, v]) => {
+			const value = this.stringify(v);
+			const truncated = value.length > 140 ? `${value.slice(0, 139)}…` : value;
+			return `${k.padEnd(keyWidth)}: ${truncated}`;
+		});
 	}
 
-	/**
-	 * Converts an array of objects into lines with index prefixes.
-	 */
-	private arrayOfObjectsToLines(
-		items: Array<Record<string, any>>,
-		opts: { maxItems?: number; maxValueLen?: number } = {},
-	): string[] {
-		const { maxItems = 50, maxValueLen = 160 } = opts;
+	private arrayToLines(items: Array<Record<string, any>>): string[] {
 		if (!items.length) return ["(empty list)"];
-		const lines: string[] = [];
-		for (let i = 0; i < items.length && i < maxItems; i++) {
-			const obj = items[i];
-			const parts = Object.entries(obj)
+
+		const maxItems = 50;
+		const lines = items.slice(0, maxItems).map((obj, i) => {
+			const props = Object.entries(obj)
 				.map(([k, v]) => {
-					let val: string;
-					if (typeof v === "string") val = v;
-					else if (typeof v === "number" || typeof v === "boolean")
-						val = String(v);
-					else if (v === null || v === undefined) val = String(v);
-					else {
-						try {
-							val = JSON.stringify(v);
-						} catch {
-							val = String(v);
-						}
-					}
-					if (val.length > maxValueLen)
-						val = `${val.slice(0, maxValueLen - 1)}…`;
-					return `${k}=${val}`;
+					const value = this.stringify(v);
+					const truncated =
+						value.length > 160 ? `${value.slice(0, 159)}…` : value;
+					return `${k}=${truncated}`;
 				})
 				.join("  •  ");
-			lines.push(`[${i + 1}] ${parts}`);
-		}
-		if (items.length > maxItems)
+			return `[${i + 1}] ${props}`;
+		});
+
+		if (items.length > maxItems) {
 			lines.push(`… ${items.length - maxItems} more items omitted`);
+		}
+
 		return lines;
 	}
 }
+
 export function isDebugEnabled(): boolean {
 	return (
 		process.env.NODE_ENV === "development" || process.env.ADK_DEBUG === "true"
