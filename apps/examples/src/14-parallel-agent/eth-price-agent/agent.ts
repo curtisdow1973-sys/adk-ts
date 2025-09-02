@@ -1,5 +1,5 @@
+import { env } from "node:process";
 import { LlmAgent } from "@iqai/adk";
-import { env } from "../../env";
 import { ethPriceTool } from "./tools";
 
 /**
@@ -16,10 +16,10 @@ export const getEthPriceAgent = () => {
 		name: "eth_price_agent",
 		description: "provides the current Ethereum (ETH) price",
 		instruction: "when asked about ethereum, provide its price",
-		model: env.LLM_MODEL,
+		model: env.LLM_MODEL || "gemini-2.5-flash",
+		tools: [ethPriceTool],
 		disallowTransferToParent: true,
 		disallowTransferToPeers: true,
-		tools: [ethPriceTool],
 	});
 
 	return ethPriceAgent;

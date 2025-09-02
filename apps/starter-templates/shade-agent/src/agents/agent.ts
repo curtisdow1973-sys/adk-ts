@@ -25,11 +25,9 @@ export const getRootAgent = async () => {
 
 	const { runner } = await AgentBuilder.create("root_agent")
 		.withDescription(
-			"Root agent that delegates tasks to sub-agents for fetching Ethereum price and sentiment information.",
+			"Delegates tasks to sub-agents for Ethereum price and sentiment.",
 		)
-		.withInstruction(
-			"when asked about ethereum information first check ethereum's price, then sentiment",
-		)
+		.withInstruction("Check Ethereum price, then sentiment when asked.")
 		.withModel(env.LLM_MODEL)
 		.asParallel([ethSentimentAgent, ethPriceAgent])
 		.withSessionService(sessionService)
