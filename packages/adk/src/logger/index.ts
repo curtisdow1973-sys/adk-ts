@@ -11,16 +11,11 @@ export class Logger {
 		this.name = name;
 	}
 
-	private colorize(message: string): string {
-		// Framework logs are colored blue, user logs are default
-		return chalk.blue(message);
-	}
-
 	debug(message: string, ...args: any[]) {
 		if (this.isDebugEnabled) {
 			const time = new Date().toLocaleTimeString();
 			console.log(
-				this.colorize(`[${time}] 🐛 [${this.name}] ${message}`),
+				chalk.blue(`[${time}] 🐛 [${this.name}] ${message}`),
 				...args,
 			);
 		}
@@ -28,16 +23,13 @@ export class Logger {
 
 	info(message: string, ...args: any[]) {
 		const time = new Date().toLocaleTimeString();
-		console.debug(
-			this.colorize(`[${time}] ℹ️ [${this.name}] ${message}`),
-			...args,
-		);
+		console.debug(chalk.cyan(`[${time}] ℹ️ [${this.name}] ${message}`), ...args);
 	}
 
 	warn(message: string, ...args: any[]) {
 		const time = new Date().toLocaleTimeString();
 		console.warn(
-			this.colorize(`[${time}] 🚧 [${this.name}] ${message}`),
+			chalk.yellow(`[${time}] 🚧 [${this.name}] ${message}`),
 			...args,
 		);
 	}
@@ -108,10 +100,7 @@ export class Logger {
 
 	error(message: string, ...args: any[]) {
 		const time = new Date().toLocaleTimeString();
-		console.error(
-			this.colorize(`[${time}] ❌ [${this.name}] ${message}`),
-			...args,
-		);
+		console.error(chalk.red(`[${time}] ❌ [${this.name}] ${message}`), ...args);
 	}
 
 	/**
@@ -129,9 +118,9 @@ export class Logger {
 		const bottomBorder = `└${"─".repeat(width - 2)}┘`;
 		const middleBorder = `├${"─".repeat(width - 2)}┤`;
 
-		console.log(this.colorize(topBorder));
-		console.log(this.colorize(`│ ${title.padEnd(contentWidth)} │`));
-		console.log(this.colorize(middleBorder));
+		console.log(chalk.blue(topBorder));
+		console.log(chalk.blue(`│ ${title.padEnd(contentWidth)} │`));
+		console.log(chalk.blue(middleBorder));
 
 		// Log each field in a clean vertical format
 		Object.entries(data).forEach(([key, value]) => {
@@ -148,10 +137,10 @@ export class Logger {
 			const content = `${formattedKey}: ${truncatedValue}`;
 			const paddedContent = content.padEnd(contentWidth);
 
-			console.log(this.colorize(`│ ${paddedContent} │`));
+			console.log(chalk.blue(`│ ${paddedContent} │`));
 		});
 
-		console.log(this.colorize(bottomBorder));
+		console.log(chalk.blue(bottomBorder));
 	}
 
 	/**
@@ -168,9 +157,9 @@ export class Logger {
 		const bottomBorder = `└${"─".repeat(width - 2)}┘`;
 		const middleBorder = `├${"─".repeat(width - 2)}┤`;
 
-		console.log(this.colorize(topBorder));
-		console.log(this.colorize(`│ ${title.padEnd(contentWidth)} │`));
-		console.log(this.colorize(middleBorder));
+		console.log(chalk.blue(topBorder));
+		console.log(chalk.blue(`│ ${title.padEnd(contentWidth)} │`));
+		console.log(chalk.blue(middleBorder));
 
 		items.forEach((item, index) => {
 			const itemStr = Object.entries(item)
@@ -189,10 +178,10 @@ export class Logger {
 			const content = `${indexPart}${truncatedItem}`;
 			const paddedContent = content.padEnd(contentWidth);
 
-			console.log(this.colorize(`│ ${paddedContent} │`));
+			console.log(chalk.blue(`│ ${paddedContent} │`));
 		});
 
-		console.log(this.colorize(bottomBorder));
+		console.log(chalk.blue(bottomBorder));
 	}
 }
 export function isDebugEnabled(): boolean {
