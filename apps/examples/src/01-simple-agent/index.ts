@@ -1,5 +1,5 @@
 import { env } from "node:process";
-import { AgentBuilder } from "@iqai/adk";
+import { AgentBuilder, LlmAgent } from "@iqai/adk";
 import dedent from "dedent";
 import { z } from "zod";
 
@@ -31,16 +31,17 @@ async function main() {
 	const response = await AgentBuilder.withModel(
 		env.LLM_MODEL || "gemini-2.5-flash",
 	)
-		.withOutputSchema(outputSchema)
+		.asSequential([
+			new LlmAgent({
+				name: "dnt_selct",
+				description: "don't select",
+				model: env.LLM_MODEL || "gemini-2.5-flash",
+			}),
+		])
+		.withOutputKey("sd")
 		.ask("What is the capital of France?");
 
-	console.log(
-		dedent`
-		🌍 Country:    ${response.country}
-		📍 Capital:    ${response.capital}
-		👥 Population: ${response.population ? response.population.toLocaleString() : "N/A"}
-		🎉 Fun fact:   ${response.fun_fact}`,
-	);
+	console.log(response);
 }
 
 main().catch(console.error);

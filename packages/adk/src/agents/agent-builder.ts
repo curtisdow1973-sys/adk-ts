@@ -199,7 +199,7 @@ export class AgentBuilder<TOut = string, TMulti extends boolean = false> {
 		suggestion?: string,
 		context?: Record<string, any>,
 	) {
-		let msg = `⚠️ ${message}`;
+		let msg = message;
 		if (suggestion) msg += `\n   • Suggestion: ${suggestion}`;
 		if (context && Object.keys(context).length) {
 			const ctxStr = Object.entries(context)
