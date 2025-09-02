@@ -1,4 +1,5 @@
 import { existsSync, mkdirSync, readFileSync, unlinkSync } from "node:fs";
+import { createRequire } from "node:module";
 import { dirname, join } from "node:path";
 import { pathToFileURL } from "node:url";
 import type { BaseAgent, BuiltAgent } from "@iqai/adk";
@@ -40,14 +41,23 @@ export class AgentLoader {
 		}
 
 		// Transpile with esbuild and import (bundles local files, preserves tools)
+		// ---------------- esbuild dynamic compilation ----------------
 		try {
 			const { build } = await import("esbuild");
 			const cacheDir = join(projectRoot, ADK_CACHE_DIR);
 			if (!existsSync(cacheDir)) {
 				mkdirSync(cacheDir, { recursive: true });
 			}
-			const outFile = join(cacheDir, `agent-${Date.now()}.mjs`);
-			// Externalize bare module imports (node_modules), bundle relative/local files
+			// Use CJS so we can require() cleanly inside a CJS Nest runtime; keep unique filename for cache busting
+			const outFile = join(cacheDir, `agent-${Date.now()}.cjs`);
+
+			// Always externalize workspace-scoped packages so we don't inline their transitive deps.
+			// This avoids PNPM "strictness" issues where a transitive dep (e.g. @google/genai) of @iqai/adk
+			// would become a direct require() from the bundled cache file and thus not resolvable.
+			const ALWAYS_EXTERNAL_SCOPES = ["@iqai/"];
+			const alwaysExternal = ["@iqai/adk"]; // explicit critical packages
+
+			// Generic plugin to externalize bare imports (node_modules) while still bundling local relative files.
 			const plugin = {
 				name: "externalize-bare-imports",
 				setup(build: {
@@ -59,13 +69,22 @@ export class AgentLoader {
 					) => void;
 				}) {
 					build.onResolve({ filter: /.*/ }, (args: { path: string }) => {
+						// Relative / absolute => bundle
 						if (
 							args.path.startsWith(".") ||
 							args.path.startsWith("/") ||
 							args.path.startsWith("..")
 						) {
-							return; // use default resolve (to get bundled)
+							return;
 						}
+						// Force external for workspace scoped packages & explicit list
+						if (
+							ALWAYS_EXTERNAL_SCOPES.some((s) => args.path.startsWith(s)) ||
+							alwaysExternal.includes(args.path)
+						) {
+							return { path: args.path, external: true };
+						}
+						// Default: externalize other bare imports too
 						return { path: args.path, external: true };
 					});
 				},
@@ -76,27 +95,46 @@ export class AgentLoader {
 				entryPoints: [filePath],
 				outfile: outFile,
 				bundle: true,
-				format: "esm",
+				format: "cjs", // match Nest's default compilation output
 				platform: "node",
 				target: ["node22"],
 				sourcemap: false,
 				logLevel: "silent",
 				plugins: [plugin],
 				absWorkingDir: projectRoot,
+				external: [...alwaysExternal],
 				// Use tsconfig if present for path aliases
 				...(existsSync(tsconfigPath) ? { tsconfig: tsconfigPath } : {}),
 			});
 
-			const mod = (await import(
-				`${pathToFileURL(outFile).href}?t=${Date.now()}`
-			)) as Record<string, unknown>;
+			// Use Node's CJS require to avoid ESM loader caching oddities with file:// & query params.
+			// Avoid using import.meta (keeps compatibility with CommonJS transpilation target)
+			const dynamicRequire = createRequire(outFile);
+			let mod: Record<string, unknown>;
+			try {
+				mod = dynamicRequire(outFile) as Record<string, unknown>;
+			} catch (loadErr) {
+				this.logger.warn(
+					`Primary require failed for built agent '${outFile}': ${loadErr instanceof Error ? loadErr.message : String(loadErr)}. Falling back to dynamic import...`,
+				);
+				try {
+					mod = (await import(pathToFileURL(outFile).href)) as Record<
+						string,
+						unknown
+					>;
+				} catch (fallbackErr) {
+					throw new Error(
+						`Both require() and import() failed for built agent file '${outFile}': ${fallbackErr instanceof Error ? fallbackErr.message : String(fallbackErr)}`,
+					);
+				}
+			}
 			let agentExport = (mod as any)?.agent;
 			if (!agentExport && (mod as any)?.default) {
 				const defaultExport = (mod as any).default as Record<string, unknown>;
 				agentExport = (defaultExport as any)?.agent ?? defaultExport;
 			}
 			try {
-				unlinkSync(outFile);
+				unlinkSync(outFile); // cleanup after successful load
 			} catch {}
 			if (agentExport) {
 				const isPrimitive = (
@@ -116,11 +154,14 @@ export class AgentLoader {
 			// Fallback: return full module so downstream resolver can inspect named exports (e.g., getFooAgent)
 			return mod;
 		} catch (e) {
-			throw new Error(
-				`Failed to import TS agent via esbuild: ${
-					e instanceof Error ? e.message : String(e)
-				}`,
-			);
+			const msg = e instanceof Error ? e.message : String(e);
+			// Provide clearer guidance when a dependency is missing due to externalization.
+			if (/Cannot find module/.test(msg)) {
+				this.logger.error(
+					`Module resolution failed while loading agent file '${filePath}'.\n> ${msg}\nThis usually means the dependency is declared in a parent workspace package (e.g. @iqai/adk) and got externalized,\nbut is not installed in the agent project's own node_modules (common with PNPM isolated hoisting).\nFix: add it to the agent project's package.json or run: pnpm add <missing-pkg> -F <agent-workspace>.`,
+				);
+			}
+			throw new Error(`Failed to import TS agent via esbuild: ${msg}`);
 		}
 	}
 
