@@ -28,10 +28,71 @@ export class Logger {
 
 	warn(message: string, ...args: any[]) {
 		const time = new Date().toLocaleTimeString();
-		console.warn(
-			chalk.yellow(`[${time}] 🚧 [${this.name}] ${message}`),
-			...args,
-		);
+		const isProd = process.env.NODE_ENV === "production";
+		const forceBoxes = process.env.ADK_FORCE_BOXES === "true";
+		const icon = "⚠️"; // consistent warning icon
+		const lines: string[] = [];
+		let handledMeta = false;
+		for (const arg of args) {
+			if (!arg) continue;
+			// Special-case meta object with suggestion/context keys
+			if (
+				!handledMeta &&
+				typeof arg === "object" &&
+				!(arg instanceof Error) &&
+				("suggestion" in arg || "context" in arg)
+			) {
+				const { suggestion, context } = arg as {
+					suggestion?: string;
+					context?: Record<string, any>;
+				};
+				if (suggestion) lines.push(`• Suggestion: ${suggestion}`);
+				if (context && Object.keys(context).length) {
+					const ctxStr = Object.entries(context)
+						.map(
+							([k, v]) =>
+								`${k}=${typeof v === "object" ? JSON.stringify(v) : String(v)}`,
+						)
+						.join("  ");
+					lines.push(`• Context: ${ctxStr}`);
+				}
+				handledMeta = true;
+				continue;
+			}
+			if (arg instanceof Error) {
+				lines.push(`• ${arg.name}: ${arg.message}`);
+				continue;
+			}
+			if (typeof arg === "object") {
+				try {
+					lines.push(`• ${JSON.stringify(arg)}`);
+				} catch {
+					lines.push(`• ${String(arg)}`);
+				}
+			} else {
+				lines.push(`• ${String(arg)}`);
+			}
+		}
+
+		if (isProd && !forceBoxes) {
+			// Production simplified (no box) but keep colors + consistent prefix
+			const head = `[${time}] ${icon} [${this.name}] ${message}`;
+			if (!lines.length) {
+				console.warn(chalk.yellow(head));
+				return;
+			}
+			const colored = [head, ...lines].map((l) => chalk.yellow(l)).join("\n");
+			console.warn(colored);
+			return;
+		}
+
+		const box = this.formatBox({
+			title: `${icon} Warning @ ${time} (${this.name})`,
+			description: message,
+			lines,
+			color: (txt: string) => chalk.yellow(txt),
+		});
+		console.warn(box);
 	}
 
 	/**
@@ -56,6 +117,8 @@ export class Logger {
 		borderChar?: string; // Border char (default "─")
 		wrap?: boolean; // Enable soft wrapping (default true)
 	}): string {
+		const isProd = process.env.NODE_ENV === "production";
+		const forceBoxes = process.env.ADK_FORCE_BOXES === "true";
 		const {
 			title,
 			description,
@@ -67,6 +130,14 @@ export class Logger {
 			borderChar = "─",
 			wrap = true,
 		} = params;
+
+		// If production and boxes not forced, return simplified plain output
+		if (isProd && !forceBoxes) {
+			const parts: string[] = [];
+			parts.push(`${title}: ${description}`);
+			if (lines?.length) parts.push(...lines);
+			return parts.join("\n");
+		}
 
 		// Terminal width (fallback 80) and max allowed width
 		const termWidth = process.stdout.columns || 80;
@@ -239,6 +310,9 @@ export class Logger {
 		const lines: string[] = [];
 		const cwd = process.cwd();
 		const maxFrames = Number(process.env.ADK_ERROR_STACK_FRAMES || 8);
+		const isProd = process.env.NODE_ENV === "production";
+		const forceBoxes = process.env.ADK_FORCE_BOXES === "true";
+		const icon = "❌"; // consistent error icon
 		const shortenFrame = (frame: string) => {
 			// Remove leading 'at ' for compactness
 			let f = frame.trim().replace(/^at\s+/, "");
@@ -280,8 +354,19 @@ export class Logger {
 			}
 		}
 		const time = new Date().toLocaleTimeString();
+		if (isProd && !forceBoxes) {
+			// Production simplified (no box) but keep colors + consistent prefix
+			const head = `[${time}] ${icon} [${this.name}] ${message}`;
+			if (!lines.length) {
+				console.error(chalk.red(head));
+				return;
+			}
+			const colored = [head, ...lines].map((l) => chalk.red(l)).join("\n");
+			console.error(colored);
+			return;
+		}
 		const box = this.formatBox({
-			title: `❌ Error @ ${time} (${this.name})`,
+			title: `${icon} Error @ ${time} (${this.name})`,
 			description: message.endsWith(":") ? message : `${message}`,
 			lines,
 			color: (txt: string) => chalk.red(txt),
@@ -291,42 +376,22 @@ export class Logger {
 
 	/**
 	 * Logs structured data in a visually appealing table format.
-	 * Uses vertical layout for better readability and respects debug settings.
+	 * (Refactored) Now delegates to formatBox for a unified boxed style with warn/error.
+	 * Previous border/table rendering logic is replaced for consistency & reduced duplication.
 	 */
 	debugStructured(title: string, data: Record<string, any>): void {
 		if (!this.isDebugEnabled) return;
 
-		// Use terminal width or fallback to 60 if not available
-		const terminalWidth = process.stdout.columns || 60;
-		const width = Math.min(terminalWidth, 100); // Cap at 100 to avoid overly wide tables
-		const contentWidth = width - 4; // Account for "│ " and " │"
-		const topBorder = `┌${"─".repeat(width - 2)}┐`;
-		const bottomBorder = `└${"─".repeat(width - 2)}┘`;
-		const middleBorder = `├${"─".repeat(width - 2)}┤`;
-
-		console.log(chalk.blue(topBorder));
-		console.log(chalk.blue(`│ ${title.padEnd(contentWidth)} │`));
-		console.log(chalk.blue(middleBorder));
-
-		// Log each field in a clean vertical format
-		Object.entries(data).forEach(([key, value]) => {
-			const formattedKey = key.padEnd(20); // Consistent width for alignment
-			const formattedValue = String(value);
-			const availableValueSpace = contentWidth - 20 - 2; // -20 for key, -2 for ": "
-
-			const truncatedValue =
-				formattedValue.length > availableValueSpace
-					? `${formattedValue.substring(0, availableValueSpace - 3)}...`
-					: formattedValue;
-
-			// Build the content line and ensure it's exactly contentWidth
-			const content = `${formattedKey}: ${truncatedValue}`;
-			const paddedContent = content.padEnd(contentWidth);
-
-			console.log(chalk.blue(`│ ${paddedContent} │`));
+		const time = new Date().toLocaleTimeString();
+		const lines = this.objectToLines(data);
+		const box = this.formatBox({
+			title: `🐛 Debug @ ${time} (${this.name})`,
+			description: title,
+			lines,
+			color: (txt: string) => chalk.blue(txt),
+			width: 60,
 		});
-
-		console.log(chalk.blue(bottomBorder));
+		console.log(box);
 	}
 
 	/**
@@ -334,40 +399,96 @@ export class Logger {
 	 */
 	debugArray(title: string, items: Array<Record<string, any>>): void {
 		if (!this.isDebugEnabled) return;
-
-		// Use terminal width or fallback to 78 if not available
-		const terminalWidth = process.stdout.columns || 78;
-		const width = Math.min(terminalWidth, 120); // Cap at 120 to avoid overly wide tables
-		const contentWidth = width - 4; // Account for "│ " and " │"
-		const topBorder = `┌${"─".repeat(width - 2)}┐`;
-		const bottomBorder = `└${"─".repeat(width - 2)}┘`;
-		const middleBorder = `├${"─".repeat(width - 2)}┤`;
-
-		console.log(chalk.blue(topBorder));
-		console.log(chalk.blue(`│ ${title.padEnd(contentWidth)} │`));
-		console.log(chalk.blue(middleBorder));
-
-		items.forEach((item, index) => {
-			const itemStr = Object.entries(item)
-				.map(([k, v]) => `${k}: ${v}`)
-				.join(" • ");
-
-			const indexPart = `[${index + 1}] `;
-			const availableSpace = contentWidth - indexPart.length;
-
-			const truncatedItem =
-				itemStr.length > availableSpace
-					? `${itemStr.substring(0, availableSpace - 3)}...`
-					: itemStr;
-
-			// Build the content line and ensure it's exactly contentWidth
-			const content = `${indexPart}${truncatedItem}`;
-			const paddedContent = content.padEnd(contentWidth);
-
-			console.log(chalk.blue(`│ ${paddedContent} │`));
+		const time = new Date().toLocaleTimeString();
+		const lines = this.arrayOfObjectsToLines(items);
+		const box = this.formatBox({
+			title: `🐛 Debug List @ ${time} (${this.name})`,
+			description: title,
+			lines,
+			color: (txt: string) => chalk.blue(txt),
+			width: 78,
+			maxWidthPct: 0.95,
 		});
+		console.log(box);
+	}
 
-		console.log(chalk.blue(bottomBorder));
+	/**
+	 * Converts a record of key-values into aligned lines suitable for formatBox.
+	 * Handles nested objects via JSON.stringify, truncating long values for readability.
+	 */
+	private objectToLines(
+		obj: Record<string, any>,
+		opts: { maxValueLen?: number; maxLines?: number; keyPadMin?: number } = {},
+	): string[] {
+		const { maxValueLen = 140, maxLines = 200, keyPadMin = 6 } = opts;
+		const entries = Object.entries(obj || {});
+		if (!entries.length) return ["(empty)"];
+		const keyPad = Math.max(
+			keyPadMin,
+			Math.min(
+				30,
+				entries.reduce((m, [k]) => Math.max(m, k.length), 0),
+			),
+		);
+		const lines: string[] = [];
+		for (const [k, v] of entries) {
+			let val: string;
+			if (typeof v === "string") val = v;
+			else if (typeof v === "number" || typeof v === "boolean") val = String(v);
+			else if (v === null || v === undefined) val = String(v);
+			else {
+				try {
+					val = JSON.stringify(v);
+				} catch {
+					val = String(v);
+				}
+			}
+			if (val.length > maxValueLen) val = `${val.slice(0, maxValueLen - 1)}…`;
+			lines.push(`${k.padEnd(keyPad)}: ${val}`);
+			if (lines.length >= maxLines) {
+				lines.push(`… ${entries.length - lines.length} more omitted`);
+				break;
+			}
+		}
+		return lines;
+	}
+
+	/**
+	 * Converts an array of objects into lines with index prefixes.
+	 */
+	private arrayOfObjectsToLines(
+		items: Array<Record<string, any>>,
+		opts: { maxItems?: number; maxValueLen?: number } = {},
+	): string[] {
+		const { maxItems = 50, maxValueLen = 160 } = opts;
+		if (!items.length) return ["(empty list)"];
+		const lines: string[] = [];
+		for (let i = 0; i < items.length && i < maxItems; i++) {
+			const obj = items[i];
+			const parts = Object.entries(obj)
+				.map(([k, v]) => {
+					let val: string;
+					if (typeof v === "string") val = v;
+					else if (typeof v === "number" || typeof v === "boolean")
+						val = String(v);
+					else if (v === null || v === undefined) val = String(v);
+					else {
+						try {
+							val = JSON.stringify(v);
+						} catch {
+							val = String(v);
+						}
+					}
+					if (val.length > maxValueLen)
+						val = `${val.slice(0, maxValueLen - 1)}…`;
+					return `${k}=${val}`;
+				})
+				.join("  •  ");
+			lines.push(`[${i + 1}] ${parts}`);
+		}
+		if (items.length > maxItems)
+			lines.push(`… ${items.length - maxItems} more items omitted`);
+		return lines;
 	}
 }
 export function isDebugEnabled(): boolean {
