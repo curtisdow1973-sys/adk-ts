@@ -1,7 +1,7 @@
 import { existsSync, readFileSync, readdirSync, statSync } from "node:fs";
 import { join, relative } from "node:path";
-import { Injectable } from "@nestjs/common";
-import { Logger } from "../../common/logger";
+import { format } from "node:util";
+import { Injectable, Logger } from "@nestjs/common";
 import type { Agent, LoadedAgent } from "../../common/types";
 
 const DIRECTORIES_TO_SKIP = [
@@ -23,7 +23,7 @@ export class AgentScanner {
 	private logger: Logger;
 
 	constructor(private quiet = false) {
-		this.logger = new Logger({ name: "agent-scanner", quiet: this.quiet });
+		this.logger = new Logger("agent-scanner");
 	}
 
 	scanAgents(
@@ -87,7 +87,9 @@ export class AgentScanner {
 		};
 
 		scanDirectory(scanDir);
-		this.logger.info(`Agent scan complete. Found ${agents.size} agents. ✨`);
+		this.logger.log(
+			format(`Agent scan complete. Found ${agents.size} agents. ✨`),
+		);
 
 		return agents;
 	}

@@ -1,10 +1,10 @@
 import { existsSync } from "node:fs";
 import { join } from "node:path";
 import { pathToFileURL } from "node:url";
+import { format } from "node:util";
 import type { FullMessage, InMemorySessionService } from "@iqai/adk";
 import { AgentBuilder } from "@iqai/adk";
-import { Injectable } from "@nestjs/common";
-import { Logger } from "../../common/logger";
+import { Injectable, Logger } from "@nestjs/common";
 import type { Agent, LoadedAgent } from "../../common/types";
 import { AgentLoader } from "./agent-loader.service";
 import { AgentScanner } from "./agent-scanner.service";
@@ -26,7 +26,7 @@ export class AgentManager {
 	) {
 		this.scanner = new AgentScanner(quiet);
 		this.loader = new AgentLoader(quiet);
-		this.logger = new Logger({ name: "agent-manager", quiet });
+		this.logger = new Logger("agent-manager");
 	}
 
 	getAgents(): Map<string, Agent> {
@@ -40,20 +40,22 @@ export class AgentManager {
 	skanAgents?(agentsDir: string): void; // backward-compat typo guard (no-op if called)
 
 	scanAgents(agentsDir: string): void {
-		this.logger.info("Scanning agents in directory: %s", agentsDir);
+		this.logger.log(format("Scanning agents in directory: %s", agentsDir));
 		this.agents = this.scanner.scanAgents(agentsDir, this.loadedAgents);
-		this.logger.info("Found agents: %o", Array.from(this.agents.keys()));
+		this.logger.log(format("Found agents: %o", Array.from(this.agents.keys())));
 	}
 
 	async startAgent(agentPath: string): Promise<void> {
-		this.logger.info("Starting agent: %s", agentPath);
+		this.logger.log(format("Starting agent: %s", agentPath));
 		const agent = this.agents.get(agentPath);
 		if (!agent) {
 			this.logger.error("Agent not found in agents map: %s", agentPath);
-			this.logger.debug("Available agents: %o", Array.from(this.agents.keys()));
+			this.logger.debug(
+				format("Available agents: %o", Array.from(this.agents.keys())),
+			);
 			throw new Error(`Agent not found: ${agentPath}`);
 		}
-		this.logger.info("Agent found, proceeding to load...");
+		this.logger.log("Agent found, proceeding to load...");
 
 		if (this.loadedAgents.has(agentPath)) {
 			return; // Already running
@@ -103,12 +105,14 @@ export class AgentManager {
 				state: undefined,
 			});
 			const { runner, session } = await agentBuilder.build();
-			this.logger.info("Agent started with session: %o", {
-				sessionId: session.id,
-				hasState: !!session.state,
-				stateKeys: session.state ? Object.keys(session.state) : [],
-				stateContent: session.state,
-			});
+			this.logger.log(
+				format("Agent started with session: %o", {
+					sessionId: session.id,
+					hasState: !!session.state,
+					stateKeys: session.state ? Object.keys(session.state) : [],
+					stateContent: session.state,
+				}),
+			);
 			// Store the loaded agent with its runner and the session from the builder only
 			const loadedAgent: LoadedAgent = {
 				agent: exportedAgent as any,
@@ -128,9 +132,8 @@ export class AgentManager {
 					session.id,
 				);
 				if (!existingSession) {
-					this.logger.info(
-						"Creating session in sessionService: %s",
-						session.id,
+					this.logger.log(
+						format("Creating session in sessionService: %s", session.id),
 					);
 					await this.sessionService.createSession(
 						loadedAgent.appName,
@@ -139,9 +142,8 @@ export class AgentManager {
 						session.id,
 					);
 				} else {
-					this.logger.info(
-						"Session already exists in sessionService: %s",
-						session.id,
+					this.logger.log(
+						format("Session already exists in sessionService: %s", session.id),
 					);
 				}
 			} catch (error) {

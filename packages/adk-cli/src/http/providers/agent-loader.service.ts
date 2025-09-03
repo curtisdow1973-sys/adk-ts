@@ -4,8 +4,7 @@ import { dirname, join } from "node:path";
 import { pathToFileURL } from "node:url";
 import type { BaseAgent, BuiltAgent } from "@iqai/adk";
 import type { AgentBuilder } from "@iqai/adk";
-import { Injectable } from "@nestjs/common";
-import { Logger } from "../../common/logger";
+import { Injectable, Logger } from "@nestjs/common";
 
 const ADK_CACHE_DIR = ".adk-cache";
 
@@ -14,7 +13,7 @@ export class AgentLoader {
 	private logger: Logger;
 
 	constructor(private quiet = false) {
-		this.logger = new Logger({ name: "agent-loader", quiet: this.quiet });
+		this.logger = new Logger("agent-loader");
 	}
 
 	/**
@@ -143,11 +142,11 @@ export class AgentLoader {
 					v == null || ["string", "number", "boolean"].includes(typeof v);
 				if (isPrimitive(agentExport)) {
 					// Primitive named 'agent' export (e.g., a string) isn't a real agent; fall through to full-module scan
-					this.logger.info(
+					this.logger.log(
 						`Ignoring primitive 'agent' export in ${filePath}; scanning module for factory...`,
 					);
 				} else {
-					this.logger.info(`TS agent imported via esbuild: ${filePath} ✅`);
+					this.logger.log(`TS agent imported via esbuild: ${filePath} ✅`);
 					return { agent: agentExport as unknown };
 				}
 			}

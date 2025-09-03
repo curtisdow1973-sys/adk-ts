@@ -1,6 +1,6 @@
+import { format } from "node:util";
 import { InMemorySessionService } from "@iqai/adk";
-import { Inject, Injectable } from "@nestjs/common";
-import { Logger } from "../../common/logger";
+import { Inject, Injectable, Logger } from "@nestjs/common";
 import { TOKENS } from "../../common/tokens";
 import type {
 	CreateSessionRequest,
@@ -9,7 +9,6 @@ import type {
 	SessionResponse,
 	SessionsResponse,
 	StateResponse,
-	StateUpdateRequest,
 } from "../../common/types";
 import { AgentManager } from "../providers/agent-manager.service";
 
@@ -23,7 +22,7 @@ export class SessionsService {
 		private readonly sessionService: InMemorySessionService,
 		@Inject(TOKENS.QUIET) private readonly quiet: boolean,
 	) {
-		this.logger = new Logger({ name: "sessions-service", quiet: this.quiet });
+		this.logger = new Logger("sessions-service");
 	}
 
 	// Centralized agent loader for reuse across modules
@@ -124,18 +123,19 @@ export class SessionsService {
 	 */
 	async getAgentSessions(loadedAgent: LoadedAgent): Promise<SessionsResponse> {
 		try {
-			this.logger.info(
-				"Listing sessions for: %s %s",
-				loadedAgent.appName,
-				loadedAgent.userId,
+			this.logger.log(
+				format(
+					"Listing sessions for: %s %s",
+					loadedAgent.appName,
+					loadedAgent.userId,
+				),
 			);
 			const listResponse = await this.sessionService.listSessions(
 				loadedAgent.appName,
 				loadedAgent.userId,
 			);
-			this.logger.info(
-				"Raw sessions from service: %d",
-				listResponse.sessions.length,
+			this.logger.log(
+				format("Raw sessions from service: %d", listResponse.sessions.length),
 			);
 
 			const sessions: SessionResponse[] = [];
@@ -165,7 +165,7 @@ export class SessionsService {
 				});
 			}
 
-			this.logger.info("Processed sessions: %d", sessions.length);
+			this.logger.log(format("Processed sessions: %d", sessions.length));
 			return { sessions };
 		} catch (error) {
 			this.logger.error("Error fetching sessions: %o", error);
@@ -181,13 +181,15 @@ export class SessionsService {
 		request?: CreateSessionRequest,
 	): Promise<SessionResponse> {
 		try {
-			this.logger.info("Creating agent session: %o", {
-				appName: loadedAgent.appName,
-				userId: loadedAgent.userId,
-				hasState: !!request?.state,
-				stateKeys: request?.state ? Object.keys(request.state) : [],
-				sessionId: request?.sessionId,
-			});
+			this.logger.log(
+				format("Creating agent session: %o", {
+					appName: loadedAgent.appName,
+					userId: loadedAgent.userId,
+					hasState: !!request?.state,
+					stateKeys: request?.state ? Object.keys(request.state) : [],
+					sessionId: request?.sessionId,
+				}),
+			);
 
 			const newSession = await this.sessionService.createSession(
 				loadedAgent.appName,
@@ -196,12 +198,14 @@ export class SessionsService {
 				request?.sessionId,
 			);
 
-			this.logger.info("Session created with state: %o", {
-				sessionId: newSession.id,
-				hasState: !!newSession.state,
-				stateKeys: newSession.state ? Object.keys(newSession.state) : [],
-				stateContent: newSession.state,
-			});
+			this.logger.log(
+				format("Session created with state: %o", {
+					sessionId: newSession.id,
+					hasState: !!newSession.state,
+					stateKeys: newSession.state ? Object.keys(newSession.state) : [],
+					stateContent: newSession.state,
+				}),
+			);
 
 			return {
 				id: newSession.id,
@@ -328,7 +332,7 @@ export class SessionsService {
 		sessionId: string,
 	): Promise<StateResponse> {
 		try {
-			this.logger.info("Getting session state: %s", sessionId);
+			this.logger.log(format("Getting session state: %s", sessionId));
 
 			const session = await this.sessionService.getSession(
 				loadedAgent.appName,
@@ -344,13 +348,15 @@ export class SessionsService {
 			const userState: Record<string, any> = {};
 			const sessionState = session.state || {};
 
-			this.logger.info("Session state retrieved: %o", {
-				sessionId,
-				hasSessionState: !!session.state,
-				sessionStateKeys: Object.keys(sessionState),
-				sessionStateContent: sessionState,
-				sessionLastUpdateTime: session.lastUpdateTime,
-			});
+			this.logger.log(
+				format("Session state retrieved: %o", {
+					sessionId,
+					hasSessionState: !!session.state,
+					sessionStateKeys: Object.keys(sessionState),
+					sessionStateContent: sessionState,
+					sessionLastUpdateTime: session.lastUpdateTime,
+				}),
+			);
 
 			const allKeys = { ...agentState, ...userState, ...sessionState };
 			const totalKeys = Object.keys(allKeys).length;
@@ -368,17 +374,20 @@ export class SessionsService {
 				},
 			};
 
-			this.logger.info("Returning state response: %o", {
-				hasAgentState:
-					!!response.agentState && Object.keys(response.agentState).length > 0,
-				hasUserState:
-					!!response.userState && Object.keys(response.userState).length > 0,
-				hasSessionState:
-					!!response.sessionState &&
-					Object.keys(response.sessionState).length > 0,
-				sessionStateKeys: Object.keys(response.sessionState),
-				totalKeys: response.metadata.totalKeys,
-			});
+			this.logger.log(
+				format("Returning state response: %o", {
+					hasAgentState:
+						!!response.agentState &&
+						Object.keys(response.agentState).length > 0,
+					hasUserState:
+						!!response.userState && Object.keys(response.userState).length > 0,
+					hasSessionState:
+						!!response.sessionState &&
+						Object.keys(response.sessionState).length > 0,
+					sessionStateKeys: Object.keys(response.sessionState),
+					totalKeys: response.metadata.totalKeys,
+				}),
+			);
 
 			return response;
 		} catch (error) {
@@ -407,11 +416,8 @@ export class SessionsService {
 		value: any,
 	): Promise<void> {
 		try {
-			this.logger.info(
-				"Updating session state: %s %s = %o",
-				sessionId,
-				path,
-				value,
+			this.logger.log(
+				format("Updating session state: %s %s = %o", sessionId, path, value),
 			);
 
 			const session = await this.sessionService.getSession(
@@ -434,7 +440,7 @@ export class SessionsService {
 				sessionId,
 			);
 
-			this.logger.info("Session state updated successfully");
+			this.logger.log("Session state updated successfully");
 		} catch (error) {
 			this.logger.error("Error updating session state: %o", error);
 			throw error;
