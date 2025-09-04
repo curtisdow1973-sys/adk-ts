@@ -149,7 +149,8 @@ import {
 } from "@iqai/adk";
 
 // Load environment variables
-import "dotenv/config";
+import * as dotenv from "dotenv";
+dotenv.config();
 
 export async function agent() {
   return await AgentBuilder
