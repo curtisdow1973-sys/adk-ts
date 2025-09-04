@@ -41,7 +41,7 @@ export default function DocsPage(): React.ReactElement {
           <Icon>
             <Building2 className="size-full" />
           </Icon>
-          <h2 className="mb-2 text-lg font-semibold">Framework</h2>
+          <h2 className="mb-2 text-lg font-semibold">Docs</h2>
           <p className="text-sm text-fd-muted-foreground">
             Build intelligent AI agents with our comprehensive TypeScript framework featuring tools, sessions, and runtime management.
           </p>
