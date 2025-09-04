@@ -15,7 +15,10 @@ export const getEthPriceAgent = () => {
 	const ethPriceAgent = new LlmAgent({
 		name: "eth_price_agent",
 		description: "provides the current Ethereum (ETH) price",
+		instruction: "when asked about ethereum, provide its price",
 		model: env.LLM_MODEL,
+		disallowTransferToParent: true,
+		disallowTransferToPeers: true,
 		tools: [ethPriceTool],
 	});
 

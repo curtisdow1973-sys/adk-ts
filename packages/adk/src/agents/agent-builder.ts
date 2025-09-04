@@ -2,6 +2,8 @@ import { Logger } from "@adk/logger/index.js";
 import type { LlmRequest } from "@adk/models";
 import type { Content, Part } from "@google/genai";
 import { type LanguageModel, generateId } from "ai";
+import chalk from "chalk";
+import type { ZodSchema, ZodType } from "zod";
 import type { BaseArtifactService } from "../artifacts/base-artifact-service.js";
 import type { BaseCodeExecutor } from "../code-executors/base-code-executor.js";
 import type { Event } from "../events/event.js";
@@ -42,18 +44,8 @@ export interface AgentBuilderConfig {
 	nodes?: LangGraphNode[];
 	rootNode?: string;
 	outputKey?: string;
-	inputSchema?: import("zod").ZodSchema;
-	outputSchema?: import("zod").ZodSchema;
-}
-
-/**
- * Session configuration options
- */
-export interface SessionOptions {
-	userId?: string;
-	appName?: string;
-	state?: Record<string, any>;
-	sessionId?: string;
+	inputSchema?: ZodSchema;
+	outputSchema?: ZodSchema;
 }
 
 /**
@@ -71,25 +63,49 @@ export interface FullMessage extends Content {
 }
 
 /**
- * Enhanced runner interface with simplified API
+ * Session configuration options
  */
-export interface EnhancedRunner<T = string> {
-	ask(message: string | FullMessage | LlmRequest): Promise<T>;
+export interface SessionOptions {
+	userId?: string;
+	appName?: string;
+	state?: Record<string, any>;
+	sessionId?: string;
+}
+
+/**
+ * Multi-agent standardized response type
+ */
+export type MultiAgentResponse = { agent: string; response: string }[];
+
+/** Helper conditional type for ask() return */
+export type RunnerAskReturn<T, M extends boolean> = M extends true
+	? MultiAgentResponse
+	: T;
+
+/**
+ * Enhanced runner interface with simplified API and conditional typing.
+ * M (multi) flag determines if ask() returns a multi-agent response array.
+ */
+export interface EnhancedRunner<T = string, M extends boolean = false> {
+	ask(
+		message: string | FullMessage | LlmRequest,
+	): Promise<RunnerAskReturn<T, M>>;
 	runAsync(params: {
 		userId: string;
 		sessionId: string;
 		newMessage: FullMessage;
 	}): AsyncIterable<Event>;
-	__outputSchema?: import("zod").ZodSchema;
+	__outputSchema?: ZodSchema;
 }
 
 /**
  * Built agent result containing the agent and runner/session
  */
-export interface BuiltAgent<T = string> {
+export interface BuiltAgent<T = string, M extends boolean = false> {
 	agent: BaseAgent;
-	runner: EnhancedRunner<T>;
+	runner: EnhancedRunner<T, M>;
 	session: Session;
+	sessionService: BaseSessionService; // newly exposed for external session operations
 }
 
 /**
@@ -105,11 +121,11 @@ export type AgentType =
 /**
  * AgentBuilder with typed output schema
  */
-export interface AgentBuilderWithSchema<T>
-	extends Omit<AgentBuilder, "build" | "ask"> {
-	build(): Promise<BuiltAgent<T>>;
-	buildWithSchema<U = T>(): Promise<BuiltAgent<U>>;
-	ask(message: string | FullMessage): Promise<T>;
+export interface AgentBuilderWithSchema<T, M extends boolean = false>
+	extends Omit<AgentBuilder<any, any>, "build" | "ask" | "withOutputSchema"> {
+	build(): Promise<BuiltAgent<T, M>>;
+	buildWithSchema<U = T>(): Promise<BuiltAgent<U, M>>;
+	ask(message: string | FullMessage): Promise<RunnerAskReturn<T, M>>;
 }
 
 /**
@@ -167,7 +183,7 @@ interface RunnerConfig {
  *   .build();
  * ```
  */
-export class AgentBuilder {
+export class AgentBuilder<TOut = string, TMulti extends boolean = false> {
 	private config: AgentBuilderConfig;
 	private sessionService?: BaseSessionService;
 	private sessionOptions?: SessionOptions;
@@ -177,8 +193,22 @@ export class AgentBuilder {
 	private existingSession?: Session;
 	private existingAgent?: BaseAgent; // If provided, reuse directly
 	private definitionLocked = false; // Lock further definition mutation after withAgent
-	private warnedMethods: Set<string> = new Set();
 	private logger = new Logger({ name: "AgentBuilder" });
+
+	/**
+	 * Warn (once per method) if the definition has been locked by withAgent().
+	 */
+	private warnIfLocked(method: string): void {
+		if (!this.definitionLocked) return;
+		this.logger.warn(
+			`AgentBuilder: ${method}() ignored because builder is locked by withAgent()`,
+			{
+				suggestion:
+					"Configure model/tools/etc. before calling withAgent(), or avoid withAgent() if you intend to mutate afterwards.",
+				context: { method, agentName: this.config.name },
+			},
+		);
+	}
 
 	/**
 	 * Private constructor - use static create() method
@@ -192,7 +222,7 @@ export class AgentBuilder {
 	 * @param name The name of the agent (defaults to "default_agent")
 	 * @returns New AgentBuilder instance
 	 */
-	static create(name = "default_agent"): AgentBuilder {
+	static create(name = "default_agent"): AgentBuilder<string, false> {
 		return new AgentBuilder(name);
 	}
 
@@ -201,7 +231,9 @@ export class AgentBuilder {
 	 * @param model The model identifier (e.g., "gemini-2.5-flash")
 	 * @returns New AgentBuilder instance with model set
 	 */
-	static withModel(model: string | BaseLlm | LanguageModel): AgentBuilder {
+	static withModel(
+		model: string | BaseLlm | LanguageModel,
+	): AgentBuilder<string, false> {
 		return new AgentBuilder("default_agent").withModel(model);
 	}
 
@@ -238,18 +270,28 @@ export class AgentBuilder {
 		return this;
 	}
 
-	withInputSchema(schema: import("zod").ZodSchema): this {
+	withInputSchema(schema: ZodSchema): this {
 		this.warnIfLocked("withInputSchema");
 		this.config.inputSchema = schema;
 		return this;
 	}
 
-	withOutputSchema<T>(
-		schema: import("zod").ZodType<T>,
-	): AgentBuilderWithSchema<T> {
+	withOutputSchema<T>(schema: ZodType<T>): AgentBuilderWithSchema<T, TMulti> {
 		this.warnIfLocked("withOutputSchema");
+		// Disallow setting an output schema directly on multi-agent aggregators
+		if (this.agentType === "sequential" || this.agentType === "parallel") {
+			const msg =
+				"Output schemas cannot be applied to sequential or parallel agents. Define output schemas on each sub-agent instead.";
+			this.logger.error(msg, {
+				suggestion: "Apply outputSchema to each sub-agent individually.",
+				context: {
+					agentType: this.agentType,
+				},
+			});
+			throw new Error(msg);
+		}
 		this.config.outputSchema = schema;
-		return this as unknown as AgentBuilderWithSchema<T>;
+		return this as unknown as AgentBuilderWithSchema<T, TMulti>;
 	}
 
 	/**
@@ -292,6 +334,17 @@ export class AgentBuilder {
 	 */
 	withOutputKey(outputKey: string): this {
 		this.warnIfLocked("withOutputKey");
+		// Ignore for aggregator agent types
+		if (this.agentType === "sequential" || this.agentType === "parallel") {
+			this.logger.warn(
+				"AgentBuilder: outputKey ignored for sequential/parallel aggregator",
+				{
+					suggestion: "Set outputKey on each sub-agent instead.",
+					context: { attemptedOutputKey: outputKey, agentType: this.agentType },
+				},
+			);
+			return this;
+		}
 		this.config.outputKey = outputKey;
 		return this;
 	}
@@ -348,11 +401,40 @@ export class AgentBuilder {
 	 * @param subAgents Sub-agents to execute in sequence
 	 * @returns This builder instance for chaining
 	 */
-	asSequential(subAgents: BaseAgent[]): this {
-		this.warnIfLocked("asSequential");
+	asSequential(subAgents: BaseAgent[]): AgentBuilder<TOut, true> {
+		if (this.definitionLocked) {
+			this.logger.warn(
+				"AgentBuilder: asSequential() ignored; builder locked by withAgent()",
+				{
+					suggestion: "Call asSequential() before withAgent().",
+					context: { agentName: this.config.name },
+				},
+			);
+			return this as unknown as AgentBuilder<TOut, true>;
+		}
 		this.agentType = "sequential";
 		this.config.subAgents = subAgents;
-		return this;
+		// Remove incompatible keys
+		if (this.config.outputKey) {
+			this.logger.warn(
+				"AgentBuilder: outputKey ignored for sequential agent aggregator; removed",
+				{
+					suggestion: "Assign outputKey on individual sub-agents if needed.",
+					context: { previousValue: this.config.outputKey },
+				},
+			);
+			this.config.outputKey = undefined;
+		}
+		if (this.config.outputSchema) {
+			this.logger.warn(
+				"AgentBuilder: outputSchema cannot be applied to sequential aggregator; removed",
+				{
+					suggestion: "Apply schemas to sub-agents individually.",
+				},
+			);
+			this.config.outputSchema = undefined;
+		}
+		return this as unknown as AgentBuilder<TOut, true>;
 	}
 
 	/**
@@ -360,11 +442,39 @@ export class AgentBuilder {
 	 * @param subAgents Sub-agents to execute in parallel
 	 * @returns This builder instance for chaining
 	 */
-	asParallel(subAgents: BaseAgent[]): this {
-		this.warnIfLocked("asParallel");
+	asParallel(subAgents: BaseAgent[]): AgentBuilder<TOut, true> {
+		if (this.definitionLocked) {
+			this.logger.warn(
+				"AgentBuilder: asParallel() ignored; builder locked by withAgent()",
+				{
+					suggestion: "Call asParallel() before withAgent().",
+					context: { agentName: this.config.name },
+				},
+			);
+			return this as unknown as AgentBuilder<TOut, true>;
+		}
 		this.agentType = "parallel";
 		this.config.subAgents = subAgents;
-		return this;
+		if (this.config.outputKey) {
+			this.logger.warn(
+				"AgentBuilder: outputKey ignored for parallel agent aggregator; removed",
+				{
+					suggestion: "Assign outputKey on individual sub-agents if needed.",
+					context: { previousValue: this.config.outputKey },
+				},
+			);
+			this.config.outputKey = undefined;
+		}
+		if (this.config.outputSchema) {
+			this.logger.warn(
+				"AgentBuilder: outputSchema cannot be applied to parallel aggregator; removed",
+				{
+					suggestion: "Apply schemas to sub-agents individually.",
+				},
+			);
+			this.config.outputSchema = undefined;
+		}
+		return this as unknown as AgentBuilder<TOut, true>;
 	}
 
 	/**
@@ -424,10 +534,12 @@ export class AgentBuilder {
 	withSession(session: Session): this {
 		// Require that withSessionService() was called first
 		if (!this.sessionService) {
-			throw new Error(
-				"Session service must be configured before using withSession(). " +
-					"Call withSessionService() first, or use withQuickSession() for in-memory sessions.",
-			);
+			const msg =
+				"Session service must be configured before using withSession(). Call withSessionService() first, or use withQuickSession() for in-memory sessions.";
+			this.logger.error(msg, {
+				suggestion: "Invoke withSessionService() prior to withSession().",
+			});
+			throw new Error(msg);
 		}
 
 		// Update session options with the session details
@@ -478,9 +590,9 @@ export class AgentBuilder {
 	 * Build the agent and optionally create runner and session
 	 * @returns Built agent with optional runner and session
 	 */
-	async build<T = string>(): Promise<BuiltAgent<T>> {
+	async build<T = TOut>(): Promise<BuiltAgent<T, TMulti>> {
 		const agent = this.createAgent();
-		let runner: EnhancedRunner<T> | undefined;
+		let runner: EnhancedRunner<T, any> | undefined;
 		let session: Session | undefined;
 
 		// If no session service is provided, create a default in-memory session
@@ -515,16 +627,21 @@ export class AgentBuilder {
 			runner = this.createEnhancedRunner<T>(baseRunner, session);
 		}
 
-		return { agent, runner, session } as BuiltAgent<T>;
+		return {
+			agent,
+			runner: runner! as EnhancedRunner<T, TMulti>,
+			session: session!,
+			sessionService: this.sessionService!,
+		} as BuiltAgent<T, TMulti>;
 	}
 
 	/**
 	 * Type-safe build method for agents with output schemas
 	 * Provides better type inference for the ask method return type
 	 */
-	async buildWithSchema<T>(): Promise<BuiltAgent<T>> {
+	async buildWithSchema<T>(): Promise<BuiltAgent<T, TMulti>> {
 		const result = await this.build();
-		return result as BuiltAgent<T>;
+		return result as unknown as BuiltAgent<T, TMulti>;
 	}
 
 	/**
@@ -532,9 +649,11 @@ export class AgentBuilder {
 	 * @param message Message to send to the agent (string or full message object)
 	 * @returns Agent response
 	 */
-	async ask(message: string | FullMessage): Promise<string> {
+	async ask(
+		message: string | FullMessage,
+	): Promise<RunnerAskReturn<TOut, TMulti>> {
 		const { runner } = await this.build();
-		return runner.ask(message);
+		return runner.ask(message) as Promise<RunnerAskReturn<TOut, TMulti>>;
 	}
 
 	/**
@@ -546,7 +665,11 @@ export class AgentBuilder {
 		switch (this.agentType) {
 			case "llm": {
 				if (!this.config.model) {
-					throw new Error("Model is required for LLM agent");
+					const msg = "Model is required for LLM agent";
+					this.logger.error(msg, {
+						suggestion: "Call withModel() before build().",
+					});
+					throw new Error(msg);
 				}
 
 				const model = this.config.model;
@@ -576,7 +699,11 @@ export class AgentBuilder {
 					!Array.isArray(this.config.subAgents) ||
 					this.config.subAgents.length === 0
 				) {
-					throw new Error("Sub-agents required for sequential agent");
+					const msg = "Sub-agents required for sequential agent";
+					this.logger.error(msg, {
+						suggestion: "Provide at least one sub-agent.",
+					});
+					throw new Error(msg);
 				}
 				return new SequentialAgent({
 					name: this.config.name,
@@ -590,7 +717,11 @@ export class AgentBuilder {
 					!Array.isArray(this.config.subAgents) ||
 					this.config.subAgents.length === 0
 				) {
-					throw new Error("Sub-agents required for parallel agent");
+					const msg = "Sub-agents required for parallel agent";
+					this.logger.error(msg, {
+						suggestion: "Provide at least one sub-agent.",
+					});
+					throw new Error(msg);
 				}
 				return new ParallelAgent({
 					name: this.config.name,
@@ -604,7 +735,11 @@ export class AgentBuilder {
 					!Array.isArray(this.config.subAgents) ||
 					this.config.subAgents.length === 0
 				) {
-					throw new Error("Sub-agents required for loop agent");
+					const msg = "Sub-agents required for loop agent";
+					this.logger.error(msg, {
+						suggestion: "Provide at least one sub-agent.",
+					});
+					throw new Error(msg);
 				}
 				return new LoopAgent({
 					name: this.config.name,
@@ -621,7 +756,11 @@ export class AgentBuilder {
 					!this.config.rootNode ||
 					typeof this.config.rootNode !== "string"
 				) {
-					throw new Error("Nodes and root node required for LangGraph agent");
+					const msg = "Nodes and root node required for LangGraph agent";
+					this.logger.error(msg, {
+						suggestion: "Provide nodes[] and a valid rootNode string.",
+					});
+					throw new Error(msg);
 				}
 				return new LangGraphAgent({
 					name: this.config.name,
@@ -658,20 +797,27 @@ export class AgentBuilder {
 	private createEnhancedRunner<T>(
 		baseRunner: Runner,
 		session: Session,
-	): EnhancedRunner<T> {
+	): EnhancedRunner<T, TMulti> {
 		const sessionOptions = this.sessionOptions; // Capture sessionOptions in closure
 		const outputSchema = this.config.outputSchema;
+		const agentType = this.agentType; // capture agent type for aggregation logic
+		const isMulti = agentType === "parallel" || agentType === "sequential";
+		const subAgentNames = this.config.subAgents?.map((a) => a.name) || [];
 
 		return {
 			__outputSchema: outputSchema,
-			async ask(message: string | FullMessage | LlmRequest): Promise<T> {
+			async ask(message: string | FullMessage | LlmRequest): Promise<any> {
 				const newMessage: FullMessage =
 					typeof message === "string"
 						? { parts: [{ text: message }] }
 						: typeof message === "object" && "contents" in message
 							? { parts: message.contents[message.contents.length - 1].parts }
 							: message;
-				let response = "";
+				let combinedResponse = "";
+				// Track per-agent incremental text
+				const perAgentBuffers: Record<string, string> = {};
+				// Track authors that produced any text (excluding 'user')
+				const authors: Set<string> = new Set();
 
 				if (!sessionOptions?.userId) {
 					throw new Error("Session configuration is required");
@@ -692,29 +838,45 @@ export class AgentBuilder {
 							)
 							.join("");
 						if (content) {
-							response += content;
+							combinedResponse += content;
+							const author = event.author || "";
+							if (author && author !== "user") {
+								authors.add(author);
+								perAgentBuffers[author] =
+									(perAgentBuffers[author] || "") + content;
+							}
 						}
 					}
 				}
 
-				// If we have an output schema, the response should already be validated by the processor
-				// and formatted as JSON. Try to parse it, otherwise return the raw response.
+				if (isMulti) {
+					// Always return ordered array for multi-agent
+					return subAgentNames.map((name) => ({
+						agent: name,
+						response: (perAgentBuffers[name] || "").trim(),
+					}));
+				}
+
+				// Single-agent path with optional schema parsing
 				if (outputSchema) {
 					try {
-						const parsed = JSON.parse(response);
+						const parsed = JSON.parse(combinedResponse);
 						return outputSchema.parse(parsed) as T;
 					} catch (parseError) {
-						// If parsing fails, try to validate the raw response
 						try {
-							return outputSchema.parse(response) as T;
+							return outputSchema.parse(combinedResponse) as T;
 						} catch (validationError) {
-							// If both fail, return the raw response as type T (casting)
-							return response.trim() as T;
+							throw new Error(
+								`Failed to parse and validate LLM output against the schema.
+							JSON parse error: ${parseError instanceof Error ? parseError.message : String(parseError)}
+							Zod validation error: ${validationError instanceof Error ? validationError.message : String(validationError)}
+							Raw output: "${combinedResponse}"`,
+							);
 						}
 					}
 				}
 
-				return response.trim() as T;
+				return combinedResponse.trim() as T;
 			},
 
 			runAsync(params: {
@@ -725,22 +887,5 @@ export class AgentBuilder {
 				return baseRunner.runAsync(params);
 			},
 		};
-	}
-
-	/**
-	 * Warn (once per method) if the definition has been locked by withAgent().
-	 */
-	private warnIfLocked(method: string): void {
-		if (!this.definitionLocked) return;
-		if (this.warnedMethods.has(method)) return;
-		this.warnedMethods.add(method);
-		if (process.env.NODE_ENV !== "production") {
-			const msg = `AgentBuilder: attempted to call ${method} after withAgent(); ignoring. (Wrap the agent first OR configure before withAgent).`;
-			if (this.logger && typeof this.logger.warn === "function") {
-				this.logger.warn(msg);
-			} else {
-				console.warn(msg);
-			}
-		}
 	}
 }

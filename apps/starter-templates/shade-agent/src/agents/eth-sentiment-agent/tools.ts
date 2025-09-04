@@ -11,7 +11,7 @@ export const ethHeadlinesTool = createTool({
 	name: "get_eth_headlines",
 	description:
 		"Get latest Ethereum-related news headlines from Reddit r/ethereum using rss-parser",
-	fn: async () => {
+	fn: async (_, context) => {
 		try {
 			const parser = new Parser();
 			const feed = await parser.parseURL(
@@ -23,7 +23,9 @@ export const ethHeadlinesTool = createTool({
 			if (headlines.length === 0) {
 				return "No headlines found.";
 			}
-			return headlines.join("\n");
+			const formatted = headlines.join("\n");
+			context.state.set("headlines", formatted);
+			return formatted;
 		} catch {
 			return "Ethereum headlines unavailable at the moment.";
 		}

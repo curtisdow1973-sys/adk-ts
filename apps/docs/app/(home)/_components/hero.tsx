@@ -87,11 +87,10 @@ export function Hero() {
                 <DynamicCodeBlock
                   lang="typescript"
                   code={dedent`
-                    const workflow = await AgentBuilder
+                    const workflow = AgentBuilder
                       .asSequential([researchAgent, analysisAgent])
                       .withTools([GoogleSearch, DataProcessor])
-                      .withMemory(vectorMemoryService)
-                      .build();
+                      .withMemory(vectorMemoryService);
 
                     const result = await workflow.ask(
                       "Analyze market trends in AI"
