@@ -30,7 +30,7 @@ export default function DocsPage(): React.ReactElement {
           Get Started
         </Link>
         <Link
-          href="/docs/framework/quickstart"
+          href="/docs/framework/get-started/quickstart"
           className={cn(buttonVariants({ variant: 'outline' }), 'ml-4 px-6')}
         >
           Quickstart Guide
