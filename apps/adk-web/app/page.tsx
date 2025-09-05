@@ -123,6 +123,7 @@ function HomeContent() {
 			{/* Sidebar (now includes expanded panel) */}
 			<div className="flex-shrink-0 h-full">
 				<Sidebar
+					key={selectedAgent?.relativePath || "__no_agent__"}
 					selectedPanel={selectedPanel}
 					onPanelSelect={handlePanelSelect}
 					selectedAgent={selectedAgent}
@@ -141,7 +142,11 @@ function HomeContent() {
 							apiUrl={finalApiUrl}
 							agents={agents}
 							selectedAgent={selectedAgent}
-							onSelectAgent={selectAgent}
+							onSelectAgent={(agent) => {
+								// Clear session first to avoid stale session requests against new agent
+								setCurrentSessionId(null);
+								selectAgent(agent);
+							}}
 						/>
 					</div>
 

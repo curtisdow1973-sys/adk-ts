@@ -188,11 +188,28 @@ export function useAgents(apiUrl: string, currentSessionId?: string | null) {
 		},
 	});
 
-	const selectAgent = useCallback((agent: Agent) => {
-		setSelectedAgent(agent);
-		setMessages([]);
-		setLastMessageId(0);
-	}, []);
+	const selectAgent = useCallback(
+		(agent: Agent) => {
+			// Cancel in-flight queries tied to the previous agent to avoid races
+			if (selectedAgent) {
+				try {
+					queryClient.cancelQueries({
+						queryKey: ["events", apiUrl, selectedAgent.relativePath],
+					});
+					queryClient.cancelQueries({
+						queryKey: ["agent-messages", apiUrl, selectedAgent.relativePath],
+					});
+					queryClient.cancelQueries({
+						queryKey: ["sessions", apiUrl, selectedAgent.relativePath],
+					});
+				} catch {}
+			}
+			setSelectedAgent(agent);
+			setMessages([]);
+			setLastMessageId(0);
+		},
+		[apiUrl, queryClient, selectedAgent],
+	);
 
 	const sendMessage = useCallback(
 		(message: string, attachments?: File[]) => {

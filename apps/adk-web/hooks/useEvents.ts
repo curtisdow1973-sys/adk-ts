@@ -55,15 +55,6 @@ export function useEvents(
 		refetchInterval: 30000,
 	});
 
-	// Keep session cards fresh when events for active session change
-	useEffect(() => {
-		if (!selectedAgent) return;
-		queryClient.invalidateQueries({
-			queryKey: ["sessions", apiUrl, selectedAgent.relativePath],
-		});
-		// Intentionally not depending on eventsResponse to avoid invalidation storms
-	}, [apiUrl, selectedAgent, queryClient]);
-
 	const events = eventsResponse?.events ?? [];
 	const totalCount = eventsResponse?.totalCount ?? 0;
 

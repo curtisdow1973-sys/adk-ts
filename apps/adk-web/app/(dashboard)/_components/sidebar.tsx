@@ -55,6 +55,11 @@ export function Sidebar({
 	const finalApiUrl =
 		apiUrl || (port ? `http://localhost:${port}` : "http://localhost:8042");
 
+	// Local session state should be declared before hooks that depend on it
+	const [localSessionId, setLocalSessionId] = useState<string | null>(
+		initialSessionId ?? null,
+	);
+
 	// Manage sessions and events internally
 	const {
 		sessions,
@@ -67,12 +72,9 @@ export function Sidebar({
 	const { events, isLoading: eventsLoading } = useEvents(
 		finalApiUrl,
 		selectedAgent,
-		initialSessionId ?? null,
+		localSessionId ?? null,
 	);
 
-	const [localSessionId, setLocalSessionId] = useState<string | null>(
-		initialSessionId ?? null,
-	);
 	const [selectedEvent, setSelectedEvent] = useState<any | null>(null);
 
 	// Track previous agent to detect actual agent switch
@@ -98,13 +100,17 @@ export function Sidebar({
 			const firstSessionId = sessions[0].id;
 			setLocalSessionId(firstSessionId);
 			onSessionChange?.(firstSessionId);
+			// Also sync server-side active session for consistency
+			try {
+				void switchSession(firstSessionId);
+			} catch {}
 		}
 		// If current local session id is no longer present in sessions (e.g., after agent change or deletion), clear it
 		if (localSessionId && !sessions.some((s) => s.id === localSessionId)) {
 			setLocalSessionId(null);
 			onSessionChange?.(null);
 		}
-	}, [sessions, localSessionId, onSessionChange]);
+	}, [sessions, localSessionId, onSessionChange, switchSession]);
 
 	const handleCreateSession = async (
 		state?: Record<string, any>,
