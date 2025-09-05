@@ -88,7 +88,7 @@ export class AgentManager {
 			const exportedAgent = await this.loader.resolveAgentExport(agentModule);
 
 			// Validate basic shape
-			if (!(exportedAgent as any)?.name) {
+			if (!exportedAgent?.name) {
 				throw new Error(
 					`Invalid agent export in ${agentFilePath}. Expected a BaseAgent instance with a name property.`,
 				);
@@ -96,9 +96,9 @@ export class AgentManager {
 			// Soft validation of optional fields (model/instruction not strictly required for all custom agents)
 
 			// Always use the session created by the agent builder; ignore any session from the exported agent.
-			const agentBuilder = AgentBuilder.create(
-				(exportedAgent as any).name,
-			).withAgent(exportedAgent as any);
+			const agentBuilder = AgentBuilder.create(exportedAgent.name).withAgent(
+				exportedAgent,
+			);
 			agentBuilder.withSessionService(this.sessionService, {
 				userId: `${USER_ID_PREFIX}${agentPath}`,
 				appName: DEFAULT_APP_NAME,
@@ -115,15 +115,15 @@ export class AgentManager {
 			);
 			// Store the loaded agent with its runner and the session from the builder only
 			const loadedAgent: LoadedAgent = {
-				agent: exportedAgent as any,
-				runner: runner as any,
+				agent: exportedAgent,
+				runner: runner,
 				sessionId: session.id,
 				userId: `${USER_ID_PREFIX}${agentPath}`,
 				appName: DEFAULT_APP_NAME,
 			};
 			this.loadedAgents.set(agentPath, loadedAgent);
-			(agent as any).instance = exportedAgent;
-			(agent as any).name = (exportedAgent as any).name;
+			agent.instance = exportedAgent;
+			agent.name = exportedAgent.name;
 			// Ensure the session is stored in the session service
 			try {
 				const existingSession = await this.sessionService.getSession(
@@ -151,7 +151,7 @@ export class AgentManager {
 			}
 		} catch (error) {
 			// agent might be undefined if lookup failed earlier
-			const agentName = (agent as any)?.name ?? agentPath;
+			const agentName = agent?.name ?? agentPath;
 			this.logger.error(
 				`Failed to load agent "${agentName}": ${error instanceof Error ? error.message : String(error)}`,
 			);
@@ -166,7 +166,7 @@ export class AgentManager {
 		this.loadedAgents.delete(agentPath);
 		const agent = this.agents.get(agentPath);
 		if (agent) {
-			(agent as any).instance = undefined;
+			agent.instance = undefined;
 		}
 	}
 
@@ -198,16 +198,16 @@ export class AgentManager {
 
 			// Always run against the CURRENT loadedAgent.sessionId (switchable)
 			let accumulated = "";
-			for await (const event of (loadedAgent as any).runner.runAsync({
+			for await (const event of loadedAgent.runner.runAsync({
 				userId: loadedAgent.userId,
 				sessionId: loadedAgent.sessionId,
 				newMessage: fullMessage,
 			})) {
-				const parts = (event as any)?.content?.parts;
+				const parts = event?.content?.parts;
 				if (Array.isArray(parts)) {
 					accumulated += parts
 						.map((p: any) =>
-							p && typeof p === "object" && "text" in p ? (p as any).text : "",
+							p && typeof p === "object" && "text" in p ? p.text : "",
 						)
 						.join("");
 				}
