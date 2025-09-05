@@ -24,7 +24,7 @@ import { Button } from "@/components/ui/button";
 import { useChatAttachments } from "@/hooks/useChatAttachments";
 import { cn } from "@/lib/utils";
 import { Bot, MessageSquare, Paperclip, User as UserIcon } from "lucide-react";
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 
 interface ChatPanelProps {
 	selectedAgent: Agent | null;
@@ -40,6 +40,7 @@ export function ChatPanel({
 	isSendingMessage = false,
 }: ChatPanelProps) {
 	const [inputMessage, setInputMessage] = useState("");
+	const inputRef = useRef<HTMLTextAreaElement | null>(null);
 	const {
 		attachedFiles,
 		fileInputRef,
@@ -61,6 +62,10 @@ export function ChatPanel({
 		onSendMessage(inputMessage, attachedFiles);
 		setInputMessage("");
 		resetAttachments();
+		// Keep focus in the input for rapid follow-ups
+		requestAnimationFrame(() => {
+			inputRef.current?.focus();
+		});
 	};
 
 	// Close dropdown when clicking outside (handled by backdrop now)
@@ -183,6 +188,7 @@ export function ChatPanel({
 					>
 						<PromptInput onSubmit={handleSubmit} className="w-full">
 							<PromptInputTextarea
+								ref={inputRef}
 								value={inputMessage}
 								placeholder={
 									isDragOver
@@ -190,7 +196,6 @@ export function ChatPanel({
 										: `Message ${selectedAgent.name}...`
 								}
 								onChange={(e) => setInputMessage(e.target.value)}
-								disabled={isSendingMessage}
 							/>
 							<PromptInputToolbar>
 								<PromptInputTools>
@@ -205,7 +210,10 @@ export function ChatPanel({
 								</PromptInputTools>
 								<PromptInputSubmit
 									status={isSendingMessage ? "streaming" : "ready"}
-									disabled={!inputMessage.trim() && attachedFiles.length === 0}
+									disabled={
+										(!inputMessage.trim() && attachedFiles.length === 0) ||
+										isSendingMessage
+									}
 								/>
 							</PromptInputToolbar>
 						</PromptInput>
