@@ -1,4 +1,6 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { useMemo } from "react";
+import { Api } from "../Api";
 import type { Agent } from "../app/(dashboard)/_schema";
 
 interface StateResponse {
@@ -19,6 +21,10 @@ export function useStatePanel(
 	currentSessionId: string | null,
 ) {
 	const queryClient = useQueryClient();
+	const apiClient = useMemo(
+		() => (apiUrl ? new Api({ baseUrl: apiUrl }) : null),
+		[apiUrl],
+	);
 
 	const {
 		data: currentState,
@@ -27,48 +33,30 @@ export function useStatePanel(
 	} = useQuery<StateResponse>({
 		queryKey: ["state", apiUrl, selectedAgent?.relativePath, currentSessionId],
 		queryFn: async () => {
-			if (!apiUrl || !selectedAgent || !currentSessionId) {
+			if (!apiClient || !selectedAgent || !currentSessionId) {
 				throw new Error("Agent, session and apiUrl required");
 			}
-
-			const response = await fetch(
-				`${apiUrl}/api/agents/${encodeURIComponent(selectedAgent.relativePath)}/sessions/${currentSessionId}/state`,
+			const res = await apiClient.api.stateControllerGetState(
+				encodeURIComponent(selectedAgent.relativePath),
+				currentSessionId,
 			);
-
-			if (!response.ok) {
-				throw new Error("Failed to fetch state");
-			}
-
-			return response.json();
+			return res.data as StateResponse;
 		},
-		enabled: !!apiUrl && !!selectedAgent && !!currentSessionId,
+		enabled: !!apiClient && !!selectedAgent && !!currentSessionId,
 	});
 
 	const updateStateMutation = useMutation({
 		mutationFn: async ({ path, value }: { path: string; value: any }) => {
-			if (!apiUrl || !selectedAgent || !currentSessionId) {
+			if (!apiClient || !selectedAgent || !currentSessionId) {
 				throw new Error("Agent, session and apiUrl required");
 			}
-
-			const response = await fetch(
-				`${apiUrl}/api/agents/${encodeURIComponent(selectedAgent.relativePath)}/sessions/${currentSessionId}/state`,
-				{
-					method: "PUT",
-					headers: {
-						"Content-Type": "application/json",
-					},
-					body: JSON.stringify({ path, value }),
-				},
+			return apiClient.api.stateControllerUpdateState(
+				encodeURIComponent(selectedAgent.relativePath),
+				currentSessionId,
+				{ path, value },
 			);
-
-			if (!response.ok) {
-				throw new Error("Failed to update state");
-			}
-
-			return response.json();
 		},
 		onSuccess: () => {
-			// Invalidate and refetch state
 			queryClient.invalidateQueries({
 				queryKey: [
 					"state",
