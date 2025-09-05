@@ -108,7 +108,7 @@ function setupHotReload(
 					const fullPath =
 						typeof filename === "string" ? resolve(p, filename) : p;
 					if (shouldIgnorePath(fullPath, gitignorePrefixes)) {
-						if (!config.quiet) {
+						if (!config.quiet && process.env.ADK_DEBUG_NEST === "1") {
 							console.log(`[hot-reload] Ignored change in ${fullPath}`);
 						}
 						return;
@@ -124,7 +124,7 @@ function setupHotReload(
 							// Clear running agents so next use reloads fresh code, then rescan
 							agentManager.stopAllAgents();
 							agentManager.scanAgents(config.agentsDir);
-							if (!config.quiet) {
+							if (!config.quiet && process.env.ADK_DEBUG_NEST === "1") {
 								console.log(
 									`[hot-reload] Reloaded agents after change in ${filename ?? p}`,
 								);
@@ -143,7 +143,7 @@ function setupHotReload(
 				},
 			);
 			watchers.push(watcher);
-			if (!config.quiet) {
+			if (!config.quiet && process.env.ADK_DEBUG_NEST === "1") {
 				console.log(`[hot-reload] Watching ${p}`);
 			}
 		} catch (e) {
@@ -190,7 +190,12 @@ export async function startHttpServer(
 ): Promise<StartedHttpServer> {
 	const app = await NestFactory.create<NestExpressApplication>(
 		HttpModule.register(config),
-		{ logger: config.quiet ? ["error", "warn"] : ["log", "error", "warn"] },
+		{
+			logger:
+				process.env.ADK_DEBUG_NEST === "1"
+					? ["log", "error", "warn", "debug", "verbose"]
+					: ["error", "warn"],
+		},
 	);
 
 	// CORS parity with previous Hono app.use("/*", cors())
@@ -228,7 +233,7 @@ export async function startHttpServer(
 			customSiteTitle: "ADK API Docs",
 			jsonDocumentUrl: "/openapi.json",
 		});
-		if (!config.quiet) {
+		if (!config.quiet && process.env.ADK_DEBUG_NEST === "1") {
 			console.log("[openapi] Docs available at /docs (json: /openapi.json)");
 		}
 	}
