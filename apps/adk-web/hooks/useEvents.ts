@@ -1,7 +1,8 @@
 "use client";
 
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { useEffect } from "react";
+import { useEffect, useMemo } from "react";
+import { Api } from "../Api";
 import type { Agent } from "../app/(dashboard)/_schema";
 
 interface Event {
@@ -27,6 +28,10 @@ export function useEvents(
 	sessionId: string | null,
 ) {
 	const queryClient = useQueryClient();
+	const apiClient = useMemo(
+		() => (apiUrl ? new Api({ baseUrl: apiUrl }) : null),
+		[apiUrl],
+	);
 
 	const {
 		data: eventsResponse,
@@ -36,19 +41,15 @@ export function useEvents(
 	} = useQuery<EventsResponse>({
 		queryKey: ["events", apiUrl, selectedAgent?.relativePath, sessionId],
 		queryFn: async () => {
-			if (!apiUrl || !selectedAgent || !sessionId) {
+			if (!apiClient || !selectedAgent || !sessionId)
 				return { events: [], totalCount: 0 } as EventsResponse;
-			}
-
-			const response = await fetch(
-				`${apiUrl}/api/agents/${encodeURIComponent(selectedAgent.relativePath)}/sessions/${sessionId}/events`,
+			const res = await apiClient.api.eventsControllerGetEvents(
+				encodeURIComponent(selectedAgent.relativePath),
+				sessionId,
 			);
-			if (!response.ok) {
-				throw new Error(`Failed to fetch events: ${response.status}`);
-			}
-			return response.json();
+			return res.data as EventsResponse;
 		},
-		enabled: !!apiUrl && !!selectedAgent && !!sessionId,
+		enabled: !!apiClient && !!selectedAgent && !!sessionId,
 		staleTime: 10000,
 		retry: 2,
 		refetchInterval: 30000,
@@ -60,7 +61,8 @@ export function useEvents(
 		queryClient.invalidateQueries({
 			queryKey: ["sessions", apiUrl, selectedAgent.relativePath],
 		});
-	}, [eventsResponse, apiUrl, selectedAgent, queryClient]);
+		// Intentionally not depending on eventsResponse to avoid invalidation storms
+	}, [apiUrl, selectedAgent, queryClient]);
 
 	const events = eventsResponse?.events ?? [];
 	const totalCount = eventsResponse?.totalCount ?? 0;
