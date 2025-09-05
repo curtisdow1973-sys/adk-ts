@@ -7,8 +7,19 @@ import {
 	Param,
 	Post,
 } from "@nestjs/common";
-import { ApiBody, ApiOperation, ApiParam, ApiTags } from "@nestjs/swagger";
+import {
+	ApiBody,
+	ApiOkResponse,
+	ApiOperation,
+	ApiParam,
+	ApiTags,
+} from "@nestjs/swagger";
 import { CreateSessionRequest, SessionsResponse } from "../../common/types";
+import {
+	SessionResponseDto,
+	SessionsResponseDto,
+	SuccessResponseDto,
+} from "../dto/api.dto";
 import { SessionsService } from "./sessions.service";
 
 @ApiTags("sessions")
@@ -29,6 +40,7 @@ export class SessionsController {
 		name: "id",
 		description: "URL-encoded absolute agent path or identifier",
 	})
+	@ApiOkResponse({ type: SessionsResponseDto })
 	async listSessions(@Param("id") id: string): Promise<SessionsResponse> {
 		const agentPath = decodeURIComponent(id);
 		return this.sessions.listSessions(agentPath);
@@ -48,6 +60,7 @@ export class SessionsController {
 		description: "Initial session creation payload with optional state",
 		schema: { example: { state: { foo: "bar" }, sessionId: "custom-id-123" } },
 	})
+	@ApiOkResponse({ type: SessionResponseDto })
 	async createSession(
 		@Param("id") id: string,
 		@Body() request: CreateSessionRequest,
@@ -63,6 +76,7 @@ export class SessionsController {
 	})
 	@ApiParam({ name: "id", description: "Agent identifier" })
 	@ApiParam({ name: "sessionId", description: "Session to delete" })
+	@ApiOkResponse({ type: SuccessResponseDto })
 	async deleteSession(
 		@Param("id") id: string,
 		@Param("sessionId") sessionId: string,
@@ -79,6 +93,7 @@ export class SessionsController {
 	})
 	@ApiParam({ name: "id", description: "Agent identifier" })
 	@ApiParam({ name: "sessionId", description: "Session to switch to" })
+	@ApiOkResponse({ type: SuccessResponseDto })
 	async switchSession(
 		@Param("id") id: string,
 		@Param("sessionId") sessionId: string,

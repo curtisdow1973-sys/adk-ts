@@ -1,6 +1,7 @@
 import { Controller, Get, Inject, Post } from "@nestjs/common";
-import { ApiOperation, ApiTags } from "@nestjs/swagger";
+import { ApiOkResponse, ApiOperation, ApiTags } from "@nestjs/swagger";
 import type { AgentListResponse } from "../../common/types";
+import { AgentsListResponseDto } from "../dto/api.dto";
 import { AgentManager } from "../providers/agent-manager.service";
 
 function mapAgentsToResponse(agents: Map<string, any>): AgentListResponse[] {
@@ -25,6 +26,7 @@ export class AgentsController {
 		description:
 			"Returns all agent entries found by scanning the agents directory. Each agent includes name, absolute, and relative paths.",
 	})
+	@ApiOkResponse({ type: AgentsListResponseDto })
 	listAgents(): { agents: AgentListResponse[] } {
 		const agentsList = mapAgentsToResponse(this.agentManager.getAgents());
 		return { agents: agentsList };
@@ -36,6 +38,7 @@ export class AgentsController {
 		description:
 			"Triggers a fresh scan of the agents directory and returns the updated agent list.",
 	})
+	@ApiOkResponse({ type: AgentsListResponseDto })
 	refreshAgents(): { agents: AgentListResponse[] } {
 		const agentsDir = process.cwd();
 		this.agentManager.scanAgents(agentsDir);

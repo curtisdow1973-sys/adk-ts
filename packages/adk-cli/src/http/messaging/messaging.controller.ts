@@ -1,10 +1,17 @@
 import { Body, Controller, Get, Inject, Param, Post } from "@nestjs/common";
-import { ApiBody, ApiOperation, ApiParam, ApiTags } from "@nestjs/swagger";
+import {
+	ApiBody,
+	ApiOkResponse,
+	ApiOperation,
+	ApiParam,
+	ApiTags,
+} from "@nestjs/swagger";
 import {
 	MessageRequest,
 	MessageResponse,
 	MessagesResponse,
 } from "../../common/types";
+import { MessageResponseDto, MessagesResponseDto } from "../dto/api.dto";
 import { MessagingService } from "./messaging.service";
 
 @ApiTags("messaging")
@@ -22,6 +29,7 @@ export class MessagingController {
 			"Returns ordered chat transcript for the agent, including user and assistant messages.",
 	})
 	@ApiParam({ name: "id", description: "Agent identifier" })
+	@ApiOkResponse({ type: MessagesResponseDto })
 	async getAgentMessages(@Param("id") id: string): Promise<MessagesResponse> {
 		const agentPath = decodeURIComponent(id);
 		return this.messaging.getMessages(agentPath);
@@ -49,6 +57,7 @@ export class MessagingController {
 			},
 		},
 	})
+	@ApiOkResponse({ type: MessageResponseDto })
 	async postAgentMessage(
 		@Param("id") id: string,
 		@Body() body: MessageRequest,

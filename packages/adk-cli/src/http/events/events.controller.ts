@@ -1,6 +1,12 @@
 import { Controller, Get, Inject, Param } from "@nestjs/common";
-import { ApiOperation, ApiParam, ApiTags } from "@nestjs/swagger";
+import {
+	ApiOkResponse,
+	ApiOperation,
+	ApiParam,
+	ApiTags,
+} from "@nestjs/swagger";
 import { EventsResponse } from "../../common/types";
+import { EventsResponseDto } from "../dto/api.dto";
 import { EventsService } from "./events.service";
 
 @ApiTags("events")
@@ -22,6 +28,7 @@ export class EventsController {
 		description: "URL-encoded absolute agent path or identifier",
 	})
 	@ApiParam({ name: "sessionId", description: "Target session identifier" })
+	@ApiOkResponse({ type: EventsResponseDto })
 	async getEvents(
 		@Param("id") id: string,
 		@Param("sessionId") sessionId: string,

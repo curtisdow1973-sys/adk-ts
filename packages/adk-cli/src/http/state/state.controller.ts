@@ -1,6 +1,13 @@
 import { Body, Controller, Get, Inject, Param, Put } from "@nestjs/common";
-import { ApiBody, ApiOperation, ApiParam, ApiTags } from "@nestjs/swagger";
+import {
+	ApiBody,
+	ApiOkResponse,
+	ApiOperation,
+	ApiParam,
+	ApiTags,
+} from "@nestjs/swagger";
 import { StateResponse, StateUpdateRequest } from "../../common/types";
+import { StateResponseDto, SuccessResponseDto } from "../dto/api.dto";
 import { StateService } from "./state.service";
 
 @ApiTags("state")
@@ -19,6 +26,7 @@ export class StateController {
 	})
 	@ApiParam({ name: "id", description: "Agent identifier" })
 	@ApiParam({ name: "sessionId", description: "Session identifier" })
+	@ApiOkResponse({ type: StateResponseDto })
 	async getState(
 		@Param("id") id: string,
 		@Param("sessionId") sessionId: string,
@@ -39,6 +47,7 @@ export class StateController {
 		description: "State update payload specifying path and new value",
 		schema: { example: { path: "user.preferences.theme", value: "dark" } },
 	})
+	@ApiOkResponse({ type: SuccessResponseDto })
 	async updateState(
 		@Param("id") id: string,
 		@Param("sessionId") sessionId: string,
