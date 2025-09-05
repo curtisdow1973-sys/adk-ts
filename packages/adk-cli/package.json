@@ -18,14 +18,7 @@
 		"url": "https://github.com/IQAIcom/adk-ts.git",
 		"directory": "packages/adk-cli"
 	},
-	"keywords": [
-		"ai",
-		"llm",
-		"agent",
-		"cli",
-		"adk",
-		"typescript"
-	],
+	"keywords": ["ai", "llm", "agent", "cli", "adk", "typescript"],
 	"author": "IQAI",
 	"license": "MIT",
 	"dependencies": {
@@ -50,10 +43,8 @@
 	},
 	"devDependencies": {
 		"@iqai/tsconfig": "workspace:*",
-		"@types/body-parser": "^1.19.6",
 		"@types/marked-terminal": "^6.1.1",
 		"@types/node": "^20.17.30",
-		"body-parser": "^2.2.0",
 		"typescript": "^5.3.2",
 		"vitest": "^3.1.3"
 	},

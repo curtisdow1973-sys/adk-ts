@@ -20,6 +20,9 @@ importers:
       lint-staged:
         specifier: ^15.4.3
         version: 15.5.2
+      tsx:
+        specifier: ^4.19.4
+        version: 4.20.3
       turbo:
         specifier: ^2.3.3
         version: 2.5.4
@@ -502,18 +505,12 @@ importers:
       '@iqai/tsconfig':
         specifier: workspace:*
         version: link:../tsconfig
-      '@types/body-parser':
-        specifier: ^1.19.6
-        version: 1.19.6
       '@types/marked-terminal':
         specifier: ^6.1.1
         version: 6.1.1
       '@types/node':
         specifier: ^20.17.30
         version: 20.19.4
-      body-parser:
-        specifier: ^2.2.0
-        version: 2.2.0
       typescript:
         specifier: ^5.3.2
         version: 5.8.3
@@ -3000,9 +2997,6 @@ packages:
 
   '@types/better-sqlite3@7.6.13':
     resolution: {integrity: sha512-NMv9ASNARoKksWtsq/SHakpYAYnhBrQgGD8zkLYk/jaK8jUGn08CfEdTRgYhMypUQAfzSP8W6gNLe0q19/t4VA==}
-
-  '@types/body-parser@1.19.6':
-    resolution: {integrity: sha512-HLFeCYgz89uk22N5Qg3dvGvsv46B8GLvKKo1zKG4NybA8U2DiEO3w9lqGg29t/tfLRJpJ6iQxnVw4OnB7MoM9g==}
 
   '@types/bunyan@1.8.11':
     resolution: {integrity: sha512-758fRH7umIMk5qt5ELmRMff4mLDlN+xyYzC+dkPTdKwbSkJFvz6xwyScrytPU0QIBbRRwbiE8/BIg8bpajerNQ==}
@@ -9852,11 +9846,6 @@ snapshots:
 
   '@types/better-sqlite3@7.6.13':
     dependencies:
-      '@types/node': 20.19.4
-
-  '@types/body-parser@1.19.6':
-    dependencies:
-      '@types/connect': 3.4.38
       '@types/node': 20.19.4
 
   '@types/bunyan@1.8.11':

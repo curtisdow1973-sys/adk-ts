@@ -1,8 +1,6 @@
 {
 	"extends": "@iqai/tsconfig/base.json",
-	"include": [
-		"src/**/*"
-	],
+	"include": ["src/**/*"],
 	"exclude": [
 		"node_modules",
 		"dist",
@@ -13,11 +11,7 @@
 		"src/nest/**/*"
 	],
 	"compilerOptions": {
-		"lib": [
-			"ES2022",
-			"DOM",
-			"DOM.Iterable"
-		],
+		"lib": ["ES2022", "DOM", "DOM.Iterable"],
 		"target": "ES2022",
 		"module": "CommonJS",
 		"moduleResolution": "node",
@@ -27,9 +21,7 @@
 		"allowSyntheticDefaultImports": true,
 		"esModuleInterop": true,
 		"downlevelIteration": true,
-		"types": [
-			"node"
-		],
+		"types": ["node"],
 		"experimentalDecorators": true,
 		"emitDecoratorMetadata": true,
 		"skipLibCheck": true,
