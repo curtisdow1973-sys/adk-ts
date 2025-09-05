@@ -7,6 +7,8 @@ interface ServeCommandOptions {
 	host?: string;
 	dir?: string;
 	quiet?: boolean;
+	swagger?: boolean;
+	noSwagger?: boolean;
 }
 
 @Command({
@@ -22,6 +24,9 @@ export class ServeCommand extends CommandRunner {
 		const host = options?.host ?? "localhost";
 		const agentsDir = options?.dir ?? process.cwd();
 		const quiet = !!options?.quiet;
+		let swagger: boolean | undefined = undefined;
+		if (options?.swagger) swagger = true;
+		else if (options?.noSwagger) swagger = false;
 
 		if (!quiet) {
 			console.log(
@@ -34,6 +39,7 @@ export class ServeCommand extends CommandRunner {
 			host,
 			agentsDir,
 			quiet,
+			swagger,
 		});
 
 		if (!quiet) {
@@ -86,6 +92,23 @@ export class ServeCommand extends CommandRunner {
 		defaultValue: false,
 	})
 	parseQuiet(): boolean {
+		return true;
+	}
+
+	@Option({
+		flags: "--swagger",
+		description:
+			"Force enable OpenAPI docs (overrides default NODE_ENV-based behavior)",
+	})
+	parseSwagger(): boolean {
+		return true;
+	}
+
+	@Option({
+		flags: "--no-swagger",
+		description: "Disable OpenAPI docs (even in non-production)",
+	})
+	parseNoSwagger(): boolean {
 		return true;
 	}
 }

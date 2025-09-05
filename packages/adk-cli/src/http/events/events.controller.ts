@@ -1,7 +1,9 @@
 import { Controller, Get, Inject, Param } from "@nestjs/common";
+import { ApiTags } from "@nestjs/swagger";
 import { EventsResponse } from "../../common/types";
 import { EventsService } from "./events.service";
 
+@ApiTags("events")
 @Controller("api/agents/:id/sessions/:sessionId")
 export class EventsController {
 	constructor(

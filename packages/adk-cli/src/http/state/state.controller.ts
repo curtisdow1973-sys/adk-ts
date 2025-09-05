@@ -1,7 +1,9 @@
 import { Body, Controller, Get, Inject, Param, Put } from "@nestjs/common";
+import { ApiTags } from "@nestjs/swagger";
 import { StateResponse, StateUpdateRequest } from "../../common/types";
 import { StateService } from "./state.service";
 
+@ApiTags("state")
 @Controller("api/agents/:id/sessions/:sessionId")
 export class StateController {
 	constructor(

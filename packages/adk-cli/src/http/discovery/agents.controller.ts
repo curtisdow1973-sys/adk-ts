@@ -1,4 +1,5 @@
 import { Controller, Get, Inject, Post } from "@nestjs/common";
+import { ApiTags } from "@nestjs/swagger";
 import type { AgentListResponse } from "../../common/types";
 import { AgentManager } from "../providers/agent-manager.service";
 
@@ -11,6 +12,7 @@ function mapAgentsToResponse(agents: Map<string, any>): AgentListResponse[] {
 	}));
 }
 
+@ApiTags("agents")
 @Controller("api/agents")
 export class AgentsController {
 	constructor(

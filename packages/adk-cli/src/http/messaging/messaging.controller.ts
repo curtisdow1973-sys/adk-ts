@@ -1,4 +1,5 @@
 import { Body, Controller, Get, Inject, Param, Post } from "@nestjs/common";
+import { ApiTags } from "@nestjs/swagger";
 import {
 	MessageRequest,
 	MessageResponse,
@@ -6,6 +7,7 @@ import {
 } from "../../common/types";
 import { MessagingService } from "./messaging.service";
 
+@ApiTags("messaging")
 @Controller("api/agents/:id")
 export class MessagingController {
 	constructor(

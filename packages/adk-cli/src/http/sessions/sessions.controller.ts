@@ -7,9 +7,11 @@ import {
 	Param,
 	Post,
 } from "@nestjs/common";
+import { ApiTags } from "@nestjs/swagger";
 import { CreateSessionRequest, SessionsResponse } from "../../common/types";
 import { SessionsService } from "./sessions.service";
 
+@ApiTags("sessions")
 @Controller("api/agents/:id/sessions")
 export class SessionsController {
 	constructor(

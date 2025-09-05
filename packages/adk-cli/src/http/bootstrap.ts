@@ -5,6 +5,7 @@ import type { FSWatcher } from "node:fs";
 import { resolve, sep } from "node:path";
 import { NestFactory } from "@nestjs/core";
 import type { NestExpressApplication } from "@nestjs/platform-express";
+import { DocumentBuilder, SwaggerModule } from "@nestjs/swagger";
 
 import { HttpModule } from "./http.module";
 import { AgentManager } from "./providers/agent-manager.service";
@@ -203,6 +204,34 @@ export async function startHttpServer(
 	const agentManager = app.get(AgentManager, { strict: false });
 	const hotReload = app.get(HotReloadService, { strict: false });
 	agentManager.scanAgents(config.agentsDir);
+
+	// Swagger / OpenAPI setup
+	const enableSwagger = config.swagger ?? process.env.NODE_ENV !== "production";
+	if (enableSwagger) {
+		const builder = new DocumentBuilder()
+			.setTitle("ADK HTTP API")
+			.setDescription(
+				"REST endpoints for managing and interacting with ADK agents",
+			)
+			.setVersion("1.0.0")
+			.addTag("agents")
+			.addTag("sessions")
+			.addTag("events")
+			.addTag("state")
+			.addTag("messaging")
+			.addTag("health")
+			.build();
+		const document = SwaggerModule.createDocument(app, builder, {
+			deepScanRoutes: true,
+		});
+		SwaggerModule.setup("docs", app, document, {
+			customSiteTitle: "ADK API Docs",
+			jsonDocumentUrl: "/openapi.json",
+		});
+		if (!config.quiet) {
+			console.log("[openapi] Docs available at /docs (json: /openapi.json)");
+		}
+	}
 
 	// Hot reloading: setup via helper for readability and testability
 	const { teardownHotReload } = setupHotReload(agentManager, hotReload, config);
