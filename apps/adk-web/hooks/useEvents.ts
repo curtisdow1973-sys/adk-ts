@@ -67,6 +67,20 @@ export function useEvents(
 	const events = eventsResponse?.events ?? [];
 	const totalCount = eventsResponse?.totalCount ?? 0;
 
+	// Reflect event count changes onto sessions list cache for reactivity
+	useEffect(() => {
+		if (!selectedAgent || !sessionId) return;
+		queryClient.setQueryData(
+			["sessions", apiUrl, selectedAgent.relativePath],
+			(old: any) => {
+				if (!old || !Array.isArray(old)) return old;
+				return old.map((s: any) =>
+					s.id === sessionId ? { ...s, eventCount: totalCount } : s,
+				);
+			},
+		);
+	}, [apiUrl, selectedAgent, sessionId, totalCount, queryClient]);
+
 	const invalidateEvents = () => {
 		queryClient.invalidateQueries({
 			queryKey: ["events", apiUrl, selectedAgent?.relativePath, sessionId],
