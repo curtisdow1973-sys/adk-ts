@@ -67,23 +67,6 @@ export function StatePanel({
 		}
 	};
 
-	const handleSaveState = async () => {
-		try {
-			const parsed = JSON.parse(jsonEditor.value || "{}");
-			// Replace entire state by updating top-level keys
-			const entries = Object.entries(parsed as Record<string, any>);
-			for (const [k, v] of entries) {
-				await updateState(k, v);
-			}
-			toast.success("State saved successfully!");
-			setIsDialogOpen(false);
-		} catch (error) {
-			toast.error(
-				"Invalid JSON format. Please check your syntax and try again.",
-			);
-		}
-	};
-
 	if (!selectedAgent || !currentSessionId) {
 		return (
 			<div className="h-full flex flex-col bg-background">
@@ -196,12 +179,23 @@ export function StatePanel({
 								<Button
 									onClick={async () => {
 										try {
-											const parsed = JSON.parse(jsonEditor.value);
-											// Replace entire state by updating top-level keys
-											const entries = Object.entries(
-												parsed as Record<string, any>,
-											);
-											for (const [k, v] of entries) {
+											const parsed = JSON.parse(jsonEditor.value) as Record<
+												string,
+												any
+											>;
+											const existing = (currentState?.sessionState ||
+												{}) as Record<string, any>;
+
+											// Delete keys that were removed
+											const newKeys = new Set(Object.keys(parsed));
+											for (const existingKey of Object.keys(existing)) {
+												if (!newKeys.has(existingKey)) {
+													await updateState(existingKey, undefined);
+												}
+											}
+
+											// Upsert all provided keys
+											for (const [k, v] of Object.entries(parsed)) {
 												await updateState(k, v);
 											}
 											setIsDialogOpen(false);
