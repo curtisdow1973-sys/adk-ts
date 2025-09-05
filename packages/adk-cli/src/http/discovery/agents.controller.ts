@@ -1,5 +1,5 @@
 import { Controller, Get, Inject, Post } from "@nestjs/common";
-import { ApiTags, ApiOperation } from "@nestjs/swagger";
+import { ApiOperation, ApiTags } from "@nestjs/swagger";
 import type { AgentListResponse } from "../../common/types";
 import { AgentManager } from "../providers/agent-manager.service";
 

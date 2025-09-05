@@ -1,5 +1,5 @@
 import { Body, Controller, Get, Inject, Param, Put } from "@nestjs/common";
-import { ApiTags, ApiOperation, ApiParam, ApiBody } from "@nestjs/swagger";
+import { ApiBody, ApiOperation, ApiParam, ApiTags } from "@nestjs/swagger";
 import { StateResponse, StateUpdateRequest } from "../../common/types";
 import { StateService } from "./state.service";
 

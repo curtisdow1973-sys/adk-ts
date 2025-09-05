@@ -1,5 +1,5 @@
 import { Controller, Get, Inject, Param } from "@nestjs/common";
-import { ApiTags, ApiOperation, ApiParam } from "@nestjs/swagger";
+import { ApiOperation, ApiParam, ApiTags } from "@nestjs/swagger";
 import { EventsResponse } from "../../common/types";
 import { EventsService } from "./events.service";
 
@@ -17,7 +17,10 @@ export class EventsController {
 		description:
 			"Returns chronological events for a specific agent session including actions, function calls, and responses.",
 	})
-	@ApiParam({ name: "id", description: "URL-encoded absolute agent path or identifier" })
+	@ApiParam({
+		name: "id",
+		description: "URL-encoded absolute agent path or identifier",
+	})
 	@ApiParam({ name: "sessionId", description: "Target session identifier" })
 	async getEvents(
 		@Param("id") id: string,
