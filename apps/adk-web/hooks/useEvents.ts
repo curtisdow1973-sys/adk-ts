@@ -56,7 +56,6 @@ export function useEvents(
 	});
 
 	// Keep session cards fresh when events for active session change
-	// biome-ignore lint/correctness/useExhaustiveDependencies: <explanation>
 	useEffect(() => {
 		if (!selectedAgent) return;
 		queryClient.invalidateQueries({
