@@ -15,7 +15,8 @@
 			"*.log",
 			".next",
 			"docs/**",
-			"packages/adk/src/cli/browser/**"
+			"packages/adk/src/cli/browser/**",
+			"Api.ts"
 		]
 	},
 	"formatter": {
