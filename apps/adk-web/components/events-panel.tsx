@@ -32,14 +32,12 @@ interface EventsPanelProps {
 	events: Event[];
 	isLoading?: boolean;
 	onSelectEvent?: (event: Event) => void;
-	selectedEventId?: string;
 }
 
 export function EventsPanel({
 	events,
 	isLoading = false,
 	onSelectEvent,
-	selectedEventId,
 }: EventsPanelProps) {
 	const [searchTerm, setSearchTerm] = useState("");
 	const [authorFilter, setAuthorFilter] = useState<string>("all");
@@ -174,7 +172,9 @@ export function EventsPanel({
 						<div className="text-center text-muted-foreground py-8">
 							<AlertCircle className="h-12 w-12 mx-auto mb-4 opacity-50" />
 							<p className="text-sm">No events found</p>
-							<p className="text-xs">Try adjusting your filters</p>
+							{events.length !== 0 && (
+								<p className="text-xs">Try adjusting your filters</p>
+							)}
 						</div>
 					) : (
 						filteredEvents.map((event) => (

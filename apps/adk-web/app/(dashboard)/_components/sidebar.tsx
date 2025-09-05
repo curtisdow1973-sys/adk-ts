@@ -214,7 +214,6 @@ export function Sidebar({
 								onSelectEvent={(e) => {
 									setSelectedEvent(e);
 								}}
-								selectedEventId={selectedEvent?.id ?? undefined}
 							/>
 						)}
 						{selectedPanel === "state" && (
