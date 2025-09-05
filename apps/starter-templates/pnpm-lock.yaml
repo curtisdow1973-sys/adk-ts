@@ -9,8 +9,8 @@ importers:
   discord-bot:
     dependencies:
       '@iqai/adk':
-        specifier: ^0.2.0
-        version: 0.2.0(@opentelemetry/core@2.0.1(@opentelemetry/api@1.9.0))(@types/node@22.17.1)(@types/pg@8.15.4)(bufferutil@4.0.9)(react@19.1.1)(typescript@5.9.2)(utf-8-validate@5.0.10)(ws@8.18.3(bufferutil@4.0.9)(utf-8-validate@5.0.10))
+        specifier: ^0.3.0
+        version: 0.3.0(@opentelemetry/core@2.0.1(@opentelemetry/api@1.9.0))(@types/node@22.17.1)(@types/pg@8.15.4)(bufferutil@4.0.9)(react@19.1.1)(typescript@5.9.2)(utf-8-validate@5.0.10)(ws@8.18.3(bufferutil@4.0.9)(utf-8-validate@5.0.10))
       dotenv:
         specifier: ^17.2.0
         version: 17.2.1
@@ -37,8 +37,8 @@ importers:
         specifier: ^1.17.1
         version: 1.18.2(hono@4.9.1)
       '@iqai/adk':
-        specifier: ^0.2.0
-        version: 0.2.0(@opentelemetry/core@2.0.1(@opentelemetry/api@1.9.0))(@types/node@22.17.1)(@types/pg@8.15.4)(bufferutil@4.0.9)(react@19.1.1)(typescript@5.9.2)(utf-8-validate@5.0.10)(ws@8.18.3(bufferutil@4.0.9)(utf-8-validate@5.0.10))
+        specifier: ^0.3.0
+        version: 0.3.0(@opentelemetry/core@2.0.1(@opentelemetry/api@1.9.0))(@types/node@22.17.1)(@types/pg@8.15.4)(bufferutil@4.0.9)(react@19.1.1)(typescript@5.9.2)(utf-8-validate@5.0.10)(ws@8.18.3(bufferutil@4.0.9)(utf-8-validate@5.0.10))
       dotenv:
         specifier: ^17.2.0
         version: 17.2.1
@@ -93,8 +93,8 @@ importers:
         specifier: ^1.15.0
         version: 1.18.2(hono@4.9.1)
       '@iqai/adk':
-        specifier: ^0.2.0
-        version: 0.2.0(@opentelemetry/core@2.0.1(@opentelemetry/api@1.9.0))(@types/node@22.17.1)(@types/pg@8.15.4)(bufferutil@4.0.9)(react@19.1.1)(typescript@5.9.2)(utf-8-validate@5.0.10)(ws@8.18.3(bufferutil@4.0.9)(utf-8-validate@5.0.10))
+        specifier: ^0.3.0
+        version: 0.3.0(@opentelemetry/core@2.0.1(@opentelemetry/api@1.9.0))(@types/node@22.17.1)(@types/pg@8.15.4)(bufferutil@4.0.9)(react@19.1.1)(typescript@5.9.2)(utf-8-validate@5.0.10)(ws@8.18.3(bufferutil@4.0.9)(utf-8-validate@5.0.10))
       '@neardefi/shade-agent-js':
         specifier: ^1.0.0
         version: 1.0.4
@@ -104,6 +104,9 @@ importers:
       cors:
         specifier: ^2.8.5
         version: 2.8.5
+      dedent:
+        specifier: ^1.6.0
+        version: 1.6.0
       dotenv:
         specifier: ^17.2.0
         version: 17.2.1
@@ -139,8 +142,8 @@ importers:
   simple-agent:
     dependencies:
       '@iqai/adk':
-        specifier: ^0.2.0
-        version: 0.2.0(@opentelemetry/core@2.0.1(@opentelemetry/api@1.9.0))(@types/node@22.17.1)(@types/pg@8.15.4)(bufferutil@4.0.9)(react@19.1.1)(typescript@5.9.2)(utf-8-validate@5.0.10)(ws@8.18.3(bufferutil@4.0.9)(utf-8-validate@5.0.10))
+        specifier: ^0.3.0
+        version: 0.3.0(@opentelemetry/core@2.0.1(@opentelemetry/api@1.9.0))(@types/node@22.17.1)(@types/pg@8.15.4)(bufferutil@4.0.9)(react@19.1.1)(typescript@5.9.2)(utf-8-validate@5.0.10)(ws@8.18.3(bufferutil@4.0.9)(utf-8-validate@5.0.10))
       dotenv:
         specifier: ^17.2.0
         version: 17.2.1
@@ -164,8 +167,8 @@ importers:
   telegram-bot:
     dependencies:
       '@iqai/adk':
-        specifier: ^0.2.0
-        version: 0.2.0(@opentelemetry/core@2.0.1(@opentelemetry/api@1.9.0))(@types/node@22.17.1)(@types/pg@8.15.4)(bufferutil@4.0.9)(react@19.1.1)(typescript@5.9.2)(utf-8-validate@5.0.10)(ws@8.18.3(bufferutil@4.0.9)(utf-8-validate@5.0.10))
+        specifier: ^0.3.0
+        version: 0.3.0(@opentelemetry/core@2.0.1(@opentelemetry/api@1.9.0))(@types/node@22.17.1)(@types/pg@8.15.4)(bufferutil@4.0.9)(react@19.1.1)(typescript@5.9.2)(utf-8-validate@5.0.10)(ws@8.18.3(bufferutil@4.0.9)(utf-8-validate@5.0.10))
       dotenv:
         specifier: ^17.2.0
         version: 17.2.1
@@ -591,8 +594,8 @@ packages:
     peerDependencies:
       hono: ^4
 
-  '@iqai/adk@0.2.0':
-    resolution: {integrity: sha512-QjWbbDJ0zTe21ricsU9py9RXuP2VeDTII5LuVc7Ojg0DBS7vAkJhyBrr+cjHAwAPP2+XjCbTApiGVJJIyuw67Q==}
+  '@iqai/adk@0.3.0':
+    resolution: {integrity: sha512-UUMV0kF9RkfJmD1IRZshHdmawVrlm5z2mZHY6nsA2hkvBNCVvdQ9AfA9ZVmHIjQFxr9a+lUXvGp5AtCVnXOWtg==}
     engines: {node: '>=22.0'}
     hasBin: true
     peerDependencies:
@@ -2631,6 +2634,10 @@ packages:
     resolution: {integrity: sha512-p/nXbhSEcu3pZRdkW1OfJhpsVtW1gd4Wa1fnQc9YLiTfAjn0312eMKimbdIQzuZl9aa9xUGaRlP9T/CJE/ditQ==}
     engines: {node: '>=0.10.0'}
 
+  jsonrepair@3.13.0:
+    resolution: {integrity: sha512-5YRzlAQ7tuzV1nAJu3LvDlrKtBFIALHN2+a+I1MGJCt3ldRDBF/bZuvIPzae8Epot6KBXd0awRZZcuoeAsZ/mw==}
+    hasBin: true
+
   jwa@2.0.1:
     resolution: {integrity: sha512-hRF04fqJIP8Abbkq5NKGN0Bbr3JxlQ+qhZufXVr0DvujKy93ZCbXZMHDL4EOtodSbCWxOqR8MS1tXA5hwqCXDg==}
 
@@ -4176,7 +4183,7 @@ snapshots:
     dependencies:
       hono: 4.9.1
 
-  '@iqai/adk@0.2.0(@opentelemetry/core@2.0.1(@opentelemetry/api@1.9.0))(@types/node@22.17.1)(@types/pg@8.15.4)(bufferutil@4.0.9)(react@19.1.1)(typescript@5.9.2)(utf-8-validate@5.0.10)(ws@8.18.3(bufferutil@4.0.9)(utf-8-validate@5.0.10))':
+  '@iqai/adk@0.3.0(@opentelemetry/core@2.0.1(@opentelemetry/api@1.9.0))(@types/node@22.17.1)(@types/pg@8.15.4)(bufferutil@4.0.9)(react@19.1.1)(typescript@5.9.2)(utf-8-validate@5.0.10)(ws@8.18.3(bufferutil@4.0.9)(utf-8-validate@5.0.10))':
     dependencies:
       '@anthropic-ai/sdk': 0.39.0
       '@clack/prompts': 0.11.0
@@ -4204,6 +4211,7 @@ snapshots:
       dotenv: 16.6.1
       drizzle-orm: 0.43.1(@electric-sql/pglite@0.3.7)(@opentelemetry/api@1.9.0)(@types/pg@8.15.4)(kysely@0.28.5)
       express: 4.21.2
+      jsonrepair: 3.13.0
       kysely: 0.28.5
       openai: 4.104.0(ws@8.18.3(bufferutil@4.0.9)(utf-8-validate@5.0.10))(zod@3.25.76)
       socket.io: 4.8.1(bufferutil@4.0.9)(utf-8-validate@5.0.10)
@@ -6788,6 +6796,8 @@ snapshots:
       graceful-fs: 4.2.11
 
   jsonpointer@5.0.1: {}
+
+  jsonrepair@3.13.0: {}
 
   jwa@2.0.1:
     dependencies:

@@ -1,8 +1,9 @@
 "use client";
 
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { toast } from "sonner";
+import { Api } from "../Api";
 import type { Agent, Message } from "../app/(dashboard)/_schema";
 
 interface AgentApiResponse {
@@ -23,6 +24,10 @@ interface EventsResponse {
 
 export function useAgents(apiUrl: string, currentSessionId?: string | null) {
 	const queryClient = useQueryClient();
+	const apiClient = useMemo(() => {
+		if (!apiUrl) return null;
+		return new Api({ baseUrl: apiUrl });
+	}, [apiUrl]);
 	const [selectedAgent, setSelectedAgent] = useState<Agent | null>(null);
 	const [messages, setMessages] = useState<Message[]>([]);
 	const [lastMessageId, setLastMessageId] = useState<number>(0);
@@ -36,16 +41,12 @@ export function useAgents(apiUrl: string, currentSessionId?: string | null) {
 	} = useQuery({
 		queryKey: ["agents", apiUrl],
 		queryFn: async (): Promise<Agent[]> => {
-			if (!apiUrl) throw new Error("API URL is required");
-
-			const response = await fetch(`${apiUrl}/api/agents`);
-			if (!response.ok) {
-				throw new Error(`Failed to fetch agents: ${response.status}`);
-			}
-			const data: AgentApiResponse = await response.json();
+			if (!apiClient) throw new Error("API URL is required");
+			const res = await apiClient.api.agentsControllerListAgents();
+			const data: AgentApiResponse = res.data;
 			return data.agents;
 		},
-		enabled: !!apiUrl,
+		enabled: !!apiClient,
 		staleTime: 30000,
 		retry: 2,
 	});
@@ -59,17 +60,16 @@ export function useAgents(apiUrl: string, currentSessionId?: string | null) {
 			currentSessionId,
 		],
 		queryFn: async (): Promise<EventsResponse> => {
-			if (!apiUrl || !selectedAgent || !currentSessionId) {
+			if (!apiClient || !selectedAgent || !currentSessionId) {
 				return { events: [], totalCount: 0 };
 			}
-			const res = await fetch(
-				`${apiUrl}/api/agents/${encodeURIComponent(selectedAgent.relativePath)}/sessions/${currentSessionId}/events`,
+			const res = await apiClient.api.eventsControllerGetEvents(
+				encodeURIComponent(selectedAgent.relativePath),
+				currentSessionId,
 			);
-			if (!res.ok)
-				throw new Error(`Failed to fetch events for messages: ${res.status}`);
-			return res.json();
+			return res.data as EventsResponse;
 		},
-		enabled: !!apiUrl && !!selectedAgent && !!currentSessionId,
+		enabled: !!apiClient && !!selectedAgent && !!currentSessionId,
 		staleTime: 10000,
 	});
 
@@ -149,18 +149,17 @@ export function useAgents(apiUrl: string, currentSessionId?: string | null) {
 
 			const body = { message, attachments: encodedAttachments };
 
-			const response = await fetch(
-				`${apiUrl}/api/agents/${encodeURIComponent(agent.relativePath)}/message`,
-				{ method: "POST", body: JSON.stringify(body) },
-			);
-			if (!response.ok) {
-				setMessages((prev) => prev.filter((m) => m.id !== userMessage.id));
-				const errorData = await response.text();
-				throw new Error(
-					`Failed to send message: ${response.status} - ${errorData}`,
+			if (!apiClient) throw new Error("API client not ready");
+			try {
+				const res = await apiClient.api.messagingControllerPostAgentMessage(
+					encodeURIComponent(agent.relativePath),
+					body,
 				);
+				return res.data;
+			} catch (e: any) {
+				setMessages((prev) => prev.filter((m) => m.id !== userMessage.id));
+				throw new Error(e?.message || "Failed to send message");
 			}
-			return response.json();
 		},
 		onSuccess: () => {
 			// Refresh session events and derived messages
