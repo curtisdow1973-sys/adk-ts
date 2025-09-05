@@ -7,7 +7,7 @@ import { ErrorState, LoadingState } from "@/components/ui/states";
 import { useAgents } from "@/hooks/useAgents";
 import { useQueryClient } from "@tanstack/react-query";
 import { useSearchParams } from "next/navigation";
-import { Suspense, useEffect, useState } from "react";
+import { Suspense, useEffect, useRef, useState } from "react";
 
 function HomeContent() {
 	const searchParams = useSearchParams();
@@ -81,6 +81,17 @@ function HomeContent() {
 			selectAgent(agents[0]);
 		}
 	}, [agents, selectedAgent, selectAgent]);
+
+	// Reset session when switching to a different agent
+	const prevAgentRef = useRef<string | null>(null);
+	useEffect(() => {
+		const currentAgentPath = selectedAgent?.relativePath ?? null;
+		if (currentAgentPath !== prevAgentRef.current) {
+			// Agent actually changed -> clear active session so new agent's first session can auto-select
+			setCurrentSessionId(null);
+			prevAgentRef.current = currentAgentPath;
+		}
+	}, [selectedAgent]);
 	// (Session and events lifecycle + management moved into Sidebar)
 
 	if (loading) {

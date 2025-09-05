@@ -10,7 +10,7 @@ import { cn } from "@/lib/utils";
 import { Activity, Archive, Database, X } from "lucide-react";
 import Image from "next/image";
 import { useSearchParams } from "next/navigation";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 
 interface SidebarProps {
 	selectedPanel: "sessions" | "events" | "state" | null;
@@ -75,17 +75,34 @@ export function Sidebar({
 	);
 	const [selectedEvent, setSelectedEvent] = useState<any | null>(null);
 
+	// Track previous agent to detect actual agent switch
+	const prevAgentRef = useRef<string | null>(null);
+	useEffect(() => {
+		const currentAgentPath = selectedAgent?.relativePath ?? null;
+		if (currentAgentPath !== prevAgentRef.current) {
+			// Agent changed: clear local session so auto-select can pick correct one for new agent
+			setLocalSessionId(null);
+			onSessionChange?.(null);
+			prevAgentRef.current = currentAgentPath;
+		}
+	}, [selectedAgent, onSessionChange]);
+
 	// Sync incoming initialSessionId prop into local state
 	useEffect(() => {
 		setLocalSessionId(initialSessionId ?? null);
 	}, [initialSessionId]);
 
-	// Auto-select first session when sessions are loaded if no current session
+	// Auto-select first session when sessions are loaded if no current session (per agent)
 	useEffect(() => {
 		if (sessions.length > 0 && !localSessionId) {
 			const firstSessionId = sessions[0].id;
 			setLocalSessionId(firstSessionId);
 			onSessionChange?.(firstSessionId);
+		}
+		// If current local session id is no longer present in sessions (e.g., after agent change or deletion), clear it
+		if (localSessionId && !sessions.some((s) => s.id === localSessionId)) {
+			setLocalSessionId(null);
+			onSessionChange?.(null);
 		}
 	}, [sessions, localSessionId, onSessionChange]);
 
