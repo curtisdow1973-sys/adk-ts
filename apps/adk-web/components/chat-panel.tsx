@@ -84,8 +84,8 @@ export function ChatPanel({
 						backgroundSize: "40px 40px, 40px 40px, 40px 40px, 40px 40px",
 					}}
 				/>
-				<Conversation className="max-h-[70vh] max-w-4xl w-full mx-auto bg-repeat heropattern-jigsaw-red-100">
-					<ConversationContent>
+				<Conversation className="max-h-[calc(100vh-203px)] w-full mx-auto bg-repeat heropattern-jigsaw-red-100">
+					<ConversationContent className="max-w-4xl mx-auto">
 						{messages.length === 0 ? (
 							<div className="flex flex-col items-center justify-center min-h-[400px] text-center text-muted-foreground">
 								<MessageSquare className="h-12 w-12 mb-4 opacity-50" />
