@@ -6,6 +6,7 @@ import { resolve, sep } from "node:path";
 import { NestFactory } from "@nestjs/core";
 import type { NestExpressApplication } from "@nestjs/platform-express";
 import { DocumentBuilder, SwaggerModule } from "@nestjs/swagger";
+import { json, urlencoded } from "express";
 
 import { HttpModule } from "./http.module";
 import { AgentManager } from "./providers/agent-manager.service";
@@ -204,6 +205,11 @@ export async function startHttpServer(
 		methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
 		allowedHeaders: ["Content-Type", "Authorization"],
 	});
+
+	// Increase body size limits to support larger attachments
+	const bodyLimit = process.env.ADK_HTTP_BODY_LIMIT || "25mb";
+	app.use(json({ limit: bodyLimit }));
+	app.use(urlencoded({ extended: true, limit: bodyLimit }));
 
 	// Initial agent scan (parity with ADKServer constructor)
 	const agentManager = app.get(AgentManager, { strict: false });

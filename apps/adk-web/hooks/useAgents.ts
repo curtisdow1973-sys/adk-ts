@@ -30,7 +30,6 @@ export function useAgents(apiUrl: string, currentSessionId?: string | null) {
 	}, [apiUrl]);
 	const [selectedAgent, setSelectedAgent] = useState<Agent | null>(null);
 	const [messages, setMessages] = useState<Message[]>([]);
-	const [lastMessageId, setLastMessageId] = useState<number>(0);
 
 	// Fetch available agents
 	const {
@@ -100,7 +99,6 @@ export function useAgents(apiUrl: string, currentSessionId?: string | null) {
 
 			setMessages(asMessages);
 			if (asMessages.length > 0) {
-				setLastMessageId(Math.max(...asMessages.map((m) => m.id)));
 			}
 		}
 	}, [sessionEvents, selectedAgent]);
@@ -120,10 +118,28 @@ export function useAgents(apiUrl: string, currentSessionId?: string | null) {
 			};
 			setMessages((prev) => [...prev, userMessage]);
 
+			// Client-side guardrails for attachments
+			const MAX_FILE_SIZE_BYTES = 20 * 1024 * 1024; // 20MB default client cap
+
 			let encodedAttachments:
 				| Array<{ name: string; mimeType: string; data: string }>
 				| undefined;
 			if (attachments && attachments.length > 0) {
+				// Size filter with toast notifications
+				const tooLarge = attachments.filter(
+					(f) => f.size > MAX_FILE_SIZE_BYTES,
+				);
+				if (tooLarge.length > 0) {
+					toast.error(
+						`Some files exceed ${Math.round(MAX_FILE_SIZE_BYTES / (1024 * 1024))}MB and were skipped: ${tooLarge
+							.map((f) => f.name)
+							.join(", ")}`,
+					);
+				}
+				const filesToProcess = attachments.filter(
+					(f) => f.size <= MAX_FILE_SIZE_BYTES,
+				);
+
 				const fileToBase64 = (file: File) =>
 					new Promise<string>((resolve, reject) => {
 						const reader = new FileReader();
@@ -139,11 +155,17 @@ export function useAgents(apiUrl: string, currentSessionId?: string | null) {
 					});
 
 				encodedAttachments = await Promise.all(
-					attachments.map(async (file) => ({
-						name: file.name,
-						mimeType: file.type || "application/octet-stream",
-						data: await fileToBase64(file),
-					})),
+					filesToProcess.map(async (file) => {
+						const mimeType =
+							file.type && file.type !== "application/octet-stream"
+								? file.type
+								: "text/plain";
+						return {
+							name: file.name,
+							mimeType,
+							data: await fileToBase64(file),
+						};
+					}),
 				);
 			}
 
@@ -158,7 +180,12 @@ export function useAgents(apiUrl: string, currentSessionId?: string | null) {
 				return res.data;
 			} catch (e: any) {
 				setMessages((prev) => prev.filter((m) => m.id !== userMessage.id));
-				throw new Error(e?.message || "Failed to send message");
+				const msg =
+					e?.message ||
+					("status" in (e ?? {}) && (e as any).statusText) ||
+					"Failed to send message";
+				toast.error(msg);
+				throw new Error(msg);
 			}
 		},
 		onSuccess: () => {
@@ -206,7 +233,6 @@ export function useAgents(apiUrl: string, currentSessionId?: string | null) {
 			}
 			setSelectedAgent(agent);
 			setMessages([]);
-			setLastMessageId(0);
 		},
 		[apiUrl, queryClient, selectedAgent],
 	);
