@@ -1,5 +1,5 @@
 import { Body, Controller, Get, Inject, Param, Post } from "@nestjs/common";
-import { ApiTags } from "@nestjs/swagger";
+import { ApiTags, ApiOperation, ApiParam, ApiBody } from "@nestjs/swagger";
 import {
 	MessageRequest,
 	MessageResponse,
@@ -16,12 +16,33 @@ export class MessagingController {
 	) {}
 
 	@Get("messages")
+	@ApiOperation({
+		summary: "Get message history",
+		description: "Returns ordered chat transcript for the agent, including user and assistant messages.",
+	})
+	@ApiParam({ name: "id", description: "Agent identifier" })
 	async getAgentMessages(@Param("id") id: string): Promise<MessagesResponse> {
 		const agentPath = decodeURIComponent(id);
 		return this.messaging.getMessages(agentPath);
 	}
 
 	@Post("message")
+	@ApiOperation({
+		summary: "Send a message to the agent",
+		description: "Adds a user message (with optional base64 attachments) and returns the assistant response.",
+	})
+	@ApiParam({ name: "id", description: "Agent identifier" })
+	@ApiBody({
+		description: "Message payload",
+		schema: {
+			example: {
+				message: "Hello agent!",
+				attachments: [
+					{ name: "notes.txt", mimeType: "text/plain", data: "YmFzZTY0IGRhdGE=" },
+				],
+			},
+		},
+	})
 	async postAgentMessage(
 		@Param("id") id: string,
 		@Body() body: MessageRequest,

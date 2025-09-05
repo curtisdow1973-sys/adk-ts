@@ -1,5 +1,5 @@
 import { Body, Controller, Get, Inject, Param, Put } from "@nestjs/common";
-import { ApiTags } from "@nestjs/swagger";
+import { ApiTags, ApiOperation, ApiParam, ApiBody } from "@nestjs/swagger";
 import { StateResponse, StateUpdateRequest } from "../../common/types";
 import { StateService } from "./state.service";
 
@@ -12,6 +12,13 @@ export class StateController {
 	) {}
 
 	@Get("state")
+	@ApiOperation({
+		summary: "Get current session state",
+		description:
+			"Retrieves combined agent, user, and session state along with metadata such as last update time and size metrics.",
+	})
+	@ApiParam({ name: "id", description: "Agent identifier" })
+	@ApiParam({ name: "sessionId", description: "Session identifier" })
 	async getState(
 		@Param("id") id: string,
 		@Param("sessionId") sessionId: string,
@@ -21,6 +28,17 @@ export class StateController {
 	}
 
 	@Put("state")
+	@ApiOperation({
+		summary: "Update a state path",
+		description:
+			"Updates a nested state value for the session given a dot/JSON path and value payload.",
+	})
+	@ApiParam({ name: "id", description: "Agent identifier" })
+	@ApiParam({ name: "sessionId", description: "Session identifier" })
+	@ApiBody({
+		description: "State update payload specifying path and new value",
+		schema: { example: { path: "user.preferences.theme", value: "dark" } },
+	})
 	async updateState(
 		@Param("id") id: string,
 		@Param("sessionId") sessionId: string,

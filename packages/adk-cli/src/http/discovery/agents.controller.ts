@@ -1,5 +1,5 @@
 import { Controller, Get, Inject, Post } from "@nestjs/common";
-import { ApiTags } from "@nestjs/swagger";
+import { ApiTags, ApiOperation } from "@nestjs/swagger";
 import type { AgentListResponse } from "../../common/types";
 import { AgentManager } from "../providers/agent-manager.service";
 
@@ -20,12 +20,22 @@ export class AgentsController {
 	) {}
 
 	@Get()
+	@ApiOperation({
+		summary: "List discovered agents",
+		description:
+			"Returns all agent entries found by scanning the agents directory. Each agent includes name, absolute, and relative paths.",
+	})
 	listAgents(): { agents: AgentListResponse[] } {
 		const agentsList = mapAgentsToResponse(this.agentManager.getAgents());
 		return { agents: agentsList };
 	}
 
 	@Post("refresh")
+	@ApiOperation({
+		summary: "Rescan and list agents",
+		description:
+			"Triggers a fresh scan of the agents directory and returns the updated agent list.",
+	})
 	refreshAgents(): { agents: AgentListResponse[] } {
 		const agentsDir = process.cwd();
 		this.agentManager.scanAgents(agentsDir);
