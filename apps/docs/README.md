@@ -139,7 +139,7 @@ We welcome various types of contributions to improve the documentation:
 ### Getting Help
 
 - **Check existing issues** for similar questions or problems
-- **Ask in discussions** for clarification on documentation topics  
+- **[Ask in discussions](https://github.com/IQAIcom/adk-ts/discussions)** for clarification on documentation topics  
 - **Review the main [Contributing Guide](../../CONTRIBUTION.md)** for general project guidelines
 
 For more detailed contribution guidelines, see the main project's [Contributing Guide](../../CONTRIBUTION.md).
