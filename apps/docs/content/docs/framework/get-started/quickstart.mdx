@@ -184,17 +184,17 @@ Instead of writing test scripts, you can interact with your agent directly using
 
 ### Terminal-Based Chat (`adk run`)
 
-For a command-line chat experience:
+For a command-line chat experience, install the CLI globally and start the chat:
 
 ```bash
-# Install the CLI globally (optional)
+# Install the CLI globally
 npm install -g @iqai/adk-cli
 
 # Start terminal-based chat with your agent
 adk run
 ```
 
-Or without global installation:
+Or use `npx` without global installation:
 
 ```bash
 npx @iqai/adk-cli run
@@ -209,13 +209,13 @@ This command will:
 
 ### Web-Based Interface (`adk web`)
 
-For a more visual chat experience with a web interface:
+For a more visual chat experience with a web interface, if you have the ADK-TS CLI installed globally, run:
 
 ```bash
 adk web
 ```
 
-Or with `npx`:
+Or use `npx` without global installation:
 
 ```bash
 npx @iqai/adk-cli web
@@ -232,7 +232,6 @@ This command will:
   Both `adk run` and `adk web` let you test your agents interactively without
   writing any test scripts. Perfect for quick testing and experimentation!
 </Callout>
-
 
 ## Recommended Project Structure
 
