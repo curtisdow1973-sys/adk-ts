@@ -92,7 +92,6 @@ The documentation site uses:
 
 All documentation content is written in [MDX format](https://mdxjs.com/) and organized in the `content/docs/` directory:
 
-- **`(framework)/`** - Framework docs grouped route (Next.js route grouping)
 - **`framework/`** - Core ADK framework documentation
 - **`cli/`** - ADK CLI documentation
 - **`mcp-servers/`** - Model Context Protocol server documentation
@@ -138,9 +137,8 @@ We welcome various types of contributions to improve the documentation:
 
 ### Getting Help
 
-- **Check existing issues** for similar questions or problems
-- **[Ask in discussions](https://github.com/IQAIcom/adk-ts/discussions)** for clarification on documentation topics  
-- **Review the main [Contributing Guide](../../CONTRIBUTION.md)** for general project guidelines
+- **[Check existing issues](https://github.com/IQAIcom/adk-ts/issues)** for similar questions or problems
+- **[Ask in discussions](https://github.com/IQAIcom/adk-ts/discussions)** for clarification on documentation topics
 
 For more detailed contribution guidelines, see the main project's [Contributing Guide](../../CONTRIBUTION.md).
 
@@ -167,4 +165,4 @@ For more detailed contribution guidelines, see the main project's [Contributing 
 
 ---
 
-**Ready to contribute?** Visit the [live documentation](https://adk.iqai.com) to see your changes in action once merged!
+**Ready to contribute?** Start by exploring the `content/docs/` directory and improving existing pages or adding new content. Your contributions help make ADK-TS more accessible and useful for developers worldwide!
