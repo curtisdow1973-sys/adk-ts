@@ -1,5 +1,11 @@
 # @iqai/adk
 
+## 0.3.1
+
+### Patch Changes
+
+- b6c0344: Improved adk cli experience
+
 ## 0.3.0
 
 ### Minor Changes
