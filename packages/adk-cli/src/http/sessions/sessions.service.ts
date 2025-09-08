@@ -1,5 +1,5 @@
 import { format } from "node:util";
-import { InMemorySessionService } from "@iqai/adk";
+import { Event, InMemorySessionService } from "@iqai/adk";
 import { Inject, Injectable, Logger } from "@nestjs/common";
 import { TOKENS } from "../../common/tokens";
 import type {
@@ -93,13 +93,13 @@ export class SessionsService {
 
 			// Convert session events to message format
 			// See TODO notes in previous implementation regarding tool call representation.
-			const messages = session.events.map((event, index) => ({
+			const messages = session.events.map((event: Event, index: number) => ({
 				id: index + 1,
 				type:
 					event.author === "user" ? ("user" as const) : ("assistant" as const),
 				content:
 					event.content?.parts
-						?.map((part) =>
+						?.map((part: any) =>
 							typeof part === "object" && "text" in part
 								? (part as any).text
 								: "",
