@@ -74,7 +74,7 @@ app.get("/", async (c) => {
 		// Send back both the txHash and the new price optimistically
 		return c.json({
 			txHash: txHash.hash,
-			newPrice: price.toFixed(2),
+			newPrice: price,
 		});
 	} catch (error) {
 		console.error("Failed to send the transaction:", error);

@@ -2,14 +2,14 @@ import { chainAdapters, contracts } from "chainsig.js";
 import { http, createPublicClient } from "viem";
 
 export const ethRpcUrl = "https://sepolia.drpc.org";
-export const ethContractAddress = "0xcFB4BF3943A3e1c778278093c5b34B5e573e4803";
+export const ethContractAddress = "0xcDbf74b5395C882a547f7c9e7a5b0a3Bb4552eBF";
 
 export const ethContractAbi = [
 	{
 		inputs: [],
 		name: "getMarketData",
 		outputs: [
-			{ internalType: "uint256", name: "price", type: "uint256" },
+			{ internalType: "string", name: "price", type: "string" },
 			{ internalType: "string", name: "sentiment", type: "string" },
 			{ internalType: "uint256", name: "timestamp", type: "uint256" },
 		],
@@ -20,7 +20,7 @@ export const ethContractAbi = [
 		inputs: [],
 		name: "latestData",
 		outputs: [
-			{ internalType: "uint256", name: "price", type: "uint256" },
+			{ internalType: "string", name: "price", type: "string" },
 			{ internalType: "string", name: "sentiment", type: "string" },
 			{ internalType: "uint256", name: "timestamp", type: "uint256" },
 		],
@@ -29,7 +29,7 @@ export const ethContractAbi = [
 	},
 	{
 		inputs: [
-			{ internalType: "uint256", name: "_price", type: "uint256" },
+			{ internalType: "string", name: "_price", type: "string" },
 			{ internalType: "string", name: "_sentiment", type: "string" },
 		],
 		name: "updateMarketData",
