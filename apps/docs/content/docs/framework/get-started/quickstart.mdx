@@ -74,6 +74,23 @@ export async function agent() {
 }
 ```
 
+<Callout type="info" title="Using Different Models">
+  You can easily use other LLM models by changing the model parameter:
+  ```typescript
+  // For OpenAI models
+  .withModel("gpt-4o")
+
+  // For Anthropic models
+  .withModel("claude-3-5-sonnet")
+  ```
+  ADK-TS will automatically detect the provider from the model name, but you'll need to set
+  the appropriate API key in your `.env` file (e.g., `OPENAI_API_KEY` for OpenAI
+  models or `ANTHROPIC_API_KEY` for Anthropic models).
+  
+  For advanced LLM configurations, check our [Models
+  documentation](/docs/framework/agents/models).
+</Callout>
+
 ### 4. Test Your Agent
 
 Now let's test your agent. Create a simple script to interact with it. Add the following to `src/main.ts`:
@@ -127,7 +144,7 @@ dotenv.config();
 
 export async function agent() {
   return await AgentBuilder.create("research_assistant")
-    .withModel("gemini-2.5-flash")
+
     .withDescription(
       "A helpful research assistant with web search capabilities"
     )
