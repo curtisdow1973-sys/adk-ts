@@ -66,7 +66,7 @@ console.log(response);
 
 ## 📚 Documentation
 
-For detailed documentation on how to use ADK-TS, please visit our [official documentation site](https://adk.iqai.com/docs/framework).
+For detailed documentation on how to use ADK-TS, please visit our [official documentation site](https://adk.iqai.com/docs/framework/get-started).
 
 ## 🚀 Key Features
 
