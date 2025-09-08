@@ -26,7 +26,7 @@ app.get("/", async (c) => {
 		const { sessionService, runner, session } = await getRootAgent();
 
 		// Run models to get price and sentiment
-		const response = await runner.ask("Give ethereum's price and sentiment");
+		await runner.ask("Give ethereum's price and sentiment");
 
 		// Get the latest state after the agent run is complete
 		const currentSession = await sessionService.getSession(
