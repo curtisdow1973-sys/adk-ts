@@ -27,7 +27,7 @@ export const getRootAgent = async () => {
 		.withQuickSession({
 			state: {
 				headlines: "",
-				price: 0,
+				price: "",
 				sentiment: "",
 			},
 		})

@@ -15,9 +15,9 @@ export const ethPriceTool = createTool({
 				"https://api.coingecko.com/api/v3/simple/price?ids=ethereum&vs_currencies=usd",
 			);
 			const data = await response.json();
-			const price = data?.ethereum?.usd;
-			if (data?.ethereum?.usd) {
-				context.state.set("price", price);
+			const price = data?.ethereum?.usd?.toFixed(2);
+			if (price) {
+				context.state.set("price", String(price));
 				return `Current Ethereum price: $${data.ethereum.usd} USD`;
 			}
 			return "Unable to fetch Ethereum price right now.";
