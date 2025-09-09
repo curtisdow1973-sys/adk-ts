@@ -26,7 +26,7 @@ app.get("/", async (c) => {
 		const { sessionService, runner, session } = await getRootAgent();
 
 		// Run models to get price and sentiment
-		const response = await runner.ask("Give ethereum's price and sentiment");
+		await runner.ask("Give ethereum's price and sentiment");
 
 		// Get the latest state after the agent run is complete
 		const currentSession = await sessionService.getSession(
@@ -74,7 +74,7 @@ app.get("/", async (c) => {
 		// Send back both the txHash and the new price optimistically
 		return c.json({
 			txHash: txHash.hash,
-			newPrice: price.toFixed(2),
+			newPrice: price,
 		});
 	} catch (error) {
 		console.error("Failed to send the transaction:", error);
