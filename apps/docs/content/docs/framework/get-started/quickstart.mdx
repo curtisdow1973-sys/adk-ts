@@ -57,17 +57,17 @@ echo -e ".env\nnode_modules/" > .gitignore
 
 ### 3. Create Your First Agent
 
-Create a simple agent in `src/agent.ts`:
+Create a simple agent in `src/agents/assistant/agent.ts`:
 
 ```typescript
-// src/agent.ts
+// src/agents/assistant/agent.ts
 import { AgentBuilder } from "@iqai/adk";
 import * as dotenv from "dotenv";
 
 dotenv.config();
 
 export async function agent() {
-  return await AgentBuilder.create("my_first_agent")
+  return await AgentBuilder.create("assistant")
     .withModel("gemini-2.5-flash")
     .withInstruction("You are a helpful assistant.")
     .build();
@@ -80,39 +80,40 @@ export async function agent() {
   // For OpenAI models
   .withModel("gpt-4o")
 
-  // For Anthropic models
-  .withModel("claude-3-5-sonnet")
-  ```
-  ADK-TS will automatically detect the provider from the model name, but you'll need to set
-  the appropriate API key in your `.env` file (e.g., `OPENAI_API_KEY` for OpenAI
-  models or `ANTHROPIC_API_KEY` for Anthropic models).
-  
-  For advanced LLM configurations, check our [Models
-  documentation](/docs/framework/agents/models).
+// For Anthropic models
+.withModel("claude-3-5-sonnet")
+
+````
+ADK-TS will automatically detect the provider from the model name, but you'll need to set
+the appropriate API key in your `.env` file (e.g., `OPENAI_API_KEY` for OpenAI
+models or `ANTHROPIC_API_KEY` for Anthropic models).
+
+For advanced LLM configurations, check our [Models
+documentation](/docs/framework/agents/models).
 </Callout>
 
 ### 4. Test Your Agent
 
-Now let's test your agent. Create a simple script to interact with it. Add the following to `src/main.ts`:
+Now let's test your agent. Create a simple script to interact with it. Add the following to `src/agents/index.ts`:
 
 ```typescript
-// src/main.ts
-import { agent } from "./agent";
+// src/agents/index.ts
+import { agent } from "./assistant/agent";
 
 async function main() {
-  const { runner } = await agent();
+const { runner } = await agent();
 
-  const response = await runner.ask("What is the capital of France?");
-  console.log("🤖 Response:", response);
+const response = await runner.ask("What is the capital of France?");
+console.log("🤖 Response:", response);
 }
 
 main().catch(console.error);
-```
+````
 
 Run it in your terminal:
 
 ```bash
-npx tsx src/main.ts
+npx tsx src/agents/index.ts
 ```
 
 You should see something like:
@@ -133,10 +134,10 @@ Now let's make your agent more powerful by adding the ability to search the web 
 
 ### 1. Update Your Agent with Tools
 
-Replace your `src/agent.ts` with this enhanced version:
+Replace your `src/agents/assistant/agent.ts` with this enhanced version:
 
 ```typescript
-// src/agent.ts
+// src/agents/assistant/agent.ts
 import { AgentBuilder, GoogleSearch } from "@iqai/adk";
 import * as dotenv from "dotenv";
 
@@ -144,7 +145,7 @@ dotenv.config();
 
 export async function agent() {
   return await AgentBuilder.create("research_assistant")
-
+    .withModel("gemini-2.5-flash")
     .withDescription(
       "A helpful research assistant with web search capabilities"
     )
@@ -163,8 +164,8 @@ export async function agent() {
 Update your test script to ask a question that requires web search:
 
 ```typescript
-// src/main.ts
-import { agent } from "./agent";
+// src/agents/index.ts
+import { agent } from "./assistant/agent";
 
 async function main() {
   const { runner } = await agent();
@@ -181,7 +182,7 @@ main().catch(console.error);
 Run it again:
 
 ```bash
-npx tsx src/main.ts
+npx tsx src/agents/index.ts
 ```
 
 Your agent will now search the web for current information and provide a more comprehensive, up-to-date answer!
@@ -216,6 +217,11 @@ Or use `npx` without global installation:
 ```bash
 npx @iqai/adk-cli run
 ```
+
+<Callout type="info" title="Agent Discovery">
+  For the CLI to auto-discover your agents, make sure your agent files are
+  placed under the `src/agents` directory.
+</Callout>
 
 This command will:
 
