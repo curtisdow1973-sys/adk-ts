@@ -37,7 +37,7 @@ export default function DocsPage(): React.ReactElement {
         </Link>
       </div>
       <div className="mt-16 grid grid-cols-1 gap-6 text-left md:grid-cols-3 max-w-4xl mx-auto">
-        <Item href="/docs/framework">
+        <Item href="/docs/framework/get-started">
           <Icon>
             <Building2 className="size-full" />
           </Icon>

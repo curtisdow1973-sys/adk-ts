@@ -49,7 +49,7 @@ export function Hero() {
           {/* Action buttons with enhanced styling */}
           <div className="flex flex-row gap-3 justify-center mb-12 animate-fade-in-up animation-delay-600">
             <Link
-              href="/docs/framework"
+              href="/docs/framework/get-started"
               className="group inline-flex items-center justify-center rounded-lg bg-primary px-4 sm:px-6 py-2.5 text-sm font-medium text-primary-foreground transition-all hover:bg-primary/90 hover:scale-105 shadow-lg hover:shadow-primary/25"
             >
               Get Started
