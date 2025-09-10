@@ -95,31 +95,70 @@ export class AgentManager {
 			}
 			// Soft validation of optional fields (model/instruction not strictly required for all custom agents)
 
-			// Always use the session created by the agent builder; ignore any session from the exported agent.
+			// Check for existing sessions before creating a new one
+			const userId = `${USER_ID_PREFIX}${agentPath}`;
+			const appName = DEFAULT_APP_NAME;
+			
+			// Try to find existing sessions for this agent/user combination
+			const existingSessions = await this.sessionService.listSessions(appName, userId);
+			let sessionToUse;
+			
+			if (existingSessions.sessions.length > 0) {
+				// Use the most recently updated session
+				const mostRecentSession = existingSessions.sessions.reduce((latest, current) => 
+					current.lastUpdateTime > latest.lastUpdateTime ? current : latest
+				);
+				sessionToUse = mostRecentSession;
+				this.logger.log(
+					format("Reusing existing session: %o", {
+						sessionId: sessionToUse.id,
+						hasState: !!sessionToUse.state,
+						stateKeys: sessionToUse.state ? Object.keys(sessionToUse.state) : [],
+						lastUpdateTime: sessionToUse.lastUpdateTime,
+						totalExistingSessions: existingSessions.sessions.length,
+					}),
+				);
+			} else {
+				// No existing sessions found, create a new one
+				this.logger.log("No existing sessions found, creating new session");
+				const agentBuilder = AgentBuilder.create(exportedAgent.name).withAgent(
+					exportedAgent,
+				);
+				agentBuilder.withSessionService(this.sessionService, {
+					userId,
+					appName,
+					state: undefined,
+				});
+				const { session } = await agentBuilder.build();
+				sessionToUse = session;
+				this.logger.log(
+					format("New session created: %o", {
+						sessionId: sessionToUse.id,
+						hasState: !!sessionToUse.state,
+						stateKeys: sessionToUse.state ? Object.keys(sessionToUse.state) : [],
+						stateContent: sessionToUse.state,
+					}),
+				);
+			}
+			
+			// Always create a fresh runner with the selected session
 			const agentBuilder = AgentBuilder.create(exportedAgent.name).withAgent(
 				exportedAgent,
 			);
 			agentBuilder.withSessionService(this.sessionService, {
-				userId: `${USER_ID_PREFIX}${agentPath}`,
-				appName: DEFAULT_APP_NAME,
+				userId,
+				appName,
 				state: undefined,
+				sessionId: sessionToUse.id, // Use the selected session ID
 			});
-			const { runner, session } = await agentBuilder.build();
-			this.logger.log(
-				format("Agent started with session: %o", {
-					sessionId: session.id,
-					hasState: !!session.state,
-					stateKeys: session.state ? Object.keys(session.state) : [],
-					stateContent: session.state,
-				}),
-			);
-			// Store the loaded agent with its runner and the session from the builder only
+			const { runner } = await agentBuilder.build();
+			// Store the loaded agent with its runner and the selected session
 			const loadedAgent: LoadedAgent = {
 				agent: exportedAgent,
 				runner: runner,
-				sessionId: session.id,
-				userId: `${USER_ID_PREFIX}${agentPath}`,
-				appName: DEFAULT_APP_NAME,
+				sessionId: sessionToUse.id,
+				userId,
+				appName,
 			};
 			this.loadedAgents.set(agentPath, loadedAgent);
 			agent.instance = exportedAgent;
@@ -129,21 +168,21 @@ export class AgentManager {
 				const existingSession = await this.sessionService.getSession(
 					loadedAgent.appName,
 					loadedAgent.userId,
-					session.id,
+					sessionToUse.id,
 				);
 				if (!existingSession) {
 					this.logger.log(
-						format("Creating session in sessionService: %s", session.id),
+						format("Creating session in sessionService: %s", sessionToUse.id),
 					);
 					await this.sessionService.createSession(
 						loadedAgent.appName,
 						loadedAgent.userId,
-						session.state,
-						session.id,
+						sessionToUse.state,
+						sessionToUse.id,
 					);
 				} else {
 					this.logger.log(
-						format("Session already exists in sessionService: %s", session.id),
+						format("Session already exists in sessionService: %s", sessionToUse.id),
 					);
 				}
 			} catch (error) {
