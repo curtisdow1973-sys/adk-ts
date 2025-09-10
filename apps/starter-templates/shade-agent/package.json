@@ -20,7 +20,13 @@
 		"type": "git",
 		"url": "git+https://github.com/IQAICOM/adk-agent-starter.git"
 	},
-	"keywords": ["ai", "agent", "mcp", "adk-ts", "IQAI"],
+	"keywords": [
+		"ai",
+		"agent",
+		"mcp",
+		"adk-ts",
+		"IQAI"
+	],
 	"author": "IQAI",
 	"license": "MIT",
 	"bugs": {
@@ -28,23 +34,23 @@
 	},
 	"homepage": "https://github.com/IQAICOM/adk-agent-starter#readme",
 	"dependencies": {
-		"@hono/node-server": "^1.15.0",
-		"@iqai/adk": "^0.3.0",
-		"@neardefi/shade-agent-js": "^1.0.0",
-		"chainsig.js": "^1.1.9",
+		"@hono/node-server": "^1.19.2",
+		"@iqai/adk": "^0.3.1",
+		"@neardefi/shade-agent-js": "^1.0.4",
+		"chainsig.js": "^1.1.11",
 		"cors": "^2.8.5",
-		"dedent": "^1.6.0",
-		"dotenv": "^17.2.0",
-		"ethers": "^6.11.1",
-		"hono": "^4.8.4",
+		"dedent": "^1.7.0",
+		"dotenv": "^17.2.2",
+		"ethers": "^6.15.0",
+		"hono": "^4.9.6",
 		"rss-parser": "^3.13.0",
-		"viem": "^2.34.0",
-		"zod": "^3.25.67"
+		"viem": "^2.37.5",
+		"zod": "^4.1.5"
 	},
 	"devDependencies": {
-		"@types/node": "^22.16.0",
+		"@types/node": "^24.3.1",
 		"rimraf": "^6.0.1",
-		"tsx": "^4.20.3",
-		"typescript": "^5.8.3"
+		"tsx": "^4.20.5",
+		"typescript": "^5.9.2"
 	}
 }

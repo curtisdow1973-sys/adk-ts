@@ -1,7 +1,6 @@
 import {
 	type Content,
 	FinishReason,
-	type FunctionDeclaration,
 	type GenerateContentResponse,
 	GoogleGenAI,
 	type Part,
@@ -210,18 +209,6 @@ export class GoogleLlm extends BaseLlm {
 		if (dataObj?.displayName) {
 			dataObj.displayName = null;
 		}
-	}
-
-	/**
-	 * Builds function declaration log string.
-	 */
-	private buildFunctionDeclarationLog(funcDecl: FunctionDeclaration): string {
-		let paramStr = "{}";
-		if (funcDecl.parameters?.properties) {
-			paramStr = JSON.stringify(funcDecl.parameters.properties);
-		}
-
-		return `${funcDecl.name}: ${paramStr}`;
 	}
 
 	/**
