@@ -1,5 +1,11 @@
 # @iqai/adk-cli
 
+## 0.3.3
+
+### Patch Changes
+
+- 4c0476b: Adds adk cache directory to skip from scanning avoiding session creation in loop bug
+
 ## 0.3.2
 
 ### Patch Changes
