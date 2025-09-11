@@ -78,7 +78,7 @@ pnpm install
 # Install NEAR CLI
 npm install -g near-cli-rs
 
-# Create account (replace with your desired name)
+# Create account (replace "your-name" with your desired name)
 near account create-account fund-myself your-name.testnet 10NEAR
 
 # Export credentials
@@ -169,7 +169,7 @@ curl https://your-app-id.phala.network/api/transaction
 # {"txHash":"0x...","newPrice":"4286.5"}
 ```
 
-This will:
+What happens:
 
 1. ✨ **AI Price Agent** fetches current ETH price
 2. ✨ **AI Sentiment Agent** analyzes ETH sentiment from news
