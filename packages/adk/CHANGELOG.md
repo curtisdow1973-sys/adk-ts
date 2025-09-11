@@ -1,5 +1,11 @@
 # @iqai/adk
 
+## 0.3.3
+
+### Patch Changes
+
+- 5d19967: Disables triming on errors for logger
+
 ## 0.3.2
 
 ### Patch Changes
