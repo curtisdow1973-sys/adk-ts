@@ -1,3 +1,14 @@
+<div align="center">
+ <img src="https://files.catbox.moe/vumztw.png" alt="ADK TypeScript Logo" width="100" />
+ <br/>
+ <h1>ADK-TS Near Shade Agent Template</h1>
+ <b>Starter template for creating AI Agents with ADK-TS and Near Shade Agent</b>
+ <br/>
+  <i>LLM-powered • Onchain Oracles • Secure TEE • TypeScript</i>
+</div>
+
+---
+
 # NEAR Shade Agent Template - AI Agents + Blockchain Integration
 
 A template showing how to build AI agents that automatically fetch Ethereum price and sentiment data, then securely store it on the blockchain using NEAR's chain signatures and Phala's Trusted Execution Environment (TEE).
@@ -43,14 +54,10 @@ This template demonstrates how to build **AI-powered applications** that:
 
 ```bash
 # Create a new project with the NEAR Shade Agent template
-npx @iqai/adk-cli new
-
-# When prompted:
-# 1. Enter your project name (e.g., "my-eth-oracle")
-# 2. Select "Near Shade Agent" from the template options
+npx @iqai/adk-cli new --template shade-agent my-shade-agent
 
 # Navigate to your project and install dependencies
-cd your-project-name
+cd my-shade-agent
 pnpm install
 ```
 
