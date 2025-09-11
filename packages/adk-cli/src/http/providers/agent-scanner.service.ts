@@ -4,8 +4,9 @@ import { format } from "node:util";
 import { Injectable, Logger } from "@nestjs/common";
 import type { Agent, LoadedAgent } from "../../common/types";
 
-const DIRECTORIES_TO_SKIP = [
+export const DIRECTORIES_TO_SKIP = [
 	"node_modules",
+	".adk-cache",
 	".git",
 	".next",
 	"dist",
