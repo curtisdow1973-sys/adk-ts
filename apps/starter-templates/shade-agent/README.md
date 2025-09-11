@@ -75,14 +75,11 @@ pnpm install
 **Option B: Command Line**
 
 ```bash
-# Install NEAR CLI
-npm install -g near-cli-rs
-
 # Create account (replace "your-name" with your desired name)
-near account create-account fund-myself your-name.testnet 10NEAR
+npx near-cli-rs account create-account fund-myself your-name.testnet 10NEAR
 
 # Export credentials
-near account export-account your-name.testnet
+npx near-cli-rs account export-account your-name.testnet
 ```
 
 #### 🔑 Phala API Key (Required)
@@ -196,7 +193,7 @@ For development and debugging, you can test just the AI agents:
 pnpm dev
 
 # Test agent logic (without blockchain interaction)
-adk web
+npx @iqai/adk-cli web
 ```
 
 This opens a web interface where you can chat with your agents and test their functionality.
