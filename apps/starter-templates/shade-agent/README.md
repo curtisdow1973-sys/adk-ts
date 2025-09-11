@@ -1,103 +1,291 @@
+# NEAR Shade Agent Template - AI Agents + Blockchain Integration
 
-<div align="center">
-	<img src="https://files.catbox.moe/vumztw.png" alt="ADK TypeScript Logo" width="100" />
-	<br/>
-	<h1>ADK Near Shade Agent Template</h1>
-	<b>Starter template for creating AI Agents with ADK and Near Shade Agent</b>
-	<br/>
-		<i>LLM-powered • Onchain Oracles • Secure TEE • TypeScript</i>
-</div>
+A template showing how to build AI agents that automatically fetch Ethereum price and sentiment data, then securely store it on the blockchain using NEAR's chain signatures and Phala's Trusted Execution Environment (TEE).
 
----
+**Built with [ADK-TS](https://adk.iqai.com/) - AI Development Kit (ADK) for TypeScript**
 
-This template provides a ready-to-deploy Shade Agent API that uses LLMs to fetch the price and sentiment of Ethereum from news headlines, and saves the results to a contract via the Shade Agent framework. Built with TypeScript and [@iqai/adk](https://www.npmjs.com/package/@iqai/adk), it is designed for NEAR and Phala Cloud TEE environments.
+## 🎯 What This Template Shows
 
-## Features
+This template demonstrates how to build **AI-powered applications** that:
 
-- Fetches Ethereum price using LLMs
-- Analyzes news headlines for ETH sentiment
-- Pushes price and sentiment to a contract via Shade Agent
-- REST API endpoints for agent and Ethereum account info, and transactions
-- Production-ready Docker and pnpm setup
+1. **🤖 Uses AI Agents** (built with ADK-TS) to fetch real-time data:
+   - **Price Agent**: Gets current ETH price from CoinGecko API
+   - **Sentiment Agent**: Analyzes ETH sentiment from Reddit headlines using AI
 
-## 🚀 Get Started
+2. **🔐 Securely signs transactions** using NEAR's chain signatures in Phala's TEE
 
-The easiest way to create a new project using this template is with the ADK CLI:
+3. **📝 Stores data on-chain** by updating an Ethereum smart contract on Sepolia testnet
+
+4. **🌐 Provides REST API** to trigger updates and view account information
+
+## 🏗️ How It Works
+
+```
+┌─────────────────┐    ┌──────────────────┐    ┌─────────────────────┐
+│   AI Agents     │    │   Phala TEE      │    │  Ethereum Sepolia   │
+│   (ADK-TS)      │    │                  │    │                     │
+│ • Price Agent   │───▶│ • NEAR Chain     │───▶│ • Smart Contract    │
+│ • Sentiment     │    │   Signatures     │    │ • Price & Sentiment │
+│   Agent         │    │ • Secure Signing │    │   Storage           │
+└─────────────────┘    └──────────────────┘    └─────────────────────┘
+```
+
+## 🚀 Quick Start
+
+### Prerequisites
+
+- Node.js 18+ and pnpm
+- A Google account (for free AI API access)
+- A NEAR testnet account (free to create)
+- A Phala Network account (free to create)
+
+## Step 1: Create Project Using ADK CLI
 
 ```bash
-npm install -g @iqai/adk-cli # if you haven't already
-adk new --template shade-agent my-shade-agent
-cd my-shade-agent
+# Create a new project with the NEAR Shade Agent template
+npx @iqai/adk-cli new
+
+# When prompted:
+# 1. Enter your project name (e.g., "my-eth-oracle")
+# 2. Select "Near Shade Agent" from the template options
+
+# Navigate to your project and install dependencies
+cd your-project-name
 pnpm install
 ```
 
-## ⚙️ Environment Setup
-Make sure to configure your environment variables:
+### Step 2: Get Your API Keys
+
+#### 🔑 Google AI API Key (Required)
+
+1. Visit [Google AI Studio](https://aistudio.google.com/apikey)
+2. Sign in with your Google account
+3. Click "Create API Key"
+4. Copy the generated key
+
+#### 🔑 NEAR Account (Required)
+
+**Option A: Web Interface (Easiest)**
+
+1. Go to [NEAR Testnet Wallet](https://testnet.mynearwallet.com/)
+2. Click "Create Account"
+3. Follow the setup process
+4. Save your account ID and seed phrase
+
+**Option B: Command Line**
 
 ```bash
+# Install NEAR CLI
+npm install -g near-cli-rs
+
+# Create account (replace with your desired name)
+near account create-account fund-myself your-name.testnet 10NEAR
+
+# Export credentials
+near account export-account your-name.testnet
+```
+
+#### 🔑 Phala API Key (Required)
+
+1. Visit [Phala Network Console](https://cloud.phala.network/)
+2. Sign in with your account
+3. Create a new API key
+4. Copy the generated key
+
+### Step 3: Configure Environment
+
+```bash
+# Copy the example environment file
 cp .env.development.local.example .env.development.local
 ```
 
-Edit `.env.development.local` and fill in the required variables:
+Edit `.env.development.local` with your values:
 
-- `NEAR_ACCOUNT_ID` — Your NEAR account name (this is used to fund your new shade agent account)
-- `NEAR_SEED_PHRASE` — Your NEAR account seed phrase
-- `NEXT_PUBLIC_contractId` — Contract ID (should be `ac.proxy.<your-account>` for local, `ac.sandbox.<your-account>` for TEE)
-- `NEAR_RPC_JSON`, `GOOGLE_API_KEY`, `ADK_DEBUG` — As needed for your deployment
-- `PHALA_API_KEY` — For deploying Agent it to TEE powered by Phala cloud
+```env
+GOOGLE_API_KEY=your_google_api_key_here
+NEAR_ACCOUNT_ID=your-name.testnet
+NEAR_SEED_PHRASE=your twelve word seed phrase here
+NEXT_PUBLIC_contractId=ac-sandbox.your-name.testnet
+DOCKER_TAG=your-dockerhub-username/shade-agent:latest
+PHALA_API_KEY=your_phala_api_key_here
+```
 
-### 3. Local Development
-
-Start the Shade Agent CLI in one terminal:
+### Step 4: Deploy to Phala Cloud
 
 ```bash
+# Deploy your shade agent to Phala's TEE infrastructure
 pnpm dlx @neardefi/shade-agent-cli
 ```
 
-In another terminal, run the API locally:
+This command will:
+
+- Set up your shade agent in Phala's TEE
+- Create necessary NEAR contracts
+- Give you a URL like: `https://your-app-id.phala.network`
+
+**💡 Save this URL - you'll use it to test your agent!**
+
+### Step 5: Fund Your Ethereum Address
+
+Your agent needs Sepolia ETH to pay gas fees:
+
+1. **Get your Ethereum address**:
+
+   ```bash
+   curl https://your-app-id.phala.network/api/eth-account
+   ```
+
+2. **Fund it with Sepolia ETH** using [Google Cloud Web3 faucets](https://cloud.google.com/application/web3/faucet/ethereum/sepolia)
+
+## 🧪 Testing Your Template
+
+### Check Agent Status
 
 ```bash
+# Check if your shade agent is running
+curl https://your-app-id.phala.network/api/agent-account
+
+# Expected response:
+# {"accountId":"0x...","balance":"1000000000000000000000000"}
+```
+
+### Check Ethereum Address
+
+```bash
+# Verify your derived Ethereum address has Sepolia ETH
+curl https://your-app-id.phala.network/api/eth-account
+
+# Expected response:
+# {"senderAddress":"0x...","balance":500000000000000000}
+```
+
+### Run the AI Agents and Update Blockchain
+
+```bash
+# Trigger the full flow: AI agents → data collection → blockchain update
+curl https://your-app-id.phala.network/api/transaction
+
+# Expected response:
+# {"txHash":"0x...","newPrice":"4286.5"}
+```
+
+This will:
+
+1. ✨ **AI Price Agent** fetches current ETH price
+2. ✨ **AI Sentiment Agent** analyzes ETH sentiment from news
+3. 🔐 **Secure signing** happens in Phala's TEE
+4. 📝 **Smart contract** gets updated on Ethereum Sepolia
+5. 🎉 **Transaction hash** is returned
+
+### View Transaction on Blockchain
+
+Copy your transaction hash and view it on [Sepolia Etherscan](https://sepolia.etherscan.io/):
+
+```
+https://sepolia.etherscan.io/tx/YOUR_TX_HASH
+```
+
+## 🛠️ Development and Testing
+
+### Test AI Agents Locally
+
+For development and debugging, you can test just the AI agents:
+
+```bash
+# Start local development server
 pnpm dev
-```
 
-### 4. Docker Compose
-
-To build and run the agent in Docker:
-
-```bash
-docker compose up --build
-```
-
-
-### 5. Test agents
-
-To test the agents in /agents folder use: 
-
-```bash
+# Test agent logic (without blockchain interaction)
 adk web
 ```
 
-This spins up a ui to test your agent with a chat interface and ability to choose agent to chat with and more.
+This opens a web interface where you can chat with your agents and test their functionality.
 
+### Smart Contract Details
 
-## Endpoints
+- **Network**: Ethereum Sepolia Testnet
+- **Contract Address**: `0xcDbf74b5395C882a547f7c9e7a5b0a3Bb4552eBF`
 
-- `GET /api/agent-account` — Returns agent account and balance
-- `GET /api/eth-account` — Returns derived Ethereum Sepolia account and balance
-- `POST /api/transaction` — Sends a transaction to update ETH price and sentiment
+## 📁 Template Structure
 
-## Deployment
+```
+src/
+├── agents/
+│   ├── agent.ts                 # Root agent orchestrator
+│   ├── eth-price-agent/         # Price fetching agent
+│   └── eth-sentiment-agent/     # Sentiment analysis agent
+├── routes/
+│   ├── agentAccount.ts          # NEAR account status
+│   ├── ethAccount.ts            # Ethereum address info
+│   └── transaction.ts           # Main transaction flow
+├── utils/
+│   └── ethereum.ts              # Ethereum integration
+└── index.ts                     # Server setup
+```
 
-For TEE/Phala Cloud deployment, follow the official Shade Agent and Phala Cloud documentation. Make sure to update your environment variables for the deployment environment.
+## 🔧 Customizing the Template
 
-## Project Structure
+### Adding New Agents
 
-- `src/agents/eth-price-agent/` — LLM-powered ETH price agent
-- `src/agents/eth-sentiment-agent/` — LLM-powered ETH sentiment agent
-- `src/agents/format-agent/` — This is used to extract sentiment and price of ethereum gathered from root agent in structured output
-- `src/routes/` — API endpoints
-- `src/utils/` — Ethereum utilities
+1. Create a new agent directory in `src/agents/`
+2. Follow the pattern from existing agents
+3. Add to the root agent in `src/agents/agent.ts`
 
-## License
+### Changing Data Sources
 
-MIT
+- Modify tools in agent directories to fetch from different APIs
+- Update the smart contract if you need different data fields
+
+### Adding New Endpoints
+
+- Create new route files in `src/routes/`
+- Add to the main server in `src/index.ts`
+
+## 🐛 Troubleshooting
+
+### "Failed to get agent account"
+
+- Ensure your NEAR account has sufficient balance
+- Check that `NEAR_ACCOUNT_ID` and `NEAR_SEED_PHRASE` are correct
+- Wait a few minutes after deployment for the agent to initialize
+
+### "Failed to send the transaction"
+
+- Make sure your Ethereum address has Sepolia ETH
+- Verify your Google API key is working
+- Check that the Phala deployment completed successfully
+
+### "Google API key invalid"
+
+- Ensure the API key is from [Google AI Studio](https://aistudio.google.com/apikey)
+- Make sure there are no extra spaces in your `.env` file
+
+## 📚 Learn More
+
+### ADK-TS Resources
+
+- [ADK Documentation](https://adk.iqai.com/)
+- [GitHub Repository](https://github.com/IQAICOM/adk-ts)
+
+### NEAR Protocol Resources
+
+- [NEAR Documentation](https://docs.near.org/)
+- [Chain Signatures](https://docs.near.org/abstraction/chain-signatures)
+
+### Phala Network Resources
+
+- [Phala Documentation](https://docs.phala.network)
+- [Phala Cloud Cases](https://docs.phala.com/phala-cloud/cases/overview)
+
+## 🤝 Contributing
+
+This template is open source and contributions are welcome! Feel free to:
+
+- Report bugs or suggest improvements
+- Add new agent examples
+- Improve documentation
+- Share your customizations
+
+---
+
+**🎉 Ready to build?** This template gives you everything you need to start building AI-powered applications with NEAR and ADK-TS!
