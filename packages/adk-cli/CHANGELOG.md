@@ -1,5 +1,12 @@
 # @iqai/adk-cli
 
+## 0.3.2
+
+### Patch Changes
+
+- Updated dependencies [5d19967]
+  - @iqai/adk@0.3.3
+
 ## 0.3.1
 
 ### Patch Changes
