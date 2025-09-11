@@ -193,7 +193,7 @@ For development and debugging, you can test just the AI agents:
 pnpm dev
 
 # Test agent logic (without blockchain interaction)
-adk web
+npx @iqai/adk-cli web
 ```
 
 This opens a web interface where you can chat with your agents and test their functionality.
