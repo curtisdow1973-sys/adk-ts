@@ -9,21 +9,9 @@ import { DocumentBuilder, SwaggerModule } from "@nestjs/swagger";
 
 import { HttpModule } from "./http.module";
 import { AgentManager } from "./providers/agent-manager.service";
+import { DIRECTORIES_TO_SKIP } from "./providers/agent-scanner.service";
 import { HotReloadService } from "./reload/hot-reload.service";
 import type { RuntimeConfig } from "./runtime-config";
-
-// Reuse the same well-known skips used by AgentScanner
-const DIRECTORIES_TO_SKIP = [
-	"node_modules",
-	".git",
-	".next",
-	"dist",
-	"build",
-	".turbo",
-	"coverage",
-	".vscode",
-	".idea",
-] as const;
 
 function pathHasSkippedDir(p: string): boolean {
 	const parts = p.split(sep).filter(Boolean);

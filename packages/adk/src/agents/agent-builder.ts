@@ -3,6 +3,7 @@ import type { LlmRequest } from "@adk/models";
 import type { Content, Part } from "@google/genai";
 import { type LanguageModel, generateId } from "ai";
 import chalk from "chalk";
+import dedent from "dedent";
 import type { ZodSchema, ZodType } from "zod";
 import type { BaseArtifactService } from "../artifacts/base-artifact-service.js";
 import type { BaseCodeExecutor } from "../code-executors/base-code-executor.js";
@@ -866,12 +867,8 @@ export class AgentBuilder<TOut = string, TMulti extends boolean = false> {
 						try {
 							return outputSchema.parse(combinedResponse) as T;
 						} catch (validationError) {
-							throw new Error(
-								`Failed to parse and validate LLM output against the schema.
-							JSON parse error: ${parseError instanceof Error ? parseError.message : String(parseError)}
-							Zod validation error: ${validationError instanceof Error ? validationError.message : String(validationError)}
-							Raw output: "${combinedResponse}"`,
-							);
+							const message = `🚨 Failed to parse and validate LLM output against the schema. \n\n ℹ️ JSON parse error: ${parseError instanceof Error ? parseError.message : String(parseError)} \n\n 🚧 Zod validation error: ${validationError instanceof Error ? validationError.message : String(validationError)} \n\n 📄 Raw output: ${combinedResponse}`;
+							throw new Error(message);
 						}
 					}
 				}
