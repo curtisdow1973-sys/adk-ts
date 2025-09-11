@@ -2,7 +2,7 @@ import { existsSync } from "node:fs";
 import { join } from "node:path";
 import { pathToFileURL } from "node:url";
 import { format } from "node:util";
-import type { FullMessage, InMemorySessionService } from "@iqai/adk";
+import type { FullMessage, InMemorySessionService, Session } from "@iqai/adk";
 import { AgentBuilder } from "@iqai/adk";
 import { Injectable, Logger } from "@nestjs/common";
 import type { Agent, LoadedAgent } from "../../common/types";
@@ -98,22 +98,28 @@ export class AgentManager {
 			// Check for existing sessions before creating a new one
 			const userId = `${USER_ID_PREFIX}${agentPath}`;
 			const appName = DEFAULT_APP_NAME;
-			
+
 			// Try to find existing sessions for this agent/user combination
-			const existingSessions = await this.sessionService.listSessions(appName, userId);
-			let sessionToUse;
-			
+			const existingSessions = await this.sessionService.listSessions(
+				appName,
+				userId,
+			);
+			let sessionToUse: Session;
+
 			if (existingSessions.sessions.length > 0) {
 				// Use the most recently updated session
-				const mostRecentSession = existingSessions.sessions.reduce((latest, current) => 
-					current.lastUpdateTime > latest.lastUpdateTime ? current : latest
+				const mostRecentSession = existingSessions.sessions.reduce(
+					(latest, current) =>
+						current.lastUpdateTime > latest.lastUpdateTime ? current : latest,
 				);
 				sessionToUse = mostRecentSession;
 				this.logger.log(
 					format("Reusing existing session: %o", {
 						sessionId: sessionToUse.id,
 						hasState: !!sessionToUse.state,
-						stateKeys: sessionToUse.state ? Object.keys(sessionToUse.state) : [],
+						stateKeys: sessionToUse.state
+							? Object.keys(sessionToUse.state)
+							: [],
 						lastUpdateTime: sessionToUse.lastUpdateTime,
 						totalExistingSessions: existingSessions.sessions.length,
 					}),
@@ -135,12 +141,14 @@ export class AgentManager {
 					format("New session created: %o", {
 						sessionId: sessionToUse.id,
 						hasState: !!sessionToUse.state,
-						stateKeys: sessionToUse.state ? Object.keys(sessionToUse.state) : [],
+						stateKeys: sessionToUse.state
+							? Object.keys(sessionToUse.state)
+							: [],
 						stateContent: sessionToUse.state,
 					}),
 				);
 			}
-			
+
 			// Always create a fresh runner with the selected session
 			const agentBuilder = AgentBuilder.create(exportedAgent.name).withAgent(
 				exportedAgent,
@@ -182,7 +190,10 @@ export class AgentManager {
 					);
 				} else {
 					this.logger.log(
-						format("Session already exists in sessionService: %s", sessionToUse.id),
+						format(
+							"Session already exists in sessionService: %s",
+							sessionToUse.id,
+						),
 					);
 				}
 			} catch (error) {
