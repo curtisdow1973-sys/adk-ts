@@ -81,6 +81,7 @@ export class Logger {
 				description: message,
 				lines,
 				color,
+				wrap: true,
 			});
 			method(box);
 		} else {
@@ -119,7 +120,11 @@ export class Logger {
 
 	private formatArgs(args: any[], includeStack = false): string[] {
 		const lines: string[] = [];
-		const maxFrames = Number(process.env.ADK_ERROR_STACK_FRAMES || 8);
+		// Show full stack by default unless ADK_ERROR_STACK_FRAMES is explicitly set
+		const maxFrames =
+			process.env.ADK_ERROR_STACK_FRAMES !== undefined
+				? Number(process.env.ADK_ERROR_STACK_FRAMES)
+				: Number.POSITIVE_INFINITY;
 
 		for (const arg of args) {
 			if (!arg) continue;
@@ -188,6 +193,7 @@ export class Logger {
 		color?: (txt: string) => string;
 		pad?: number;
 		borderChar?: string;
+		wrap?: boolean;
 	}): string {
 		const {
 			title,
@@ -198,6 +204,7 @@ export class Logger {
 			color = chalk.yellow,
 			pad = 1,
 			borderChar = "─",
+			wrap = false,
 		} = params;
 
 		const isProd = process.env.NODE_ENV === "production";
@@ -225,23 +232,46 @@ export class Logger {
 		const separator = `├${horizontal}┤`;
 		const bottom = `└${horizontal}┘`;
 
-		const padLine = (text: string) => {
-			const maxContent = innerWidth - pad * 2;
-			const truncated =
-				text.length > maxContent ? `${text.slice(0, maxContent - 1)}…` : text;
-			const padded = " ".repeat(pad) + truncated;
-			return padded + " ".repeat(innerWidth - padded.length);
+		const maxContent = innerWidth - pad * 2;
+
+		const wrapText = (text: string): string[] => {
+			if (!wrap) {
+				const truncated =
+					text.length > maxContent ? `${text.slice(0, maxContent - 1)}…` : text;
+				const padded = " ".repeat(pad) + truncated;
+				return [padded + " ".repeat(innerWidth - padded.length)];
+			}
+
+			const out: string[] = [];
+			let remaining = text;
+			while (remaining.length > 0) {
+				if (remaining.length <= maxContent) {
+					const padded = " ".repeat(pad) + remaining;
+					out.push(padded + " ".repeat(innerWidth - padded.length));
+					break;
+				}
+				let sliceEnd = maxContent;
+				const slice = remaining.slice(0, maxContent + 1);
+				const lastSpace = slice.lastIndexOf(" ");
+				if (lastSpace > -1 && lastSpace >= Math.floor(maxContent * 0.6)) {
+					sliceEnd = lastSpace;
+				}
+				const chunk = remaining.slice(0, sliceEnd).trimEnd();
+				const padded = " ".repeat(pad) + chunk;
+				out.push(padded + " ".repeat(innerWidth - padded.length));
+				remaining = remaining.slice(sliceEnd).trimStart();
+			}
+			return out;
 		};
 
 		// Assemble box
-		const content = [
-			top,
-			`│ ${padLine(title)} │`,
-			separator,
-			`│ ${padLine(description)} │`,
-			...lines.map((line) => `│ ${padLine(line)} │`),
-			bottom,
-		];
+		const content: string[] = [top];
+		for (const l of wrapText(title)) content.push(`│ ${l} │`);
+		content.push(separator);
+		for (const l of wrapText(description)) content.push(`│ ${l} │`);
+		for (const line of lines)
+			for (const l of wrapText(line)) content.push(`│ ${l} │`);
+		content.push(bottom);
 
 		return `\n${content.map((line) => color(line)).join("\n")}`;
 	}

@@ -14,10 +14,12 @@ function HomeContent() {
 	const apiUrl = searchParams.get("apiUrl");
 	const port = searchParams.get("port");
 
-	// Support both legacy apiUrl and new port parameter
-	// Default to port 8042 if neither is provided
-	const finalApiUrl =
-		apiUrl || (port ? `http://localhost:${port}` : "http://localhost:8042");
+	// Support both legacy apiUrl and new port parameter, else default
+	const finalApiUrl = apiUrl
+		? apiUrl
+		: port
+			? `http://localhost:${port}`
+			: "http://localhost:8042";
 
 	// Panel and session state
 	const [selectedPanel, setSelectedPanel] = useState<

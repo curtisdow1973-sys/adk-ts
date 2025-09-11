@@ -1,5 +1,5 @@
-import { AgentBuilder, LlmAgent, createTool } from "@iqai/adk";
 import { env } from "node:process";
+import { AgentBuilder, LlmAgent, createTool } from "@iqai/adk";
 import * as z from "zod";
 import { ask } from "../utils";
 
@@ -26,7 +26,10 @@ const workflowStateTool = createTool({
 		status: z
 			.enum(["pending", "in_progress", "completed", "failed"])
 			.describe("Stage status"),
-		data: z.record(z.any()).optional().describe("Stage-specific data"),
+		data: z
+			.record(z.string(), z.any())
+			.optional()
+			.describe("Stage-specific data"),
 		nextStage: z.string().optional().describe("Next stage to execute"),
 	}),
 	fn: ({ stage, status, data, nextStage }, context) => {
