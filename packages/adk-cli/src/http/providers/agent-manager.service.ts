@@ -37,8 +37,6 @@ export class AgentManager {
 		return this.loadedAgents;
 	}
 
-	skanAgents?(agentsDir: string): void; // backward-compat typo guard (no-op if called)
-
 	scanAgents(agentsDir: string): void {
 		this.logger.log(format("Scanning agents in directory: %s", agentsDir));
 		this.agents = this.scanner.scanAgents(agentsDir, this.loadedAgents);
