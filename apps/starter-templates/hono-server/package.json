@@ -15,15 +15,7 @@
 		"type": "git",
 		"url": "git+https://github.com/IQAICOM/adk-hono-server.git"
 	},
-	"keywords": [
-		"ai",
-		"agent",
-		"mcp",
-		"adk-ts",
-		"IQAI",
-		"hono",
-		"web-server"
-	],
+	"keywords": ["ai", "agent", "mcp", "adk-ts", "IQAI", "hono", "web-server"],
 	"author": "IQAI",
 	"license": "MIT",
 	"bugs": {

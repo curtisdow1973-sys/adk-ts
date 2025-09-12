@@ -15,15 +15,7 @@
 		"type": "git",
 		"url": "git+https://github.com/IQAICOM/adk-discord-bot.git"
 	},
-	"keywords": [
-		"ai",
-		"agent",
-		"mcp",
-		"adk-ts",
-		"IQAI",
-		"discord",
-		"bot"
-	],
+	"keywords": ["ai", "agent", "mcp", "adk-ts", "IQAI", "discord", "bot"],
 	"author": "IQAI",
 	"license": "MIT",
 	"bugs": {
