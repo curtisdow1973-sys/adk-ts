@@ -10,7 +10,6 @@ import { AppModule } from "./app.module";
 // the Nest container for a trivial, frequently used query.
 try {
 	if (process.argv.some((a) => a === "--version" || a === "-v" || a === "-V")) {
-		// eslint-disable-next-line @typescript-eslint/no-var-requires
 		const pkg = require("../package.json");
 		// Print just the version to stay script-friendly (e.g., `adk --version` in tooling)
 		// Common CLIs output only the version number; adjust if branding desired.
