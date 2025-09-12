@@ -55,7 +55,6 @@ class BasicLlmRequestProcessor extends BaseLlmRequestProcessor {
 			if (!hasTools && !hasTransfers) {
 				llmRequest.setOutputSchema(agent.outputSchema);
 			} else {
-				// eslint-disable-next-line @typescript-eslint/no-floating-promises
 				(() => {
 					try {
 						const logger = new Logger({ name: "BasicLlmRequestProcessor" });

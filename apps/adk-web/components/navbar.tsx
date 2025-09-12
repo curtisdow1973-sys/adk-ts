@@ -1,4 +1,7 @@
+"use client";
+
 import type { Agent } from "@/app/(dashboard)/_schema";
+import { ConnectionStatus } from "@/components/connection-status";
 import { ThemeToggle } from "@/components/theme-toggle";
 import {
 	Select,
@@ -8,7 +11,6 @@ import {
 	SelectValue,
 } from "@/components/ui/select";
 import { Bot } from "lucide-react";
-import { Tooltip, TooltipContent, TooltipTrigger } from "./ui/tooltip";
 
 interface NavbarProps {
 	apiUrl: string;
@@ -28,19 +30,7 @@ export function Navbar({
 			<div className="px-4 py-3">
 				<div className="flex items-center justify-between">
 					{/* Connection Status */}
-					<Tooltip>
-						<TooltipTrigger asChild>
-							<div className="flex items-center space-x-2 cursor-pointer">
-								<div className="h-2 w-2 rounded-full bg-green-500" />
-								<span className="text-xs text-muted-foreground">
-									{new URL(apiUrl).host}
-								</span>
-							</div>
-						</TooltipTrigger>
-						<TooltipContent>
-							<span>Connected to this server</span>
-						</TooltipContent>
-					</Tooltip>
+					<ConnectionStatus apiUrl={apiUrl} />
 
 					{/* Agent Selector */}
 					<div className="flex items-center space-x-3">
