@@ -1,5 +1,13 @@
 # @iqai/adk-cli
 
+## 0.3.4
+
+### Patch Changes
+
+- dd1d22e: fix: improve ADK run command exit handling
+- 49ea60a: Fix session persistence in adk-cli and adk-web to prevent new sessions on refresh
+- 964e4a7: Adds --version support for adk cli
+
 ## 0.3.3
 
 ### Patch Changes
