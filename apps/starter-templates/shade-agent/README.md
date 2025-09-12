@@ -13,7 +13,7 @@
 
 A template showing how to build AI agents that automatically fetch Ethereum price and sentiment data, then securely store it on the blockchain using NEAR's chain signatures and Phala's Trusted Execution Environment (TEE).
 
-**Built with [ADK-TS](https://adk.iqai.com/) - AI Development Kit (ADK) for TypeScript**
+**Built with [ADK-TS](https://adk.iqai.com/) - Agent Development Kit (ADK) for TypeScript**
 
 ## 🎯 What This Template Shows
 
@@ -49,11 +49,12 @@ This template demonstrates how to build **AI-powered applications** that:
 - A Google account (for free AI API access)
 - A NEAR testnet account (free to create)
 - A Phala Network account (free to create)
+- Docker Desktop (must be installed and running)
 
 ## Step 1: Create Project Using ADK CLI
 
 ```bash
-# Create a new project with the NEAR Shade Agent template
+# Create a new project with the NEAR Shade Agent template (replace "my-shade-agent" with your desired project name)
 npx @iqai/adk-cli new --template shade-agent my-shade-agent
 
 # Navigate to your project and install dependencies
@@ -83,11 +84,30 @@ pnpm install
 
 ```bash
 # Create account (replace "your-name" with your desired name)
-npx near-cli-rs account create-account fund-myself your-name.testnet 10NEAR
+npx near-cli-rs account create-account sponsor-by-faucet-service your-name.testnet
 
-# Export credentials
+# When prompted:
+# - Add an access key: Choose "autogenerate-new-keypair"
+# - Save access key: Choose "save-to-keychain" (IMPORTANT!)
+# - Network: Choose "testnet"
+# - Proceed: Choose "create"
+
+# Export your seed phrase (needed for the .env file)
 npx near-cli-rs account export-account your-name.testnet
+
+# When prompted:
+# - Export method: Choose "using-seed-phrase"
+# - Network: Choose "testnet"
+# - Copy the seed phrase that appears (you'll need this for NEAR_SEED_PHRASE)
 ```
+
+> **Important Notes:**
+>
+- 💾 Save both your account ID (e.g., "your-name.testnet") and seed phrase
+- 🔒 Keep your seed phrase secure - it's like a password for your account
+- If you get "account already exists" error:
+  - The account name is taken, try a different name
+  - Or if you created it before, just export the existing account using the export command above
 
 #### 🔑 Phala API Key (Required)
 
@@ -110,7 +130,7 @@ GOOGLE_API_KEY=your_google_api_key_here
 NEAR_ACCOUNT_ID=your-name.testnet
 NEAR_SEED_PHRASE=your twelve word seed phrase here
 NEXT_PUBLIC_contractId=ac-sandbox.your-name.testnet
-DOCKER_TAG=your-dockerhub-username/shade-agent:latest
+DOCKER_TAG=your-dockerhub-username/shade-agent
 PHALA_API_KEY=your_phala_api_key_here
 ```
 
@@ -123,6 +143,7 @@ pnpm dlx @neardefi/shade-agent-cli
 
 This command will:
 
+- Build and push your Docker image to Docker Hub (make sure you're logged in with `docker login`)
 - Set up your shade agent in Phala's TEE
 - Create necessary NEAR contracts
 - Give you a URL like: `https://your-app-id.phala.network`
@@ -193,17 +214,29 @@ https://sepolia.etherscan.io/tx/YOUR_TX_HASH
 
 ### Test AI Agents Locally
 
-For development and debugging, you can test just the AI agents:
+For development and debugging, you have several options:
 
 ```bash
-# Start local development server
+# Start the full application locally (includes API and agents)
 pnpm dev
+```
 
-# Test agent logic (without blockchain interaction)
+This runs the entire app locally, including the REST API and agent orchestration.
+
+To test **only the AI agents** (without blockchain or API), use one of the following:
+
+```bash
+# Run agents in the terminal (CLI interface)
+npx @iqai/adk-cli run
+
+# Open a web interface to chat and interact with agents
 npx @iqai/adk-cli web
 ```
 
-This opens a web interface where you can chat with your agents and test their functionality.
+- `run`: Test agents directly in your terminal.
+- `web`: Opens a browser-based interface for interactive agent testing.
+
+This lets you quickly debug and experiment with agent logic before integrating with the blockchain or API.
 
 ### Smart Contract Details
 
@@ -247,6 +280,11 @@ src/
 
 ## 🐛 Troubleshooting
 
+### "Cannot connect to the Docker daemon"
+
+- Make sure Docker Desktop is installed and running on your machine
+- Run `docker ps` in your terminal to verify Docker is running
+
 ### "Failed to get agent account"
 
 - Ensure your NEAR account has sufficient balance
@@ -268,7 +306,8 @@ src/
 
 ### ADK-TS Resources
 
-- [ADK Documentation](https://adk.iqai.com/)
+- [ADK-TS Documentation](https://adk.iqai.com/)
+- [ADK-TS CLI Documentation](https://adk.iqai.com/docs/cli)
 - [GitHub Repository](https://github.com/IQAICOM/adk-ts)
 
 ### NEAR Protocol Resources
@@ -283,7 +322,7 @@ src/
 
 ## 🤝 Contributing
 
-This template is open source and contributions are welcome! Feel free to:
+This [template](https://github.com/IQAIcom/adk-ts/tree/main/apps/starter-templates/shade-agent) is open source and contributions are welcome! Feel free to:
 
 - Report bugs or suggest improvements
 - Add new agent examples
