@@ -162,28 +162,27 @@ export class AgentManager {
 				}),
 			);
 			return mostRecentSession;
-		} else {
-			// No existing sessions found, create a new one
-			this.logger.log("No existing sessions found, creating new session");
-			const agentBuilder = AgentBuilder.create(exportedAgent.name).withAgent(
-				exportedAgent,
-			);
-			agentBuilder.withSessionService(this.sessionService, {
-				userId,
-				appName,
-				state: undefined,
-			});
-			const { session } = await agentBuilder.build();
-			this.logger.log(
-				format("New session created: %o", {
-					sessionId: session.id,
-					hasState: !!session.state,
-					stateKeys: session.state ? Object.keys(session.state) : [],
-					stateContent: session.state,
-				}),
-			);
-			return session;
 		}
+		// No existing sessions found, create a new one
+		this.logger.log("No existing sessions found, creating new session");
+		const agentBuilder = AgentBuilder.create(exportedAgent.name).withAgent(
+			exportedAgent,
+		);
+		agentBuilder.withSessionService(this.sessionService, {
+			userId,
+			appName,
+			state: undefined,
+		});
+		const { session } = await agentBuilder.build();
+		this.logger.log(
+			format("New session created: %o", {
+				sessionId: session.id,
+				hasState: !!session.state,
+				stateKeys: session.state ? Object.keys(session.state) : [],
+				stateContent: session.state,
+			}),
+		);
+		return session;
 	}
 
 	private async createRunnerWithSession(
