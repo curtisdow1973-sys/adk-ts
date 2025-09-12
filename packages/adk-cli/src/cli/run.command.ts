@@ -158,14 +158,13 @@ class AgentChatClient {
 					});
 
 					if (p.isCancel(message)) {
-						p.cancel("Chat ended");
-						process.exit(0);
+						sigintHandler();
 					}
 
 					const trimmed = (message || "").trim();
 					
 					// Check for explicit exit commands
-					if (trimmed.toLowerCase() === "exit" || trimmed.toLowerCase() === "quit") {
+					if (["exit", "quit"].includes(trimmed.toLowerCase())) {
 						p.outro("Chat ended");
 						process.exit(0);
 					}
