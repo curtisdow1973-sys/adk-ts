@@ -4,6 +4,23 @@ import "reflect-metadata";
 import { CommandFactory } from "nest-commander";
 import { AppModule } from "./app.module";
 
+// Lightweight, dependency-free version flag handling executed before Nest bootstraps.
+// Supports: adk --version | adk -v | adk -V
+// Intentionally done here (instead of commander integration) to avoid spinning up
+// the Nest container for a trivial, frequently used query.
+try {
+	if (process.argv.some((a) => a === "--version" || a === "-v" || a === "-V")) {
+		// eslint-disable-next-line @typescript-eslint/no-var-requires
+		const pkg = require("../package.json");
+		// Print just the version to stay script-friendly (e.g., `adk --version` in tooling)
+		// Common CLIs output only the version number; adjust if branding desired.
+		console.log(pkg.version || "unknown");
+		process.exit(0);
+	}
+} catch {
+	// Silently ignore and continue to normal bootstrap if something unexpected happens.
+}
+
 // Decide how noisy Nest should be based on the invoked command.
 // We only want framework bootstrap logs when actually starting a server
 // (serve / run / web). Plain `adk` (help) should be clean.
