@@ -154,15 +154,19 @@ class AgentChatClient {
 				try {
 					const message = await p.text({
 						message: "💬 Message:",
-						placeholder: "Type your message here... (type 'exit' or 'quit' to end)",
+						placeholder:
+							"Type your message here... (type 'exit' or 'quit' to end)",
 					});
 
 					if (p.isCancel(message)) {
 						sigintHandler();
 					}
 
-					const trimmed = (message || "").trim();
-					
+					const trimmed =
+						typeof message === "symbol"
+							? String(message)
+							: (message || "").trim();
+
 					// Check for explicit exit commands
 					if (["exit", "quit"].includes(trimmed.toLowerCase())) {
 						p.outro("Chat ended");
