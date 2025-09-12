@@ -142,26 +142,45 @@ class AgentChatClient {
 			throw new Error("Agent not selected");
 		}
 
-		while (true) {
-			try {
-				const message = await p.text({
-					message: "💬 Message:",
-					placeholder: "Type your message here...",
-				});
+		// Add SIGINT handler for interactive chat mode
+		const sigintHandler = () => {
+			p.cancel("Chat ended");
+			process.exit(0);
+		};
+		process.on("SIGINT", sigintHandler);
 
-				if (p.isCancel(message)) {
-					p.cancel("Chat ended");
-					break;
-				}
+		try {
+			while (true) {
+				try {
+					const message = await p.text({
+						message: "💬 Message:",
+						placeholder: "Type your message here... (type 'exit' or 'quit' to end)",
+					});
 
-				const trimmed = (message || "").trim();
-				if (trimmed) {
-					await this.sendMessage(trimmed);
+					if (p.isCancel(message)) {
+						p.cancel("Chat ended");
+						process.exit(0);
+					}
+
+					const trimmed = (message || "").trim();
+					
+					// Check for explicit exit commands
+					if (trimmed.toLowerCase() === "exit" || trimmed.toLowerCase() === "quit") {
+						p.outro("Chat ended");
+						process.exit(0);
+					}
+
+					if (trimmed) {
+						await this.sendMessage(trimmed);
+					}
+				} catch (error) {
+					console.error(chalk.red("Error in chat:"), error);
+					process.exit(1);
 				}
-			} catch (error) {
-				console.error(chalk.red("Error in chat:"), error);
-				break;
 			}
+		} finally {
+			// Clean up SIGINT handler
+			process.removeListener("SIGINT", sigintHandler);
 		}
 	}
 
