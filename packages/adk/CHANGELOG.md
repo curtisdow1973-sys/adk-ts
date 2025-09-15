@@ -1,5 +1,11 @@
 # @iqai/adk
 
+## 0.3.5
+
+### Patch Changes
+
+- 8ce3a6f: Fixes ai sdk tool response converstion issue
+
 ## 0.3.4
 
 ### Patch Changes
