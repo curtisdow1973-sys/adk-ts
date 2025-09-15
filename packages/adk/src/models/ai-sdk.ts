@@ -305,19 +305,19 @@ export class AiSdkLlm extends BaseLlm {
 			);
 
 			const contentParts = functionResponses.map((part) => {
-				// Ensure output is properly formatted for AI SDK
-				let output: any = part.functionResponse.response;
+				// Format output according to AI SDK LanguageModelV2ToolResultOutput
+				let output: any;
+				const response = part.functionResponse.response;
 
-				// If output is empty object or undefined, convert to string
-				if (
-					!output ||
-					(typeof output === "object" && Object.keys(output).length === 0)
-				) {
-					output = JSON.stringify(output || {});
-				} else if (typeof output === "object") {
-					output = JSON.stringify(output);
-				} else if (typeof output !== "string") {
-					output = String(output);
+				if (response === undefined || response === null) {
+					// Use JSON format for null/undefined
+					output = { type: "json", value: null };
+				} else if (typeof response === "string") {
+					// Text format for strings
+					output = { type: "text", value: response };
+				} else {
+					// JSON format for objects
+					output = { type: "json", value: response };
 				}
 
 				return {
