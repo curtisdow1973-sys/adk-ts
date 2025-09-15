@@ -5,7 +5,6 @@ import {
 	type LanguageModel,
 	ModelMessage,
 	type Tool,
-	ToolResultPart,
 	generateText,
 	jsonSchema,
 	streamText,
@@ -306,12 +305,27 @@ export class AiSdkLlm extends BaseLlm {
 			);
 
 			const contentParts = functionResponses.map((part) => {
+				// Ensure output is properly formatted for AI SDK
+				let output: any = part.functionResponse.response;
+
+				// If output is empty object or undefined, convert to string
+				if (
+					!output ||
+					(typeof output === "object" && Object.keys(output).length === 0)
+				) {
+					output = JSON.stringify(output || {});
+				} else if (typeof output === "object") {
+					output = JSON.stringify(output);
+				} else if (typeof output !== "string") {
+					output = String(output);
+				}
+
 				return {
 					type: "tool-result" as const,
 					toolCallId: part.functionResponse.id,
 					toolName: part.functionResponse.name || "unknown",
-					output: part.functionResponse.response as ToolResultPart["output"],
-				} satisfies AssistantContent[number];
+					output: output,
+				};
 			});
 
 			return {
