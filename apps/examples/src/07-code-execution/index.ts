@@ -1,8 +1,8 @@
 import { env } from "node:process";
-import { InMemorySessionService, AgentBuilder } from "@iqai/adk";
+import { AgentBuilder, InMemorySessionService } from "@iqai/adk";
 import { BuiltInCodeExecutor } from "@iqai/adk";
-import { v4 as uuidv4 } from "uuid";
 import dedent from "dedent";
+import { v4 as uuidv4 } from "uuid";
 import { ask } from "../utils";
 
 /**
@@ -45,13 +45,13 @@ async function demonstrateBasicCodeExecution() {
 
 	console.log("🧮 Testing basic mathematical computation:");
 	await ask(
-		runner.ask.bind(runner),
+		runner,
 		"Calculate the sum of squares of all prime numbers less than 100",
 	);
 
 	console.log("📊 Testing data manipulation:");
 	await ask(
-		runner.ask.bind(runner),
+		runner,
 		"Generate a list of the first 10 Fibonacci numbers and calculate their average",
 	);
 }
@@ -83,7 +83,7 @@ async function demonstrateDataAnalysis() {
 
 	console.log("📈 Testing statistical analysis:");
 	await ask(
-		runner.ask.bind(runner),
+		runner,
 		dedent`
 			Create a dataset of 100 random sales figures (between 1000 and 10000),
 			then calculate:
@@ -96,7 +96,7 @@ async function demonstrateDataAnalysis() {
 
 	console.log("🔍 Testing pattern analysis:");
 	await ask(
-		runner.ask.bind(runner),
+		runner,
 		dedent`
 			Generate a time series dataset representing website traffic over 30 days
 			with some seasonal patterns (higher on weekends) and analyze:
@@ -135,7 +135,7 @@ async function demonstrateAlgorithmImplementation() {
 
 	console.log("🔄 Testing sorting algorithm:");
 	await ask(
-		runner.ask.bind(runner),
+		runner,
 		dedent`
 			Implement the quicksort algorithm and test it with:
 			1. A random unsorted list of 20 numbers
@@ -149,7 +149,7 @@ async function demonstrateAlgorithmImplementation() {
 
 	console.log("🌳 Testing graph algorithm:");
 	await ask(
-		runner.ask.bind(runner),
+		runner,
 		dedent`
 			Implement Dijkstra's shortest path algorithm and use it to find
 			the shortest path in a graph representing a simple road network:
@@ -201,7 +201,7 @@ async function demonstrateInteractiveCodeSession() {
 	);
 
 	await ask(
-		runner.ask.bind(runner),
+		runner,
 		dedent`
 		Let's start by implementing linear search and binary search algorithms.
 		Create both functions and test them with a sorted list of 1000 numbers.
@@ -210,7 +210,7 @@ async function demonstrateInteractiveCodeSession() {
 	);
 
 	await ask(
-		runner.ask.bind(runner),
+		runner,
 		dedent`
 			Now let's create a comprehensive performance comparison.
 			Test both algorithms with different list sizes (100, 1000, 10000 elements)
@@ -219,7 +219,7 @@ async function demonstrateInteractiveCodeSession() {
 	);
 
 	await ask(
-		runner.ask.bind(runner),
+		runner,
 		dedent`
 			Finally, analyze the theoretical vs actual performance:
 			1. Calculate the theoretical time complexities

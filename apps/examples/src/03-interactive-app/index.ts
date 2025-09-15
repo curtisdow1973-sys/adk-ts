@@ -1,7 +1,7 @@
 import { cancel, intro, isCancel, outro, text } from "@clack/prompts";
 import { AgentBuilder, InMemorySessionService, createTool } from "@iqai/adk";
-import * as z from "zod";
 import dedent from "dedent";
+import * as z from "zod";
 import { ask } from "../utils";
 
 /**
@@ -347,7 +347,7 @@ async function main() {
 	// Start interactive session
 	intro("📝 Todo Assistant");
 
-	await ask(runner.ask.bind(runner), "Show me my current todos and stats");
+	await ask(runner, "Show me my current todos and stats");
 
 	// Interactive loop
 	while (true) {
@@ -368,7 +368,7 @@ async function main() {
 		}
 
 		try {
-			await ask(runner.ask.bind(runner), userInput);
+			await ask(runner, userInput);
 
 			const updatedSession = await sessionService.getSession(
 				session.appName,

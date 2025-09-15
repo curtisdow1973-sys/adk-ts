@@ -29,7 +29,7 @@ async function demonstrateBasicFlow() {
 		.build();
 
 	await ask(
-		runner.ask.bind(runner),
+		runner,
 		"Create demo.txt with ADK-TS flow info, then read it back.",
 	);
 }
@@ -45,7 +45,7 @@ async function demonstrateBuiltInPlanner() {
 		.build();
 
 	await ask(
-		runner.ask.bind(runner),
+		runner,
 		"Plan a $300 birthday party for 20 people who love pizza and games.",
 	);
 }
@@ -60,7 +60,7 @@ async function demonstratePlanReActPlanner() {
 		.build();
 
 	await ask(
-		runner.ask.bind(runner),
+		runner,
 		"Create a Node.js project with README.md, package.json, main.js, and .gitignore",
 	);
 }
@@ -106,7 +106,7 @@ async function demonstrateAdvancedFlowPatterns() {
 		.build();
 
 	await ask(
-		runner.ask.bind(runner),
+		runner,
 		"Create API docs: specification, endpoints, getting started guide",
 	);
 }

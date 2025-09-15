@@ -3,9 +3,9 @@ import * as path from "node:path";
 import { env } from "node:process";
 import {
 	AgentBuilder,
-	createDatabaseSessionService,
 	InMemoryArtifactService,
 	LoadArtifactsTool,
+	createDatabaseSessionService,
 	createTool,
 } from "@iqai/adk";
 import dedent from "dedent";
@@ -159,20 +159,11 @@ async function demonstrateSessionPersistence() {
 
 	// Test session persistence
 	console.log("🧮 Testing counter persistence:");
-	await ask(
-		runner.ask.bind(runner),
-		"Increment the 'examples_run' counter by 1",
-	);
+	await ask(runner, "Increment the 'examples_run' counter by 1");
 
-	await ask(
-		runner.ask.bind(runner),
-		"Increment the 'coffee_breaks' counter by 2",
-	);
+	await ask(runner, "Increment the 'coffee_breaks' counter by 2");
 
-	await ask(
-		runner.ask.bind(runner),
-		"Show me all my counters and their values",
-	);
+	await ask(runner, "Show me all my counters and their values");
 
 	// Demonstrate session retrieval
 	console.log("💾 Current session state:");
@@ -216,7 +207,7 @@ async function demonstrateArtifactPersistence() {
 	// Test artifact creation
 	console.log("📄 Creating artifacts:");
 	await ask(
-		runner.ask.bind(runner),
+		runner,
 		dedent`
 			Save a shopping list with these items:
 			- Apples
@@ -230,7 +221,7 @@ async function demonstrateArtifactPersistence() {
 	);
 
 	await ask(
-		runner.ask.bind(runner),
+		runner,
 		dedent`
 			Create a meeting agenda for tomorrow:
 			1. Project status update
@@ -244,15 +235,12 @@ async function demonstrateArtifactPersistence() {
 
 	// Test artifact loading
 	console.log("📖 Loading artifacts:");
-	await ask(
-		runner.ask.bind(runner),
-		"Show me all my saved files and their contents",
-	);
+	await ask(runner, "Show me all my saved files and their contents");
 
 	// Test artifact updating
 	console.log("✏️ Updating artifacts:");
 	await ask(
-		runner.ask.bind(runner),
+		runner,
 		dedent`
 			Update the shopping list to add:
 			- Bananas
@@ -264,10 +252,7 @@ async function demonstrateArtifactPersistence() {
 
 	// Show final artifact state
 	console.log("📋 Final artifact verification:");
-	await ask(
-		runner.ask.bind(runner),
-		"Show me the updated shopping list content",
-	);
+	await ask(runner, "Show me the updated shopping list content");
 }
 
 async function demonstrateHybridPersistence() {
@@ -359,7 +344,7 @@ async function demonstrateHybridPersistence() {
 	// Test hybrid persistence
 	console.log("🏗️ Creating a project with hybrid persistence:");
 	await ask(
-		runner.ask.bind(runner),
+		runner,
 		dedent`
 			Create a new project called "Website Redesign" with description
 			"Modernize company website with new design and improved UX".
@@ -372,7 +357,7 @@ async function demonstrateHybridPersistence() {
 	);
 
 	console.log("📊 Checking project status:");
-	await ask(runner.ask.bind(runner), "Show me all my projects and their files");
+	await ask(runner, "Show me all my projects and their files");
 }
 
 async function demonstratePersistencePatterns() {

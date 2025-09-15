@@ -150,7 +150,7 @@ async function demonstrateBasicWorkflow() {
 		.build();
 
 	await ask(
-		runner.ask.bind(runner),
+		runner,
 		"Create a market analysis for electric vehicle charging stations. Break this into research and analysis stages, tracking progress through each step.",
 	);
 }
@@ -234,7 +234,7 @@ async function demonstrateLangGraphStyleWorkflow() {
 		.build();
 
 	await ask(
-		runner.ask.bind(runner),
+		runner,
 		"Create a customer onboarding system. Analyze complexity and route to appropriate processing.",
 	);
 }
@@ -271,7 +271,7 @@ async function demonstrateErrorRecoveryWorkflow() {
 		.build();
 
 	await ask(
-		runner.ask.bind(runner),
+		runner,
 		"Simulate processing customer data with potential failures. Show retry logic, alternative approaches, and escalation patterns.",
 	);
 }

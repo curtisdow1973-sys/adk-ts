@@ -61,7 +61,7 @@ async function demonstrateAiSdkIntegration() {
 		.withTools(weatherTool)
 		.build();
 
-	await ask(runner.ask.bind(runner), "Get the weather for Tokyo");
+	await ask(runner, "Get the weather for Tokyo");
 }
 
 async function demonstrateHttpIntegration() {
@@ -75,7 +75,7 @@ async function demonstrateHttpIntegration() {
 		.build();
 
 	await ask(
-		runner.ask.bind(runner),
+		runner,
 		"Make a GET request to https://httpbin.org/json and show what you received.",
 	);
 }
@@ -93,7 +93,7 @@ async function demonstrateFileSystemIntegration() {
 		.build();
 
 	await ask(
-		runner.ask.bind(runner),
+		runner,
 		"Create a simple project: make a src directory, add index.html and styles.css files with basic content, then list the structure.",
 	);
 }
@@ -117,7 +117,7 @@ async function demonstrateCompositeIntegration() {
 		.build();
 
 	await ask(
-		runner.ask.bind(runner),
+		runner,
 		"Get weather for London and Tokyo, fetch a UUID from httpbin.org/uuid, then save a weather report as both JSON and markdown files.",
 	);
 }

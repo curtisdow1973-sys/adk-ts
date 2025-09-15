@@ -86,7 +86,7 @@ async function main() {
 
 	console.log("\nAsking agent about weather:");
 	await ask(
-		runner.ask.bind(runner),
+		runner,
 		"What's the weather like in San Francisco? Also, can you give me some tips for what to wear in that weather?",
 	);
 

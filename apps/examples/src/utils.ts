@@ -1,3 +1,5 @@
+import { EnhancedRunner } from "@iqai/adk";
+
 /**
  * A reusable function to handle asking questions to an agent runner.
  * It logs the question, gets the response, logs the response, and returns it.
@@ -8,13 +10,12 @@
  * @returns The agent's response
  */
 export async function ask<T>(
-	runner: (question: string) => Promise<T>,
+	runner: EnhancedRunner<T>,
 	question: string,
 	skipResponseLog = false,
 ): Promise<T> {
-	console.log(`
-👤 User:  ${question}`);
-	const response = await runner(question);
+	console.log(`👤 User:  ${question}`);
+	const response = await runner.ask(question);
 
 	if (!skipResponseLog) {
 		// Handle different response types appropriately

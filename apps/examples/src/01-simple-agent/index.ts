@@ -29,10 +29,11 @@ async function main() {
 		fun_fact: z.string().describe("An interesting fact about the city"),
 	});
 
-	const runner = (question: string) =>
-		AgentBuilder.withModel(env.LLM_MODEL || "gemini-2.5-flash")
-			.withOutputSchema(outputSchema)
-			.ask(question);
+	const { runner } = await AgentBuilder.withModel(
+		env.LLM_MODEL || "gemini-2.5-flash",
+	)
+		.withOutputSchema(outputSchema)
+		.build();
 
 	const response = await ask(runner, "What is the capital of France?", true);
 

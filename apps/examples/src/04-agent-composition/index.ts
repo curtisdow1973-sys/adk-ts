@@ -143,7 +143,7 @@ async function demonstrateOutputKeys() {
 
 	console.log("🍽️ Restaurant order processing:");
 	await ask(
-		runner.ask.bind(runner),
+		runner,
 		"I'd like to order something vegetarian, not too spicy, around $20. Maybe a salad or pasta?",
 	);
 }
@@ -279,19 +279,16 @@ async function demonstrateSubAgents() {
 
 	// Test sub-agent delegation
 	console.log("😄 Testing joke delegation:");
-	await ask(runner.ask.bind(runner), "Tell me a programming joke");
+	await ask(runner, "Tell me a programming joke");
 
 	console.log("🧮 Testing math delegation:");
-	await ask(runner.ask.bind(runner), "What's 127 multiplied by 43?");
+	await ask(runner, "What's 127 multiplied by 43?");
 
 	console.log("🌤️ Testing weather delegation:");
-	await ask(
-		runner.ask.bind(runner),
-		"What's the weather like in San Francisco?",
-	);
+	await ask(runner, "What's the weather like in San Francisco?");
 
 	console.log("💬 Testing general query (no delegation):");
-	await ask(runner.ask.bind(runner), "What's the capital of Australia?");
+	await ask(runner, "What's the capital of Australia?");
 }
 
 async function demonstrateInteractiveMultiAgent() {
@@ -342,7 +339,7 @@ async function demonstrateInteractiveMultiAgent() {
 		}
 
 		try {
-			await ask(runner.ask.bind(runner), userInput);
+			await ask(runner, userInput);
 			console.log("─".repeat(50));
 		} catch (error) {
 			console.error("❌ Error:", error);
