@@ -25,6 +25,7 @@ import { LangGraphAgent, type LangGraphNode } from "./lang-graph-agent.js";
 import { LlmAgent } from "./llm-agent.js";
 import { LoopAgent } from "./loop-agent.js";
 import { ParallelAgent } from "./parallel-agent.js";
+import { RunConfig } from "./run-config.js";
 import { SequentialAgent } from "./sequential-agent.js";
 
 /**
@@ -95,6 +96,7 @@ export interface EnhancedRunner<T = string, M extends boolean = false> {
 		userId: string;
 		sessionId: string;
 		newMessage: FullMessage;
+		runConfig?: RunConfig;
 	}): AsyncIterable<Event>;
 	__outputSchema?: ZodSchema;
 }
@@ -195,6 +197,7 @@ export class AgentBuilder<TOut = string, TMulti extends boolean = false> {
 	private existingAgent?: BaseAgent; // If provided, reuse directly
 	private definitionLocked = false; // Lock further definition mutation after withAgent
 	private logger = new Logger({ name: "AgentBuilder" });
+	private runConfig?: RunConfig;
 
 	/**
 	 * Warn (once per method) if the definition has been locked by withAgent().
@@ -578,6 +581,15 @@ export class AgentBuilder<TOut = string, TMulti extends boolean = false> {
 	}
 
 	/**
+	 * Configure runtime behavior for runs
+	 */
+	withRunConfig(config: RunConfig | Partial<RunConfig>): this {
+		this.runConfig =
+			config instanceof RunConfig ? config : new RunConfig(config);
+		return this;
+	}
+
+	/**
 	 * Configure with an in-memory session with custom IDs
 	 * Note: In-memory sessions are created automatically by default, use this only if you need custom appName/userId
 	 * @param options Session configuration options (userId and appName)
@@ -804,6 +816,7 @@ export class AgentBuilder<TOut = string, TMulti extends boolean = false> {
 		const agentType = this.agentType; // capture agent type for aggregation logic
 		const isMulti = agentType === "parallel" || agentType === "sequential";
 		const subAgentNames = this.config.subAgents?.map((a) => a.name) || [];
+		const runConfig = this.runConfig;
 
 		return {
 			__outputSchema: outputSchema,
@@ -828,6 +841,7 @@ export class AgentBuilder<TOut = string, TMulti extends boolean = false> {
 					userId: sessionOptions.userId,
 					sessionId: session.id,
 					newMessage,
+					runConfig,
 				})) {
 					if (event.content?.parts && Array.isArray(event.content.parts)) {
 						const content = event.content.parts
@@ -880,8 +894,12 @@ export class AgentBuilder<TOut = string, TMulti extends boolean = false> {
 				userId: string;
 				sessionId: string;
 				newMessage: FullMessage;
+				runConfig?: RunConfig;
 			}) {
-				return baseRunner.runAsync(params);
+				return baseRunner.runAsync({
+					...params,
+					runConfig: params.runConfig ?? runConfig,
+				});
 			},
 		};
 	}
