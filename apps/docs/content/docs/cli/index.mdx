@@ -18,7 +18,7 @@ The ADK-TS CLI (`@iqai/adk-cli`) is a comprehensive command-line toolkit designe
 
 Install globally with:
 
-<Tabs items={["npm", "yarn", "pnpm"]}>
+<Tabs items={["npm", "yarn", "pnpm", "bun"]}>
   <Tab value="npm">
     ```bash
     npm install -g @iqai/adk-cli
@@ -32,6 +32,11 @@ Install globally with:
   <Tab value="pnpm">
     ```bash
     pnpm add -g @iqai/adk-cli
+    ```
+  </Tab>
+  <Tab value="bun">
+    ```bash
+    bun add -g @iqai/adk-cli
     ```
   </Tab>
 </Tabs>
@@ -64,7 +69,7 @@ Install globally with:
 ## Requirements
 
 - **Node.js** v22.0 or higher
-- **Package Manager**: npm, yarn, pnpm, or bun
+- **Package Manager**: npm, yarn, or pnpm
 - **TypeScript** support (handled automatically)
 
 ## Commands Overview
@@ -92,11 +97,11 @@ adk run
   <Card
     title="💻 Command Reference"
     description="Detailed documentation for all CLI commands and options"
-    href="./commands"
+    href="/docs/cli/commands"
   />
   <Card
     title="⚙️ Configuration Guide"
     description="Agent discovery rules, export requirements, and project structure"
-    href="./configuration"
+    href="/docs/cli/configuration"
   />
 </Cards>

@@ -3,9 +3,10 @@ title: Commands
 description: Reference for adk new, adk run, adk web, and adk serve commands
 icon: Terminal
 ---
+
 ## `adk new`
 
-Create a new ADK project from professional templates.
+Create a new ADK project from professional templates with interactive setup.
 
 ```bash
 adk new
@@ -14,14 +15,29 @@ adk new my-agent --template simple-agent
 ```
 
 **Available Templates:**
-- `simple-agent` – Basic agent with chat
-- `discord-bot` – Discord bot integration
-- `telegram-bot` – Telegram bot integration
-- `hono-server` – RESTful web server
-- `shade-agent` – Agent with Near Shade Agents
-- `mcp-starter` – Model Context Protocol server
 
----
+- `simple-agent` – Basic agent with chat capabilities and examples
+- `discord-bot` – Agent integrated with Discord bot framework
+- `telegram-bot` – Agent integrated with Telegram bot API
+- `hono-server` – Web server with RESTful agent endpoints
+- `shade-agent` – Agent with Near Shade Agents integration
+- `mcp-starter` – Model Context Protocol server integration
+
+**Features:**
+
+- Interactive project creation with guided setup
+- Automatic dependency installation with package manager detection
+- Support for npm, pnpm, yarn, and bun
+- Template validation and error handling
+- Professional project structure with TypeScript support
+
+**Package Managers:**
+The CLI automatically detects available package managers and offers a choice:
+
+- 📦 npm
+- ⚡ pnpm
+- 🧶 yarn
+- 🍞 bun
 
 ## `adk run`
 
@@ -32,16 +48,32 @@ adk run
 # Run a specific agent file
 adk run path/to/agent.ts
 # Server-only mode (no chat)
+# Default server URL: http://localhost:8042/
 adk run --server
 # Custom host for server mode
 adk run --server --host 0.0.0.0
+# Enable hot reload during development
+adk run --hot
+# Watch additional paths for changes
+adk run --hot --watch src,lib,tools
+# Enable verbose logging
+adk run --verbose
 ```
 
-- Auto-discovers agents in the current directory
-- Interactive selector if multiple agents are found
-- Supports server mode for API-only usage
+**Options:**
 
----
+- `--server` – Start API server only (no interactive chat)
+- `--host <host>` – Custom host for server mode (default: localhost)
+- `--hot` – Enable hot reload for live code changes
+- `--watch <paths>` – Comma-separated list of additional paths to watch
+- `--verbose` – Enable detailed logging and diagnostics
+
+**Features:**
+
+- Auto-discovers agents in the current directory with .gitignore awareness
+- Interactive selector if multiple agents are found
+- Terminal chat with markdown rendering
+- Hot reload support for development workflows
 
 ## `adk web`
 
@@ -57,13 +89,28 @@ adk web --dir ./my-agents
 adk web --local --web-port 3000
 # Custom web application URL
 adk web --web-url https://custom-web-app.com
+# Custom host
+adk web --host 0.0.0.0
 ```
 
-- Visual agent browser and chat
-- Live status monitoring
-- Responsive design for desktop and mobile
+**Options:**
 
----
+- `--port <port>` – Port for API server (default: 8042)
+- `--host <host>` – Host for servers (default: localhost)
+- `--dir <directory>` – Directory to scan for agents (default: current directory)
+- `--local` – Run local web app instead of opening production URL
+- `--web-port <port>` – Port for web app when using `--local` (default: 3000)
+- `--web-url <url>` – URL of the web application (used when not `--local`)
+
+**Features:**
+
+- Visual agent browser and chat interface
+- Real-time agent status monitoring
+- Session management and message history
+- Responsive design for desktop and mobile
+- Automatically starts API server on specified port
+
+**Note:** When using `--local`, ensure you have the web app running locally on the specified port.
 
 ## `adk serve`
 
@@ -71,18 +118,47 @@ Start a standalone API server for agent management (no chat UI).
 
 ```bash
 adk serve
+# Default server URL: http://localhost:8042/
 # Custom host and port
 adk serve --host 0.0.0.0 --port 9000
 # Scan a specific directory
 adk serve --dir ./production-agents
+# Quiet mode (minimal logging)
+adk serve --quiet
 ```
 
+**Options:**
+
+- `--port <port>` – Port for the server (default: 8042)
+- `--host <host>` – Host for the server (default: localhost)
+- `--dir <directory>` – Directory to scan for agents (default: current directory)
+- `--swagger` – Force enable OpenAPI docs
+- `--no-swagger` – Disable OpenAPI docs
+- `--quiet` – Reduce logging output
+
 **API Endpoints:**
+
 - `GET /api/agents` – List all discovered agents
 - `POST /api/agents/refresh` – Refresh agent discovery scan
-- `POST /api/agents/:id/start` – Start a specific agent
-- `POST /api/agents/:id/stop` – Stop a specific agent
-- `GET /api/agents/running` – Get status of running agents
-- `POST /api/agents/:id/message` – Send message to agent
-- `GET /api/agents/:id/messages` – Get conversation history
+- `GET /api/agents/{id}/sessions` – List sessions for an agent
+- `POST /api/agents/{id}/sessions` – Create a new session
+- `DELETE /api/agents/{id}/sessions/{sessionId}` – Delete a session
+- `POST /api/agents/{id}/sessions/{sessionId}/switch` – Switch active session
+- `GET /api/agents/{id}/sessions/{sessionId}/events` – Get session events
+- `GET /api/agents/{id}/sessions/{sessionId}/state` – Get session state
+- `PUT /api/agents/{id}/sessions/{sessionId}/state` – Update session state
+- `GET /api/agents/{id}/messages` – Get message history
+- `POST /api/agents/{id}/message` – Send message to agent
 - `GET /health` – Health check
+- `GET /reload/stream` – Hot reload event stream
+- `GET /docs` – OpenAPI documentation (when enabled)
+
+## Global Options
+
+- `--help` – Show help for a command
+- `--version` – Show CLI version
+
+**Environment Variables:**
+
+- `ADK_DEBUG_NEST=1` – Enable detailed NestJS framework logging
+- `ADK_VERBOSE=1` – Enable verbose output (same as `--verbose`)
