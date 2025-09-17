@@ -1,6 +1,6 @@
 import { existsSync, mkdirSync, readFileSync, unlinkSync } from "node:fs";
 import { createRequire } from "node:module";
-import { dirname, join } from "node:path";
+import { dirname, isAbsolute, join, resolve } from "node:path";
 import { pathToFileURL } from "node:url";
 import type { BaseAgent, BuiltAgent } from "@iqai/adk";
 import type { AgentBuilder } from "@iqai/adk";
@@ -14,6 +14,133 @@ export class AgentLoader {
 
 	constructor(private quiet = false) {
 		this.logger = new Logger("agent-loader");
+	}
+
+	/**
+	 * Parse TypeScript path mappings from tsconfig.json
+	 */
+	private parseTsConfigPaths(projectRoot: string): {
+		baseUrl?: string;
+		paths?: Record<string, string[]>;
+	} {
+		const tsconfigPath = join(projectRoot, "tsconfig.json");
+		if (!existsSync(tsconfigPath)) {
+			return {};
+		}
+
+		try {
+			const tsconfigContent = readFileSync(tsconfigPath, "utf-8");
+			const tsconfig = JSON.parse(tsconfigContent);
+			const compilerOptions = tsconfig.compilerOptions || {};
+
+			return {
+				baseUrl: compilerOptions.baseUrl,
+				paths: compilerOptions.paths,
+			};
+		} catch (error) {
+			this.logger.warn(
+				`Failed to parse tsconfig.json: ${error instanceof Error ? error.message : String(error)}`,
+			);
+			return {};
+		}
+	}
+
+	/**
+	 * Create an esbuild plugin to handle TypeScript path mappings and relative imports
+	 */
+	private createPathMappingPlugin(projectRoot: string) {
+		const { baseUrl, paths } = this.parseTsConfigPaths(projectRoot);
+		const resolvedBaseUrl = baseUrl
+			? resolve(projectRoot, baseUrl)
+			: projectRoot;
+		const logger = this.logger; // Capture logger for use in plugin
+		const quiet = this.quiet; // Capture quiet flag for use in plugin
+
+		return {
+			name: "typescript-path-mapping",
+			setup(build: any) {
+				build.onResolve({ filter: /.*/ }, (args: any) => {
+					// Log all resolution attempts for debugging
+					if (!quiet) {
+						logger.debug(
+							`Resolving import: "${args.path}" from "${args.importer || "unknown"}"`,
+						);
+					}
+					// Handle path aliases first
+					if (paths && !args.path.startsWith(".") && !isAbsolute(args.path)) {
+						for (const [alias, mappings] of Object.entries(paths)) {
+							const aliasPattern = alias.replace("*", "(.*)");
+							const aliasRegex = new RegExp(`^${aliasPattern}$`);
+							const match = args.path.match(aliasRegex);
+
+							if (match) {
+								// Try each mapping until we find one that exists
+								for (const mapping of mappings) {
+									let resolvedPath = mapping;
+
+									// Replace * with captured group if present
+									if (match[1] && mapping.includes("*")) {
+										resolvedPath = mapping.replace("*", match[1]);
+									}
+
+									// Resolve relative to baseUrl
+									const fullPath = resolve(resolvedBaseUrl, resolvedPath);
+
+									// Try different extensions
+									const extensions = [".ts", ".js", ".tsx", ".jsx", ""];
+									for (const ext of extensions) {
+										const pathWithExt = ext ? fullPath + ext : fullPath;
+										if (existsSync(pathWithExt)) {
+											logger.debug(
+												`Path mapping resolved: ${args.path} -> ${pathWithExt}`,
+											);
+											return { path: pathWithExt };
+										}
+									}
+								}
+							}
+						}
+					}
+
+					// Handle simple module names that might be missing relative paths
+					if (args.path === "env" && baseUrl) {
+						// Special case: if someone imports "env" and we have a baseUrl, try to find env.ts in baseUrl
+						const envPath = resolve(resolvedBaseUrl, "env");
+						const extensions = [".ts", ".js"];
+						for (const ext of extensions) {
+							const pathWithExt = envPath + ext;
+							if (existsSync(pathWithExt)) {
+								logger.debug(
+									`Direct env import resolved: ${args.path} -> ${pathWithExt}`,
+								);
+								return { path: pathWithExt };
+							}
+						}
+					}
+
+					// Handle relative imports with baseUrl resolution
+					if (baseUrl && args.path.startsWith("../")) {
+						// For relative imports, try resolving relative to the baseUrl as well
+						const relativePath = args.path.replace("../", "");
+						const fullPath = resolve(resolvedBaseUrl, relativePath);
+
+						const extensions = [".ts", ".js", ".tsx", ".jsx", ""];
+						for (const ext of extensions) {
+							const pathWithExt = ext ? fullPath + ext : fullPath;
+							if (existsSync(pathWithExt)) {
+								logger.debug(
+									`Relative import resolved via baseUrl: ${args.path} -> ${pathWithExt}`,
+								);
+								return { path: pathWithExt };
+							}
+						}
+					}
+
+					// No path mapping found, let esbuild handle it normally
+					return;
+				});
+			},
+		};
 	}
 
 	/**
@@ -90,6 +217,9 @@ export class AgentLoader {
 			};
 
 			const tsconfigPath = join(projectRoot, "tsconfig.json");
+			const pathMappingPlugin = this.createPathMappingPlugin(projectRoot);
+			const plugins = [pathMappingPlugin, plugin]; // Always include path mapping plugin first
+
 			await build({
 				entryPoints: [filePath],
 				outfile: outFile,
@@ -99,7 +229,7 @@ export class AgentLoader {
 				target: ["node22"],
 				sourcemap: false,
 				logLevel: "silent",
-				plugins: [plugin],
+				plugins,
 				absWorkingDir: projectRoot,
 				external: [...alwaysExternal],
 				// Use tsconfig if present for path aliases
