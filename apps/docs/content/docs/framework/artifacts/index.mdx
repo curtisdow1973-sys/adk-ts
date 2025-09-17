@@ -112,6 +112,35 @@ const mediaArtifactCallback = async (callbackContext: CallbackContext) => {
 };
 ```
 
+### Auto-save input blobs from user messages
+
+When enabled, the runner will automatically save any incoming `inlineData` parts from the user's message as artifacts before appending the event. Each saved file is named using the pattern `artifact_<invocationId>_<index>` and the corresponding message part is replaced with a short text placeholder.
+
+- Requires an `artifactService` to be configured on the `Runner`
+- Toggle via `runConfig.saveInputBlobsAsArtifacts`
+- Can be set at agent build time using `withRunConfig` or per run
+
+```typescript
+import { agentBuilder, Runner, InMemorySessionService, InMemoryArtifactService } from '@iqai/adk';
+
+// Configure at agent build time
+const agent = agentBuilder()
+  .name('artifact_agent')
+  .model('gemini-2.5-flash')
+  .withRunConfig({ saveInputBlobsAsArtifacts: true })
+  .build();
+
+const runner = new Runner({
+  appName: 'my_app',
+  agent,
+  sessionService: new InMemorySessionService(),
+  artifactService: new InMemoryArtifactService(),
+});
+
+// Or enable per run
+// await runner.runAsync({ userId, sessionId, newMessage, runConfig: new RunConfig({ saveInputBlobsAsArtifacts: true }) });
+```
+
 ## Artifact Scoping
 
 Artifacts can be scoped to different access levels:
@@ -178,31 +207,43 @@ const versioningExample = async (callbackContext: CallbackContext) => {
 - Access latest version by default or specify version explicitly
 - Complete version history maintained
 
-## Common Use Cases
+## Where to start
 
 <Cards>
   <Card
-    title="📄 Generated Reports"
-    description="Create and store PDF reports, CSV exports, and analysis documents"
-    href="/docs/framework/artifacts/context-integration#report-generation"
+    title="Runner Configuration"
+    description="Enable auto-save of uploads and wire services"
+    href="/docs/framework/artifacts/runner-configuration"
   />
-
   <Card
-    title="📁 File Processing"
-    description="Handle user uploads for analysis, transformation, and processing"
-    href="/docs/framework/artifacts/context-integration#file-processing"
+    title="Using in Contexts"
+    description="Save/load via CallbackContext and ToolContext"
+    href="/docs/framework/artifacts/context-integration"
   />
-
   <Card
-    title="🎨 Media Generation"
-    description="Generate and store images, audio, video, and other media content"
-    href="/docs/framework/artifacts/context-integration#media-creation"
+    title="Scoping & Versioning"
+    description="Session vs user filenames and version behavior"
+    href="/docs/framework/artifacts/scoping-and-versioning"
   />
-
   <Card
-    title="⚡ Caching"
-    description="Cache expensive computation results and frequently accessed content"
-    href="/docs/framework/artifacts/best-practices#caching-strategies"
+    title="Service Implementations"
+    description="In-memory vs GCS and setup notes"
+    href="/docs/framework/artifacts/service-implementations"
+  />
+  <Card
+    title="Recipes"
+    description="Upload → process → save, media, caching"
+    href="/docs/framework/artifacts/recipes"
+  />
+  <Card
+    title="Troubleshooting"
+    description="Quick fixes for common issues"
+    href="/docs/framework/artifacts/troubleshooting"
+  />
+  <Card
+    title="Best Practices"
+    description="Performance, security, and ops guidance"
+    href="/docs/framework/artifacts/best-practices"
   />
 </Cards>
 
@@ -276,60 +317,10 @@ const cachingCallback = async (callbackContext: CallbackContext) => {
 
 ## Service Architecture
 
-The artifact system is built around the `BaseArtifactService` interface:
+See interfaces and backends in:
 
-### Core Operations
-
-```typescript
-interface BaseArtifactService {
-  // Save artifact with automatic versioning
-  saveArtifact(args: {
-    appName: string;
-    userId: string;
-    sessionId: string;
-    filename: string;
-    artifact: Part;
-  }): Promise<number>;
-
-  // Load specific version or latest
-  loadArtifact(args: {
-    appName: string;
-    userId: string;
-    sessionId: string;
-    filename: string;
-    version?: number;
-  }): Promise<Part | null>;
-
-  // List available artifact filenames
-  listArtifactKeys(args: {
-    appName: string;
-    userId: string;
-    sessionId: string;
-  }): Promise<string[]>;
-
-  // Delete artifact and all versions
-  deleteArtifact(args: {
-    appName: string;
-    userId: string;
-    sessionId: string;
-    filename: string;
-  }): Promise<void>;
-
-  // List all versions for a filename
-  listVersions(args: {
-    appName: string;
-    userId: string;
-    sessionId: string;
-    filename: string;
-  }): Promise<number[]>;
-}
-```
-
-### Available Implementations
-
-- **InMemoryArtifactService**: Fast temporary storage for development and testing
-- **GcsArtifactService**: Google Cloud Storage backend for production scalability
-- **Custom Services**: Implement your own storage backend
+- Scoping & Versioning: behavior overview
+- Service Implementations: concrete setup and usage
 
 ## Documentation Structure
 

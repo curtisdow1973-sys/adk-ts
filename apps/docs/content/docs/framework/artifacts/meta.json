@@ -2,8 +2,12 @@
   "icon": "FileText",
   "pages": [
     "index",
-    "service-implementations",
+    "runner-configuration",
     "context-integration",
-    "best-practices"
+    "scoping-and-versioning",
+    "service-implementations",
+    "best-practices",
+    "troubleshooting",
+    "recipes"
   ]
 }
