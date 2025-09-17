@@ -1,5 +1,13 @@
 # @iqai/adk-cli
 
+## 0.3.7
+
+### Patch Changes
+
+- aa41656: Fix TypeScript Path Resolution in Agent Loader
+- Updated dependencies [edadab9]
+  - @iqai/adk@0.3.6
+
 ## 0.3.6
 
 ### Patch Changes
