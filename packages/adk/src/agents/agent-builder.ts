@@ -2,8 +2,6 @@ import { Logger } from "@adk/logger/index.js";
 import type { LlmRequest } from "@adk/models";
 import type { Content, Part } from "@google/genai";
 import { type LanguageModel, generateId } from "ai";
-import chalk from "chalk";
-import dedent from "dedent";
 import type { ZodSchema, ZodType } from "zod";
 import type { BaseArtifactService } from "../artifacts/base-artifact-service.js";
 import type { BaseCodeExecutor } from "../code-executors/base-code-executor.js";
