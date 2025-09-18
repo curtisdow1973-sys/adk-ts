@@ -6,8 +6,6 @@ interface WebCommandOptions {
 	port?: number;
 	dir?: string;
 	host?: string;
-	webPort?: number;
-	local?: boolean;
 	webUrl?: string;
 }
 
@@ -21,9 +19,7 @@ export class WebCommand extends CommandRunner {
 		options?: WebCommandOptions,
 	): Promise<void> {
 		const apiPort = options?.port ?? 8042;
-		const webPort = options?.webPort ?? 3000;
 		const host = options?.host ?? "localhost";
-		const useLocal = options?.local ?? false;
 		const webUrl = options?.webUrl ?? "https://adk-web.iqai.com";
 
 		console.log(chalk.blue("🌐 Starting ADK Web Interface..."));
@@ -36,22 +32,8 @@ export class WebCommand extends CommandRunner {
 			quiet: true,
 		});
 
-		let webAppUrl: string;
-		if (useLocal) {
-			// Local development: assume web app is already running on webPort
-			if (apiPort === 8042) {
-				webAppUrl = `http://${host}:${webPort}`;
-			} else {
-				webAppUrl = `http://${host}:${webPort}?port=${apiPort}`;
-			}
-		} else {
-			// Production hosted UI
-			if (apiPort === 8042) {
-				webAppUrl = webUrl;
-			} else {
-				webAppUrl = `${webUrl}?port=${apiPort}`;
-			}
-		}
+		// Build the web app URL - add port param if not using default
+		const webAppUrl = apiPort === 8042 ? webUrl : `${webUrl}?port=${apiPort}`;
 
 		console.log(chalk.cyan(`🔗 Open this URL in your browser: ${webAppUrl}`));
 		console.log(chalk.gray(`   API Server: http://${host}:${apiPort}`));
@@ -79,14 +61,6 @@ export class WebCommand extends CommandRunner {
 	}
 
 	@Option({
-		flags: "--web-port <port>",
-		description: "Port for web app (when using --local)",
-	})
-	parseWebPort(val: string): number {
-		return Number(val);
-	}
-
-	@Option({
 		flags: "-h, --host <host>",
 		description: "Host for servers",
 	})
@@ -103,16 +77,8 @@ export class WebCommand extends CommandRunner {
 	}
 
 	@Option({
-		flags: "--local",
-		description: "Run local web app instead of opening production URL",
-	})
-	parseLocal(): boolean {
-		return true;
-	}
-
-	@Option({
 		flags: "--web-url <url>",
-		description: "URL of the web application (used when not --local)",
+		description: "URL of the web application",
 	})
 	parseWebUrl(val: string): string {
 		return val;
