@@ -65,13 +65,8 @@ export class AgentScanner {
 
 					// Fallback if empty (happens when --dir points directly to agents folder)
 					if (!relativePath) {
-						const folderName = dir.split(/[/\\]/).pop() || "agent";
-						const fileBase = item.replace(/\.[tj]s$/, ""); // agent.ts → agent
-						// Ensure uniqueness if multiple agents are in the root folder
-						relativePath =
-							folderName === fileBase
-								? folderName
-								: `${folderName}/${fileBase}`;
+						// When scanning the agent directory directly, use its name as the relative path.
+						relativePath = dir.split(/[\\/]/).pop() || "agent";
 						this.logger.warn(
 							`Agent at ${dir} had empty relativePath, normalized to "${relativePath}"`,
 						);
