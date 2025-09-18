@@ -60,11 +60,18 @@ export class AgentScanner {
 					let relativePath = relative(scanDir, dir);
 
 					// --- Normalize relativePath ---
-					// Remove leading/trailing slashes
-					relativePath = relativePath.replace(/^\/+|\/+$/g, "");
-					// Fallback if empty (happens when --dir points directly to "agents/")
+					// Remove leading/trailing slashes or backslashes (cross-platform)
+					relativePath = relativePath.replace(/^[\\/]+|[\\/]+$/g, "");
+
+					// Fallback if empty (happens when --dir points directly to agents folder)
 					if (!relativePath) {
-						relativePath = dir.split("/").pop() || "agent";
+						const folderName = dir.split(/[/\\]/).pop() || "agent";
+						const fileBase = item.replace(/\.[tj]s$/, ""); // agent.ts → agent
+						// Ensure uniqueness if multiple agents are in the root folder
+						relativePath =
+							folderName === fileBase
+								? folderName
+								: `${folderName}/${fileBase}`;
 						this.logger.warn(
 							`Agent at ${dir} had empty relativePath, normalized to "${relativePath}"`,
 						);
@@ -72,7 +79,7 @@ export class AgentScanner {
 
 					// Try to get the actual agent name if it's already loaded
 					const loadedAgent = loadedAgents.get(relativePath);
-					let agentName = relativePath.split("/").pop() || "unknown";
+					let agentName = relativePath.split(/[/\\]/).pop() || "unknown";
 
 					if (loadedAgent?.agent?.name) {
 						agentName = loadedAgent.agent.name;
