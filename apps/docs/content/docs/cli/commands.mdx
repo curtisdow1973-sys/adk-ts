@@ -125,8 +125,10 @@ Start a standalone API server for agent management (no chat UI).
 ```bash
 adk serve
 # Default server URL: http://localhost:8042/
-# Custom host and port
-adk serve --host 0.0.0.0 --port 9000
+# Custom port
+adk serve --port 9000
+# Custom host (make accessible from other devices/networks)
+adk serve --host 0.0.0.0
 # Scan a specific directory
 adk serve --dir ./production-agents
 # Enable OpenAPI docs (enabled by default)
