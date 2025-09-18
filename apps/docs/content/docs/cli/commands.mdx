@@ -50,7 +50,7 @@ adk run path/to/agent.ts
 # Server-only mode (no chat)
 # Default server URL: http://localhost:8042/
 adk run --server
-# Custom host for server mode
+# Make API server accessible from other devices/networks
 adk run --server --host 0.0.0.0
 # Enable hot reload during development
 adk run --hot
@@ -77,30 +77,32 @@ adk run --verbose
 
 ## `adk web`
 
-Launch a React-based web interface for visual agent testing and management.
+Launch a React-based web interface for visual agent testing and management. By default, opens the hosted production interface at [adk-web.iqai.com](https://adk-web.iqai.com).
 
 ```bash
 adk web
 # Use a specific API server port
 adk web --port 8080
+# Make API server accessible from other devices/networks
+adk web --host 0.0.0.0
 # Scan a custom directory
 adk web --dir ./my-agents
-# Run local development version
+# Use local development web application
+adk web --local
+# Use local development web application on specific port
 adk web --local --web-port 3000
-# Custom web application URL
-adk web --web-url https://custom-web-app.com
-# Custom host
-adk web --host 0.0.0.0
+# Use custom deployed web application
+adk web --web-url https://my-custom-adk-web.com
 ```
 
 **Options:**
 
 - `--port <port>` – Port for API server (default: 8042)
-- `--host <host>` – Host for servers (default: localhost)
+- `--host <host>` – Host for API server (default: localhost). Use 0.0.0.0 to make accessible from other devices
 - `--dir <directory>` – Directory to scan for agents (default: current directory)
-- `--local` – Run local web app instead of opening production URL
-- `--web-port <port>` – Port for web app when using `--local` (default: 3000)
-- `--web-url <url>` – URL of the web application (used when not `--local`)
+- `--local` – Use local development application instead of opening production URL
+- `--web-port <port>` – Port where local adk-web app is running (default: 3000)
+- `--web-url <url>` – URL of custom deployed adk-web application
 
 **Features:**
 
@@ -110,7 +112,11 @@ adk web --host 0.0.0.0
 - Responsive design for desktop and mobile
 - Automatically starts API server on specified port
 
-**Note:** When using `--local`, ensure you have the web app running locally on the specified port.
+**Web Interface Options:**
+
+- **Default (Production)**: Opens the hosted web interface at adk-web.iqai.com
+- **Local Development (`--local`)**: Use when you've downloaded and are running the adk-web code locally. Specify the port with `--web-port` if not running on default port 3000
+- **Custom Deployment (`--web-url`)**: Use when you've deployed your own instance of the adk-web application somewhere else
 
 ## `adk serve`
 
@@ -123,6 +129,10 @@ adk serve
 adk serve --host 0.0.0.0 --port 9000
 # Scan a specific directory
 adk serve --dir ./production-agents
+# Enable OpenAPI docs (enabled by default)
+adk serve --swagger
+# Disable OpenAPI docs
+adk serve --no-swagger
 # Quiet mode (minimal logging)
 adk serve --quiet
 ```
