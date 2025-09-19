@@ -98,7 +98,7 @@ adk web --web-url https://my-custom-adk-web.com
 **Options:**
 
 - `--port <port>` – Port for API server (default: 8042)
-- `--host <host>` – Host for API server (default: localhost). Use 0.0.0.0 to make accessible from other devices
+- `--host <host>` – Host for API server (default: localhost). Use 0.0.0.0 to make accessible from other devices on your network  
 - `--dir <directory>` – Directory to scan for agents (default: current directory)
 - `--local` – Use local development application instead of opening production URL
 - `--web-port <port>` – Port where local adk-web app is running (default: 3000)
@@ -159,8 +159,8 @@ adk serve --quiet
 - `GET /api/agents/{id}/sessions/{sessionId}/events` – Get session events
 - `GET /api/agents/{id}/sessions/{sessionId}/state` – Get session state
 - `PUT /api/agents/{id}/sessions/{sessionId}/state` – Update session state
-- `GET /api/agents/{id}/messages` – Get message history
-- `POST /api/agents/{id}/message` – Send message to agent
+- `GET /api/agents/{id}/messages` – Get message history for the active session
+- `POST /api/agents/{id}/message` – Send message to the agent's active session
 - `GET /health` – Health check
 - `GET /reload/stream` – Hot reload event stream
 - `GET /docs` – OpenAPI documentation (when enabled)
