@@ -1,5 +1,11 @@
 # @iqai/adk-cli
 
+## 0.3.8
+
+### Patch Changes
+
+- 0d9fd88: fix issues with path resolution
+
 ## 0.3.7
 
 ### Patch Changes
