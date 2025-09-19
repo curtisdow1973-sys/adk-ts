@@ -33,7 +33,11 @@ export class WebCommand extends CommandRunner {
 		});
 
 		// Build the web app URL - add port param if not using default
-		const webAppUrl = apiPort === 8042 ? webUrl : `${webUrl}?port=${apiPort}`;
+		const url = new URL(webUrl);
+		if (apiPort !== 8042) {
+			url.searchParams.set("port", apiPort.toString());
+		}
+		const webAppUrl = url.toString();
 
 		console.log(chalk.cyan(`🔗 Open this URL in your browser: ${webAppUrl}`));
 		console.log(chalk.gray(`   API Server: http://${host}:${apiPort}`));
