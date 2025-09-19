@@ -335,26 +335,28 @@ Tests are organized alongside source files:
 - **[tsup Configuration](./tsup.config.ts)** - Build configuration
 - **[Vitest Configuration](./vitest.config.ts)** - Test configuration
 - **[TypeScript Configuration](./tsconfig.json)** - Type checking setup
+- **[HTTP Layer Architecture](./src/http/ARCHITECTURE.md)** - Technical documentation for the HTTP server layer
 
 ## 🔧 Debugging
 
-### Common Development Issues
-
-1. **Module resolution errors** - Ensure proper imports and module registration
-2. **Build failures** - Check TypeScript configuration and dependencies
-3. **Test failures** - Verify mock setups and async handling
-4. **Runtime errors** - Use debug logging and proper error handling
-
-### Debug Configuration
+When working on the CLI codebase, use these debugging techniques:
 
 ```bash
-# Enable debug logging
+# Enable detailed logging for development
 export ADK_DEBUG_NEST=true
 export ADK_VERBOSE=true
 
-# Run with debug output
+# Test your changes with verbose output
 adk run --verbose
+adk serve --verbose
 ```
+
+### Common Contributor Issues
+
+1. **Module resolution errors** - Ensure proper imports and module registration in NestJS
+2. **Build failures** - Check TypeScript configuration and dependency versions
+3. **Test failures** - Verify mock setups and async handling in test files
+4. **Runtime errors during development** - Use debug logging and proper error handling
 
 ---
 

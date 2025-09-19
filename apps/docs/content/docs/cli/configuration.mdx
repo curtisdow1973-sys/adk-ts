@@ -87,6 +87,8 @@ When creating projects with `adk new`, the CLI auto-detects available package ma
 
 ## Troubleshooting
 
+### Common Issues
+
 **Agent not detected?**
 
 - Verify file naming: `agent.ts` or `agent.js`
@@ -99,3 +101,56 @@ When creating projects with `adk new`, the CLI auto-detects available package ma
 - Use `adk serve` and check `GET /api/agents` endpoint
 - Enable verbose logging with `--verbose` flag
 - Verify TypeScript compilation if using `.ts` files
+
+**Module resolution errors?**
+
+- Ensure proper imports in your agent files
+- Check that dependencies are installed
+- Verify TypeScript configuration if using `.ts` files
+
+**Build or runtime errors?**
+
+- Check agent export patterns match required formats
+- Verify environment variables are properly loaded
+- Use debug logging for detailed error information
+
+**Hot reload not working?**
+
+- Check file watching permissions
+- Review `.gitignore` patterns that might exclude files
+- Ensure watched paths are correctly configured
+
+**Session or state issues?**
+
+- Verify session management in your agent implementation
+- Check that state persistence is working correctly
+- Use the API endpoints to debug session data
+
+### Debug Configuration
+
+Enable detailed logging to diagnose issues:
+
+```bash
+# Enable debug logging
+export ADK_DEBUG_NEST=true
+export ADK_VERBOSE=true
+
+# Run with verbose output
+adk run --verbose
+adk serve --verbose
+```
+
+### Useful Debugging Commands
+
+```bash
+# Check discovered agents
+adk serve
+# Then visit http://localhost:8042/api/agents
+
+# Test agent loading
+adk run --verbose
+
+# Check API endpoints
+curl http://localhost:8042/health
+curl http://localhost:8042/api/agents
+```
