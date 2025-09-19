@@ -57,13 +57,25 @@ export class AgentScanner {
 				} else if (
 					AGENT_FILENAMES.includes(item as (typeof AGENT_FILENAMES)[number])
 				) {
-					const relativePath = relative(scanDir, dir);
+					let relativePath = relative(scanDir, dir);
+
+					// --- Normalize relativePath ---
+					// Remove leading/trailing slashes or backslashes (cross-platform)
+					relativePath = relativePath.replace(/^[\\/]+|[\\/]+$/g, "");
+
+					// Fallback if empty (happens when --dir points directly to agents folder)
+					if (!relativePath) {
+						// When scanning the agent directory directly, use its name as the relative path.
+						relativePath = dir.split(/[\\/]/).pop() || "agent";
+						this.logger.warn(
+							`Agent at ${dir} had empty relativePath, normalized to "${relativePath}"`,
+						);
+					}
 
 					// Try to get the actual agent name if it's already loaded
 					const loadedAgent = loadedAgents.get(relativePath);
-					let agentName = relativePath.split("/").pop() || "unknown";
+					let agentName = relativePath.split(/[/\\]/).pop() || "unknown";
 
-					// If agent is loaded, use its actual name
 					if (loadedAgent?.agent?.name) {
 						agentName = loadedAgent.agent.name;
 					} else {
@@ -73,10 +85,11 @@ export class AgentScanner {
 							agentName =
 								this.extractAgentNameFromFile(agentFilePath) || agentName;
 						} catch {
-							// Fallback to directory name if extraction fails
+							// ignore and fallback to directory name
 						}
 					}
 
+					// Store the agent
 					agents.set(relativePath, {
 						relativePath,
 						name: agentName,
