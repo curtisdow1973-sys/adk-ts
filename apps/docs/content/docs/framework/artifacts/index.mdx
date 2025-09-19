@@ -249,6 +249,10 @@ const versioningExample = async (callbackContext: CallbackContext) => {
 
 ### File Upload and Processing
 
+Save an uploaded file as an artifact, then persist derived results (e.g., analysis output). This is a minimal end-to-end flow; see the full tool-based version in Recipes.
+
+[Open recipes](/docs/framework/artifacts/recipes)
+
 ```typescript
 const fileProcessingCallback = async (callbackContext: CallbackContext) => {
   // Simulate receiving an uploaded file
@@ -279,6 +283,8 @@ const fileProcessingCallback = async (callbackContext: CallbackContext) => {
 ```
 
 ### Caching Expensive Operations
+
+Avoid recomputing expensive results by saving a JSON artifact as a cache entry and reading it on subsequent runs. Use this for deterministic or memoizable outputs.
 
 ```typescript
 const cachingCallback = async (callbackContext: CallbackContext) => {
@@ -319,8 +325,8 @@ const cachingCallback = async (callbackContext: CallbackContext) => {
 
 See interfaces and backends in:
 
-- Scoping & Versioning: behavior overview
-- Service Implementations: concrete setup and usage
+- [Scoping & Versioning](/docs/framework/artifacts/scoping-and-versioning): behavior overview
+- [Service Implementations](/docs/framework/artifacts/service-implementations): concrete setup and usage
 
 ## Documentation Structure
 
