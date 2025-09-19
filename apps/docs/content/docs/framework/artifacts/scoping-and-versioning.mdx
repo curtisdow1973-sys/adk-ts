@@ -1,0 +1,87 @@
+---
+title: Scoping & Versioning
+description: Session vs user namespaces and how artifact versions work
+---
+
+## Scoping
+
+Artifacts can be scoped to the current session or to the user across sessions. Use the `user:` filename prefix to switch to user scope.
+
+```typescript
+import type { CallbackContext } from '@iqai/adk';
+
+export async function saveScopedArtifacts(ctx: CallbackContext) {
+  const text = (s: string) => ({
+    inlineData: { data: Buffer.from(s).toString('base64'), mimeType: 'text/plain' }
+  });
+
+  // Session-scoped: available only in this session
+  await ctx.saveArtifact('summary.txt', text('session summary'));
+
+  // User-scoped: available across all sessions for this user
+  await ctx.saveArtifact('user:settings.json', {
+    inlineData: {
+      data: Buffer.from(JSON.stringify({ theme: 'dark' })).toString('base64'),
+      mimeType: 'application/json'
+    }
+  });
+}
+```
+
+Loading works the same way — the prefix determines where the service looks:
+
+```typescript
+const latest = await ctx.loadArtifact('summary.txt'); // session scope
+const userConfig = await ctx.loadArtifact('user:settings.json'); // user scope
+```
+
+## Versioning
+
+Each save creates a new version starting at 0. Loading without a `version` parameter returns the latest.
+
+```typescript
+// v0
+await ctx.saveArtifact('document.txt', {
+  inlineData: { data: Buffer.from('A').toString('base64'), mimeType: 'text/plain' }
+});
+
+// v1
+await ctx.saveArtifact('document.txt', {
+  inlineData: { data: Buffer.from('B').toString('base64'), mimeType: 'text/plain' }
+});
+
+// Load specific version
+const v0 = await ctx.loadArtifact('document.txt', 0);
+
+// Load latest (v1)
+const latestDoc = await ctx.loadArtifact('document.txt');
+```
+
+To list versions, call the underlying service (if you hold a reference). Contexts do not expose version listing.
+
+```typescript
+import { InMemoryArtifactService } from '@iqai/adk';
+
+const artifactService = new InMemoryArtifactService();
+// ... after saving some versions
+const versions = await artifactService.listVersions({
+  appName: 'my_app',
+  userId: 'u1',
+  sessionId: 's1',
+  filename: 'document.txt'
+});
+// e.g., [0, 1, 2]
+```
+
+Deletion removes all versions of a filename in the current scope.
+
+```typescript
+await artifactService.deleteArtifact({
+  appName: 'my_app',
+  userId: 'u1',
+  sessionId: 's1',
+  filename: 'document.txt'
+});
+```
+
+
