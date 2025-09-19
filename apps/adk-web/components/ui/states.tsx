@@ -70,7 +70,7 @@ export function ErrorState({
 
 				{/* Quick instructions to run ADK Web locally */}
 				<div className="mt-6 text-left max-w-xl mx-auto">
-					<p className="text-sm font-medium mb-2">How to run ADK Web locally</p>
+					<p className="text-sm font-medium mb-2">How to run ADK Web</p>
 					<div className="rounded-md border p-4 bg-muted/30">
 						<p className="text-sm mb-2">1. Install the CLI:</p>
 						<pre className="bg-background p-2 rounded text-xs overflow-auto">
@@ -86,8 +86,7 @@ export function ErrorState({
 								Use specific API server port: <code>adk web --port 8080</code>
 							</li>
 							<li>
-								Custom web app port:{" "}
-								<code>adk web --local --web-port 3000</code>
+								Scan custom directory: <code>adk web --dir ./my-agents</code>
 							</li>
 						</ul>
 					</div>

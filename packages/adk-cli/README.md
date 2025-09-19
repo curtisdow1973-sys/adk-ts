@@ -126,9 +126,6 @@ adk web --port 8080
 # Scan custom directory for agents
 adk web --dir ./my-agents
 
-# Run local development version
-adk web --local --web-port 3000
-
 # Custom web application URL
 adk web --web-url https://custom-web-app.com
 ```
@@ -182,7 +179,7 @@ npm install
 adk run
 
 # 4. In another terminal, start web interface
-adk web --local
+adk web
 ```
 
 ### Multi-Agent Development
