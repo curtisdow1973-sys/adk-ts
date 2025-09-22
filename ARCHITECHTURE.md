@@ -827,18 +827,12 @@ export class YourMemoryService extends BaseMemoryService {
 
 Create `packages/adk/src/artifacts/your-artifact-service.ts`:
 
-````typescript
+```typescript
 import { BaseArtifactService } from "./base-artifact-service";
 import type { Part } from "@google/genai";
 
 export class YourArtifactService extends BaseArtifactService {
-  async saveArtifact(params: {
-    appName: string;
-    userId: string;
-    sessionId: string;
-    filename: string;
-    artifact: Part;
-  }): Promise<number> {
+  async saveArtifact(params: { appName: string; userId: string; sessionId: string; filename: string; artifact: Part }): Promise<number> {
     // Store artifact in your backend (S3, filesystem, etc.)
     const version = await this.getNextVersion(params);
 
@@ -851,14 +845,8 @@ export class YourArtifactService extends BaseArtifactService {
     return version;
   }
 
-  async loadArtifact(params: {
-    appName: string;
-    userId: string;
-    sessionId: string;
-    filename: string;
-    version?: number;
-  }): Promise<Part | undefined> {
-    const version = params.version || await this.getLatestVersion(params);
+  async loadArtifact(params: { appName: string; userId: string; sessionId: string; filename: string; version?: number }): Promise<Part | undefined> {
+    const version = params.version || (await this.getLatestVersion(params));
 
     const artifactData = await this.retrieveArtifact({
       ...params,
@@ -868,15 +856,12 @@ export class YourArtifactService extends BaseArtifactService {
     return artifactData ? this.deserializeArtifact(artifactData) : undefined;
   }
 
-  async listArtifactKeys(params: {
-    appName: string;
-    userId: string;
-    sessionId: string;
-  }): Promise<string[]> {
+  async listArtifactKeys(params: { appName: string; userId: string; sessionId: string }): Promise<string[]> {
     // Return list of artifact filenames
     return await this.getArtifactKeys(params);
   }
 }
+```
 
 ## Testing Guidelines
 
@@ -891,7 +876,7 @@ pnpm test -- base-agent.test.ts
 
 # Run tests in watch mode
 pnpm test:watch
-````
+```
 
 ### Writing Tests
 
