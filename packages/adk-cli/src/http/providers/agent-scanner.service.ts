@@ -147,16 +147,7 @@ export class AgentScanner {
 			this.logger.log("Starting agent scan...");
 		}
 
-		try {
-			scanDirectory(scanDir);
-		} catch (error) {
-			this.logger.error(
-				`Error during agent scan: ${
-					error instanceof Error ? error.message : String(error)
-				}`,
-			);
-			throw error;
-		}
+		scanDirectory(scanDir);
 
 		this.logger.log(
 			format(`Agent scan complete. Found ${agents.size} agents.`),
