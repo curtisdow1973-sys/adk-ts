@@ -123,27 +123,9 @@ if (loaded) {
 }
 ```
 
-### Internal Implementation
-
-The `InMemoryArtifactService` uses a simple `Map` to store artifacts:
-
-```typescript
-// Internal storage structure
-private readonly artifacts: Map<string, Part[]> = new Map();
-
-// Path generation handles scoping
-private getArtifactPath(
-  appName: string,
-  userId: string,
-  sessionId: string,
-  filename: string
-): string {
-  if (filename.startsWith("user:")) {
-    return `${appName}/${userId}/user/${filename}`;
-  }
-  return `${appName}/${userId}/${sessionId}/${filename}`;
-}
-```
+<Callout type="info">
+In-memory storage is great for development and tests. Data is lost on restart.
+</Callout>
 
 <Callout type="warning">
 Data stored in `InMemoryArtifactService` is lost when the process restarts. Use only for development and testing.
@@ -178,28 +160,18 @@ const runner = new Runner({
 });
 ```
 
-### Google Cloud Setup
+### Google Cloud Setup (concise)
 
-Before using `GcsArtifactService`, ensure your Google Cloud environment is configured:
-
-1. **Create a Storage Bucket:**
 ```bash
+# Create bucket
 gsutil mb gs://my-artifacts-bucket
-```
 
-2. **Set up Authentication:**
-```bash
-# Using service account
+# Auth (choose one)
 export GOOGLE_APPLICATION_CREDENTIALS="/path/to/service-account.json"
-
-# Or using gcloud CLI
 gcloud auth application-default login
-```
 
-3. **Set Bucket Permissions:**
-```bash
-# Grant your service account storage access
-gsutil iam ch serviceAccount:my-service@project.iam.gserviceaccount.com:roles/storage.objectAdmin gs://my-artifacts-bucket
+# Grant bucket permissions
+gsutil iam ch serviceAccount:svc@project.iam.gserviceaccount.com:roles/storage.objectAdmin gs://my-artifacts-bucket
 ```
 
 ### Storage Structure
@@ -268,75 +240,23 @@ try {
 }
 ```
 
-### Performance Considerations
+### Performance tips
 
-**Optimization Strategies:**
+- Batch saves with `Promise.all([...])`
+- Prefer JSON/text compression when feasible
+- Consider chunking for very large payloads
 
-```typescript
-// Batch operations when possible
-const operations = [
-  artifactService.saveArtifact({ /* args1 */ }),
-  artifactService.saveArtifact({ /* args2 */ }),
-  artifactService.saveArtifact({ /* args3 */ })
-];
+See Troubleshooting for common GCS and service wiring issues.
 
-const versions = await Promise.all(operations);
-console.log('All artifacts saved:', versions);
-
-// Use streaming for large files
-const loadLargeArtifact = async (filename: string) => {
-  try {
-    const artifact = await artifactService.loadArtifact({
-      appName: 'my_app',
-      userId: 'user123',
-      sessionId: 'session456',
-      filename
-    });
-
-    if (artifact && artifact.inlineData.data.length > 10 * 1024 * 1024) {
-      console.log('Large artifact detected, consider streaming');
-    }
-
-    return artifact;
-  } catch (error) {
-    console.error('Failed to load large artifact:', error);
-    return null;
-  }
-};
-```
-
-### Error Handling
+### Using StorageOptions
 
 ```typescript
-const robustGcsOperations = async () => {
-  const artifactService = new GcsArtifactService('my-bucket');
+import { GcsArtifactService } from '@iqai/adk';
 
-  try {
-    const artifact = await artifactService.loadArtifact({
-      appName: 'my_app',
-      userId: 'user123',
-      sessionId: 'session456',
-      filename: 'config.json'
-    });
-
-    if (!artifact) {
-      console.log('Artifact not found, creating default');
-      // Create and save default artifact
-    }
-
-  } catch (error) {
-    if (error.code === 404) {
-      console.log('Bucket or file not found');
-    } else if (error.code === 403) {
-      console.error('Permission denied - check IAM settings');
-    } else {
-      console.error('Unexpected GCS error:', error);
-    }
-
-    // Implement fallback behavior
-    return getDefaultConfig();
-  }
-};
+const artifactService = new GcsArtifactService('my-artifacts-bucket', {
+  projectId: 'my-project',
+  keyFilename: '/path/to/key.json' // optional; or rely on ADC
+});
 ```
 
 <Callout type="info">

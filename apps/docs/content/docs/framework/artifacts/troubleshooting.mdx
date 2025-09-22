@@ -1,0 +1,47 @@
+---
+title: Troubleshooting
+description: Common issues and quick fixes for artifact usage
+---
+
+## "Artifact service is not initialized"
+
+Ensure your `Runner` is constructed with an `artifactService`.
+
+```typescript
+import { Runner, InMemoryArtifactService, InMemorySessionService } from '@iqai/adk';
+
+const runner = new Runner({
+  appName: 'my_app',
+  agent,
+  sessionService: new InMemorySessionService(),
+  artifactService: new InMemoryArtifactService(),
+});
+```
+
+## Auto-save not working
+
+- Set `withRunConfig({ saveInputBlobsAsArtifacts: true })` on your agent builder, or pass `RunConfig` per run
+- Confirm incoming message parts use `inlineData` with base64 `data` and correct `mimeType`
+
+## GCS permission/auth failures
+
+- Verify ADC or service account credentials are available
+- Check IAM roles: reader/writer on the bucket for your principal
+
+## MIME/base64 pitfalls
+
+- `inlineData.data` must be a base64 string, not raw bytes
+- Always set an accurate `mimeType` (e.g., `application/json`, `image/png`)
+
+## Loading returns null/undefined
+
+- If the artifact or version doesn’t exist, `loadArtifact` returns no value
+- Handle the nullish result before decoding the data
+
+```typescript
+const art = await ctx.loadArtifact('maybe_exists.txt');
+if (!art) return { error: 'not found' };
+const text = Buffer.from(art.inlineData.data, 'base64').toString('utf-8');
+```
+
+
