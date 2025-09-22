@@ -2,6 +2,7 @@ import { existsSync, readFileSync, readdirSync, statSync } from "node:fs";
 import { dirname, join, relative, resolve } from "node:path";
 import { format } from "node:util";
 import { Injectable, Logger } from "@nestjs/common";
+import { findProjectRoot } from "../../common/find-project-root";
 import type { Agent, LoadedAgent } from "../../common/types";
 
 export const DIRECTORIES_TO_SKIP = [
@@ -31,29 +32,8 @@ export class AgentScanner {
 	 * Find the project root by traversing up from the given directory
 	 * looking for package.json, tsconfig.json, or .env files
 	 */
-	private findProjectRoot(startDir: string): string {
-		let projectRoot = resolve(startDir);
-
-		while (projectRoot !== "/" && projectRoot !== dirname(projectRoot)) {
-			// Look for common project root indicators
-			if (
-				existsSync(join(projectRoot, "package.json")) ||
-				existsSync(join(projectRoot, "tsconfig.json")) ||
-				existsSync(join(projectRoot, ".env")) ||
-				existsSync(join(projectRoot, ".git"))
-			) {
-				break;
-			}
-			projectRoot = dirname(projectRoot);
-		}
-
-		// If we reached the filesystem root without finding markers,
-		// use the original directory
-		if (projectRoot === "/" || projectRoot === dirname(projectRoot)) {
-			projectRoot = resolve(startDir);
-		}
-
-		return projectRoot;
+	private findProjectRoot(startDir: string) {
+		return findProjectRoot(startDir);
 	}
 
 	scanAgents(

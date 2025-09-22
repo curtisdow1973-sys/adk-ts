@@ -5,6 +5,7 @@ import { pathToFileURL } from "node:url";
 import type { BaseAgent, BuiltAgent } from "@iqai/adk";
 import type { AgentBuilder } from "@iqai/adk";
 import { Injectable, Logger } from "@nestjs/common";
+import { findProjectRoot } from "../../common/find-project-root";
 
 const ADK_CACHE_DIR = ".adk-cache";
 
@@ -152,27 +153,8 @@ export class AgentLoader {
 		providedProjectRoot?: string,
 	): Promise<Record<string, unknown>> {
 		// Use provided project root or discover it
-		let projectRoot = providedProjectRoot;
-
-		if (!projectRoot) {
-			// Fallback to original project root discovery logic
-			const startDir = dirname(filePath);
-			projectRoot = startDir;
-			while (projectRoot !== "/" && projectRoot !== dirname(projectRoot)) {
-				if (
-					existsSync(join(projectRoot, "package.json")) ||
-					existsSync(join(projectRoot, ".env")) ||
-					existsSync(join(projectRoot, "tsconfig.json"))
-				) {
-					break;
-				}
-				projectRoot = dirname(projectRoot);
-			}
-			// If we reached root without finding markers, use the original start directory
-			if (projectRoot === "/") {
-				projectRoot = startDir;
-			}
-		}
+		const projectRoot =
+			providedProjectRoot ?? findProjectRoot(dirname(filePath));
 
 		if (!this.quiet) {
 			this.logger.log(
@@ -310,16 +292,7 @@ export class AgentLoader {
 
 	loadEnvironmentVariables(agentFilePath: string): void {
 		// Load environment variables from the project directory before importing
-		let projectRoot = dirname(agentFilePath);
-		while (projectRoot !== "/" && projectRoot !== dirname(projectRoot)) {
-			if (
-				existsSync(join(projectRoot, "package.json")) ||
-				existsSync(join(projectRoot, ".env"))
-			) {
-				break;
-			}
-			projectRoot = dirname(projectRoot);
-		}
+		const projectRoot = findProjectRoot(dirname(agentFilePath));
 
 		// Check for multiple env files in priority order
 		const envFiles = [
