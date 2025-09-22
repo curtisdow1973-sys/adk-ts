@@ -6,43 +6,43 @@ Welcome to the Agent Development Kit (ADK) TypeScript implementation! This guide
 graph TB
     %% User Layer
     User[👤 User Input] --> Runner[🚀 Runner]
-    
+
     %% Core Orchestration
     Runner --> SessionService[📊 Session Service]
     Runner --> Agent[🤖 LlmAgent]
-    
+
     %% Agent Processing
     Agent --> LlmFlow[🔄 LLM Flow]
     LlmFlow --> Processors[⚙️ Request Processors]
     Processors --> LlmRequest[📤 LLM Request]
-    
+
     %% LLM Providers
     LlmRequest --> LlmProvider[🤖 LLM Provider]
     LlmProvider --> LlmResponse[📥 LLM Response]
-    
-    %% Response Processing  
+
+    %% Response Processing
     LlmResponse --> Event[📝 Event]
     Event --> SessionService
-    
+
     %% Tools Integration
     Agent --> Tools[🛠️ Tools]
     Tools --> LlmRequest
-    
+
     %% Support Services
     Agent --> MemoryService[🧠 Memory Service]
     Agent --> ArtifactService[📎 Artifact Service]
-    
+
     %% Session Management
     SessionService --> Session[💾 Session]
     Session --> State[🗃️ State]
-    
+
     %% Styling
-    classDef userLayer fill:#e1f5fe
-    classDef coreLayer fill:#f3e5f5
-    classDef agentLayer fill:#e8f5e8
-    classDef modelLayer fill:#fff3e0
-    classDef serviceLayer fill:#fce4ec
-    
+    classDef userLayer fill:#e1f5fe,color:#01579b
+    classDef coreLayer fill:#f3e5f5,color:#4a148c
+    classDef agentLayer fill:#e8f5e8,color:#1b5e20
+    classDef modelLayer fill:#fff3e0,color:#e65100
+    classDef serviceLayer fill:#fce4ec,color:#880e4f
+
     class User,Runner userLayer
     class Agent,LlmFlow,Event agentLayer
     class LlmRequest,LlmResponse,Session,State coreLayer
@@ -473,7 +473,7 @@ This flexible design enables use cases from simple file generation to complex mu
    # Set up environment variables
    export GOOGLE_API_KEY=your-google-api-key
    export OPENAI_API_KEY=your-openai-api-key
-   
+
    # Run simple example
    cd apps/examples
    pnpm dev simple-agent
@@ -487,7 +487,7 @@ Required for testing and examples:
 # For Google Gemini models
 GOOGLE_API_KEY=your-google-api-key
 
-# For OpenAI models  
+# For OpenAI models
 OPENAI_API_KEY=your-openai-api-key
 
 # Optional: Specify default model
@@ -545,7 +545,7 @@ const agent = new LlmAgent({
   name: "my_agent",
   model: "gemini-2.5-flash",
   description: "A helpful assistant",
-  tools: [new MyCustomTool()]
+  tools: [new MyCustomTool()],
 });
 
 // 2. Set up session service
@@ -556,14 +556,14 @@ const session = await sessionService.createSession("app", "user-id");
 const runner = new Runner({
   appName: "my-app",
   agent,
-  sessionService
+  sessionService,
 });
 
 // 4. Execute agent
 for await (const event of runner.runAsync({
   userId: "user-id",
   sessionId: session.id,
-  newMessage: { parts: [{ text: "Hello!" }] }
+  newMessage: { parts: [{ text: "Hello!" }] },
 })) {
   // Process events
 }
@@ -611,26 +611,23 @@ export class YourProviderLlm extends BaseLlm {
     return ["your-model-.*"];
   }
 
-  protected async *generateContentAsyncImpl(
-    llmRequest: LlmRequest,
-    stream?: boolean,
-  ): AsyncGenerator<LlmResponse, void, unknown> {
+  protected async *generateContentAsyncImpl(llmRequest: LlmRequest, stream?: boolean): AsyncGenerator<LlmResponse, void, unknown> {
     // Transform LlmRequest to provider format
     const providerRequest = this.transformRequest(llmRequest);
-    
+
     // Call provider API
     const responses = await this.callProvider(providerRequest, stream);
-    
+
     // Transform responses back to LlmResponse
     for await (const response of responses) {
       yield this.transformResponse(response);
     }
   }
-  
+
   private transformRequest(llmRequest: LlmRequest): any {
     // Convert ADK format to provider format
   }
-  
+
   private transformResponse(providerResponse: any): LlmResponse {
     // Convert provider format to ADK format
   }
@@ -663,18 +660,15 @@ export class YourTool extends BaseTool {
         properties: {
           input: {
             type: "string",
-            description: "Input parameter description"
-          }
+            description: "Input parameter description",
+          },
         },
-        required: ["input"]
-      }
+        required: ["input"],
+      },
     };
   }
 
-  async runAsync(
-    args: Record<string, any>,
-    context: ToolContext,
-  ): Promise<any> {
+  async runAsync(args: Record<string, any>, context: ToolContext): Promise<any> {
     // Implement your tool logic
     const { input } = args;
     return { result: `Processed: ${input}` };
@@ -693,13 +687,10 @@ import type { LlmRequest } from "../../models/llm-request";
 import { Event } from "../../events/event";
 
 class YourRequestProcessor extends BaseLlmRequestProcessor {
-  async *runAsync(
-    invocationContext: InvocationContext,
-    llmRequest: LlmRequest,
-  ): AsyncGenerator<Event, void, unknown> {
+  async *runAsync(invocationContext: InvocationContext, llmRequest: LlmRequest): AsyncGenerator<Event, void, unknown> {
     // Modify llmRequest as needed
     llmRequest.appendInstructions(["Your custom instruction"]);
-    
+
     // Optionally yield events
     // (most processors don't yield events)
   }
@@ -717,12 +708,7 @@ import { BaseSessionService } from "./base-session-service";
 import type { Session } from "./session";
 
 export class YourSessionService extends BaseSessionService {
-  async createSession(
-    appName: string,
-    userId: string,
-    state?: Record<string, any>,
-    sessionId?: string,
-  ): Promise<Session> {
+  async createSession(appName: string, userId: string, state?: Record<string, any>, sessionId?: string): Promise<Session> {
     // Implement session creation with your storage backend
     const session: Session = {
       id: sessionId || generateUniqueId(),
@@ -732,27 +718,22 @@ export class YourSessionService extends BaseSessionService {
       events: [],
       lastUpdateTime: Date.now() / 1000,
     };
-    
+
     await this.saveToStorage(session);
     return session;
   }
 
-  async getSession(
-    appName: string,
-    userId: string,
-    sessionId: string,
-    config?: GetSessionConfig,
-  ): Promise<Session | undefined> {
+  async getSession(appName: string, userId: string, sessionId: string, config?: GetSessionConfig): Promise<Session | undefined> {
     // Implement session retrieval from your storage
     const session = await this.loadFromStorage(appName, userId, sessionId);
-    
+
     if (!session) return undefined;
-    
+
     // Apply config filters if provided
     if (config?.numRecentEvents) {
       session.events = session.events.slice(-config.numRecentEvents);
     }
-    
+
     return session;
   }
 
@@ -760,7 +741,7 @@ export class YourSessionService extends BaseSessionService {
   async listSessions(appName: string, userId: string): Promise<ListSessionsResponse> {
     // Implementation
   }
-  
+
   async deleteSession(appName: string, userId: string, sessionId: string): Promise<void> {
     // Implementation
   }
@@ -778,22 +759,19 @@ import type { LlmRequest } from "../../models/llm-request";
 import { Event } from "../../events/event";
 
 class CustomRequestProcessor extends BaseLlmRequestProcessor {
-  async *runAsync(
-    invocationContext: InvocationContext,
-    llmRequest: LlmRequest,
-  ): AsyncGenerator<Event, void, unknown> {
+  async *runAsync(invocationContext: InvocationContext, llmRequest: LlmRequest): AsyncGenerator<Event, void, unknown> {
     // Add custom preprocessing logic
     const customInstruction = this.generateCustomInstruction(invocationContext);
     llmRequest.appendInstructions([customInstruction]);
-    
+
     // Modify tools based on context
     const tools = await this.getContextualTools(invocationContext);
     llmRequest.appendTools(tools);
-    
+
     // Most processors don't yield events, but you can if needed
     // yield new Event({ ... });
   }
-  
+
   private generateCustomInstruction(ctx: InvocationContext): string {
     // Custom logic based on session state, user, etc.
     return `Custom instruction for ${ctx.agent.name}`;
@@ -815,33 +793,29 @@ export class YourMemoryService extends BaseMemoryService {
   async addSessionToMemory(session: Session): Promise<void> {
     // Extract meaningful information from session
     const memoryEntries = this.extractMemoryEntries(session);
-    
+
     // Store in your memory backend (vector DB, etc.)
     for (const entry of memoryEntries) {
       await this.storeMemoryEntry(entry);
     }
   }
 
-  async searchMemory(params: {
-    query: string;
-    appName: string;
-    userId: string;
-  }): Promise<SearchMemoryResponse> {
+  async searchMemory(params: { query: string; appName: string; userId: string }): Promise<SearchMemoryResponse> {
     // Perform semantic search in your memory backend
     const results = await this.performSemanticSearch(params.query, {
       appName: params.appName,
       userId: params.userId,
     });
-    
+
     return {
-      memories: results.map(result => ({
+      memories: results.map((result) => ({
         content: result.content,
         relevanceScore: result.score,
         metadata: result.metadata,
       })),
     };
   }
-  
+
   private extractMemoryEntries(session: Session): MemoryEntry[] {
     // Extract important information from session events
     // Filter for meaningful conversations, facts, preferences, etc.
@@ -853,7 +827,7 @@ export class YourMemoryService extends BaseMemoryService {
 
 Create `packages/adk/src/artifacts/your-artifact-service.ts`:
 
-```typescript
+````typescript
 import { BaseArtifactService } from "./base-artifact-service";
 import type { Part } from "@google/genai";
 
@@ -867,13 +841,13 @@ export class YourArtifactService extends BaseArtifactService {
   }): Promise<number> {
     // Store artifact in your backend (S3, filesystem, etc.)
     const version = await this.getNextVersion(params);
-    
+
     await this.storeArtifact({
       ...params,
       version,
       data: this.serializeArtifact(params.artifact),
     });
-    
+
     return version;
   }
 
@@ -885,12 +859,12 @@ export class YourArtifactService extends BaseArtifactService {
     version?: number;
   }): Promise<Part | undefined> {
     const version = params.version || await this.getLatestVersion(params);
-    
+
     const artifactData = await this.retrieveArtifact({
       ...params,
       version,
     });
-    
+
     return artifactData ? this.deserializeArtifact(artifactData) : undefined;
   }
 
@@ -917,7 +891,7 @@ pnpm test -- base-agent.test.ts
 
 # Run tests in watch mode
 pnpm test:watch
-```
+````
 
 ### Writing Tests
 
@@ -973,17 +947,17 @@ export interface MyInterface {
 export class MyClass implements MyInterface {
   // Properties first
   property: string;
-  
+
   // Constructor
   constructor(config: MyInterface) {
     this.property = config.property;
   }
-  
+
   // Public methods
   public async runAsync(): Promise<void> {
     // Implementation
   }
-  
+
   // Private methods last
   private helperMethod(): void {
     // Implementation
