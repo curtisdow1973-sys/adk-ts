@@ -149,9 +149,7 @@ export class AgentScanner {
 
 		scanDirectory(scanDir);
 
-		this.logger.log(
-			format(`Agent scan complete. Found ${agents.size} agents.`),
-		);
+		this.logger.log(`Agent scan complete. Found ${agents.size} agents.`);
 
 		if (!this.quiet && agents.size > 0) {
 			this.logger.log("Found agents:");

@@ -10,10 +10,9 @@ export function findProjectRoot(startDir: string) {
 
 	while (projectRoot !== "/" && projectRoot !== dirname(projectRoot)) {
 		if (
-			existsSync(join(projectRoot, "package.json")) ||
-			existsSync(join(projectRoot, "tsconfig.json")) ||
-			existsSync(join(projectRoot, ".env")) ||
-			existsSync(join(projectRoot, ".git"))
+			["package.json", "tsconfig.json", ".env", ".git"].some((marker) =>
+				existsSync(join(projectRoot, marker)),
+			)
 		) {
 			break;
 		}
