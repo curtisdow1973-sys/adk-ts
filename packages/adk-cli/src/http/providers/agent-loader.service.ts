@@ -43,31 +43,20 @@ export class AgentLoader {
 			AgentLoader.cleanupAllCacheFiles(this.logger, this.quiet);
 		};
 
-		// Handle various exit scenarios
+		// Only handle cleanup on process exit
 		process.on("exit", cleanup);
-		process.on("SIGINT", () => {
-			cleanup();
-			process.exit(0);
-		});
-		process.on("SIGTERM", () => {
-			cleanup();
-			process.exit(0);
-		});
-		process.on("SIGHUP", () => {
-			cleanup();
-			process.exit(0);
-		});
 
-		// Handle uncaught exceptions
+		process.on("SIGINT", () => process.exit(0));
+		process.on("SIGTERM", () => process.exit(0));
+		process.on("SIGHUP", () => process.exit(0));
+
 		process.on("uncaughtException", (error) => {
 			this.logger.error("Uncaught exception:", error);
-			cleanup();
 			process.exit(1);
 		});
 
 		process.on("unhandledRejection", (reason, promise) => {
 			this.logger.error("Unhandled rejection at:", promise, "reason:", reason);
-			cleanup();
 			process.exit(1);
 		});
 	}
