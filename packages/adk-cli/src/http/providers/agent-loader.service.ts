@@ -369,11 +369,6 @@ export class AgentLoader {
 				agentExport = (defaultExport as any)?.agent ?? defaultExport;
 			}
 
-			// NOTE: We no longer cleanup immediately - files will be cleaned on process exit
-			// try {
-			//   unlinkSync(outFile); // cleanup after successful load
-			// } catch {}
-
 			if (agentExport) {
 				const isPrimitive = (
 					v: unknown,
