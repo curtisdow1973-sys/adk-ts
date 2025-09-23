@@ -40,7 +40,7 @@ export class AgentLoader {
 			if (!this.quiet) {
 				this.logger.log("Cleaning up cache files...");
 			}
-			this.cleanupAllCacheFiles();
+			AgentLoader.cleanupAllCacheFiles(this.logger, this.quiet);
 		};
 
 		// Handle various exit scenarios
@@ -75,7 +75,7 @@ export class AgentLoader {
 	/**
 	 * Clean up all cache files from all project roots
 	 */
-	private cleanupAllCacheFiles(): void {
+	private static cleanupAllCacheFiles(logger?: Logger, quiet = false): void {
 		try {
 			// Clean individual tracked files first
 			for (const filePath of AgentLoader.activeCacheFiles) {
@@ -83,9 +83,7 @@ export class AgentLoader {
 					if (existsSync(filePath)) {
 						unlinkSync(filePath);
 					}
-				} catch (error) {
-					// Ignore individual file cleanup errors
-				}
+				} catch {}
 			}
 			AgentLoader.activeCacheFiles.clear();
 
@@ -95,23 +93,20 @@ export class AgentLoader {
 				try {
 					if (existsSync(cacheDir)) {
 						rmSync(cacheDir, { recursive: true, force: true });
-						if (!this.quiet) {
-							this.logger.log(`Cleaned cache directory: ${cacheDir}`);
+						if (!quiet) {
+							logger?.log(`Cleaned cache directory: ${cacheDir}`);
 						}
 					}
 				} catch (error) {
-					if (!this.quiet) {
-						this.logger.warn(
-							`Failed to clean cache directory ${cacheDir}:`,
-							error,
-						);
+					if (!quiet) {
+						logger?.warn(`Failed to clean cache directory ${cacheDir}:`, error);
 					}
 				}
 			}
 			AgentLoader.projectRoots.clear();
 		} catch (error) {
-			if (!this.quiet) {
-				this.logger.warn("Error during cache cleanup:", error);
+			if (!quiet) {
+				logger?.warn("Error during cache cleanup:", error);
 			}
 		}
 	}
