@@ -28,27 +28,13 @@ export class AgentLoader {
 	}
 
 	/**
-	 * Register cleanup handlers for process exit
+	 * Register error handlers (no automatic cache cleanup)
 	 */
 	private registerCleanupHandlers(): void {
 		if (AgentLoader.cacheCleanupRegistered) {
 			return;
 		}
 		AgentLoader.cacheCleanupRegistered = true;
-
-		const cleanup = () => {
-			if (!this.quiet) {
-				this.logger.log("Cleaning up cache files...");
-			}
-			AgentLoader.cleanupAllCacheFiles(this.logger, this.quiet);
-		};
-
-		// Only handle cleanup on process exit
-		process.on("exit", cleanup);
-
-		process.on("SIGINT", () => process.exit(0));
-		process.on("SIGTERM", () => process.exit(0));
-		process.on("SIGHUP", () => process.exit(0));
 
 		process.on("uncaughtException", (error) => {
 			this.logger.error("Uncaught exception:", error);
@@ -63,8 +49,9 @@ export class AgentLoader {
 
 	/**
 	 * Clean up all cache files from all project roots
+	 * (manual or test/debug use only)
 	 */
-	private static cleanupAllCacheFiles(logger?: Logger, quiet = false): void {
+	static cleanupAllCacheFiles(logger?: Logger, quiet = false): void {
 		try {
 			// Clean individual tracked files first
 			for (const filePath of AgentLoader.activeCacheFiles) {
@@ -145,20 +132,18 @@ export class AgentLoader {
 		const resolvedBaseUrl = baseUrl
 			? resolve(projectRoot, baseUrl)
 			: projectRoot;
-		const logger = this.logger; // Capture logger for use in plugin
-		const quiet = this.quiet; // Capture quiet flag for use in plugin
+		const logger = this.logger;
+		const quiet = this.quiet;
 
 		return {
 			name: "typescript-path-mapping",
 			setup(build: any) {
 				build.onResolve({ filter: /.*/ }, (args: any) => {
-					// Log all resolution attempts for debugging
 					if (!quiet) {
 						logger.debug(
 							`Resolving import: "${args.path}" from "${args.importer || "unknown"}"`,
 						);
 					}
-					// Handle path aliases first
 					if (paths && !args.path.startsWith(".") && !isAbsolute(args.path)) {
 						for (const [alias, mappings] of Object.entries(paths)) {
 							const aliasPattern = alias.replace("*", "(.*)");
@@ -166,19 +151,12 @@ export class AgentLoader {
 							const match = args.path.match(aliasRegex);
 
 							if (match) {
-								// Try each mapping until we find one that exists
 								for (const mapping of mappings) {
 									let resolvedPath = mapping;
-
-									// Replace * with captured group if present
 									if (match[1] && mapping.includes("*")) {
 										resolvedPath = mapping.replace("*", match[1]);
 									}
-
-									// Resolve relative to baseUrl
 									const fullPath = resolve(resolvedBaseUrl, resolvedPath);
-
-									// Try different extensions
 									const extensions = [".ts", ".js", ".tsx", ".jsx", ""];
 									for (const ext of extensions) {
 										const pathWithExt = ext ? fullPath + ext : fullPath;
@@ -194,9 +172,7 @@ export class AgentLoader {
 						}
 					}
 
-					// Handle simple module names that might be missing relative paths
 					if (args.path === "env" && baseUrl) {
-						// Special case: if someone imports "env" and we have a baseUrl, try to find env.ts in baseUrl
 						const envPath = resolve(resolvedBaseUrl, "env");
 						const extensions = [".ts", ".js"];
 						for (const ext of extensions) {
@@ -210,12 +186,9 @@ export class AgentLoader {
 						}
 					}
 
-					// Handle relative imports with baseUrl resolution
 					if (baseUrl && args.path.startsWith("../")) {
-						// For relative imports, try resolving relative to the baseUrl as well
 						const relativePath = args.path.replace("../", "");
 						const fullPath = resolve(resolvedBaseUrl, relativePath);
-
 						const extensions = [".ts", ".js", ".tsx", ".jsx", ""];
 						for (const ext of extensions) {
 							const pathWithExt = ext ? fullPath + ext : fullPath;
@@ -227,8 +200,6 @@ export class AgentLoader {
 							}
 						}
 					}
-
-					// No path mapping found, let esbuild handle it normally
 					return;
 				});
 			},
@@ -237,13 +208,11 @@ export class AgentLoader {
 
 	/**
 	 * Import a TypeScript file by compiling it on-demand
-	 * Now accepts an optional projectRoot parameter to avoid redundant project root discovery
 	 */
 	async importTypeScriptFile(
 		filePath: string,
 		providedProjectRoot?: string,
 	): Promise<Record<string, unknown>> {
-		// Use provided project root or discover it
 		const projectRoot =
 			providedProjectRoot ?? findProjectRoot(dirname(filePath));
 
@@ -253,27 +222,18 @@ export class AgentLoader {
 			);
 		}
 
-		// Transpile with esbuild and import (bundles local files, preserves tools)
-		// ---------------- esbuild dynamic compilation ----------------
 		try {
 			const { build } = await import("esbuild");
 			const cacheDir = join(projectRoot, ADK_CACHE_DIR);
 			if (!existsSync(cacheDir)) {
 				mkdirSync(cacheDir, { recursive: true });
 			}
-			// Use CJS so we can require() cleanly inside a CJS Nest runtime; keep unique filename for cache busting
 			const outFile = join(cacheDir, `agent-${Date.now()}.cjs`);
-
-			// Track this file for cleanup
 			this.trackCacheFile(outFile, projectRoot);
 
-			// Always externalize workspace-scoped packages so we don't inline their transitive deps.
-			// This avoids PNPM "strictness" issues where a transitive dep (e.g. @google/genai) of @iqai/adk
-			// would become a direct require() from the bundled cache file and thus not resolvable.
 			const ALWAYS_EXTERNAL_SCOPES = ["@iqai/"];
-			const alwaysExternal = ["@iqai/adk"]; // explicit critical packages
+			const alwaysExternal = ["@iqai/adk"];
 
-			// Generic plugin to externalize bare imports (node_modules) while still bundling local relative files.
 			const plugin = {
 				name: "externalize-bare-imports",
 				setup(build: {
@@ -285,7 +245,6 @@ export class AgentLoader {
 					) => void;
 				}) {
 					build.onResolve({ filter: /.*/ }, (args: { path: string }) => {
-						// Relative / absolute => bundle
 						if (
 							args.path.startsWith(".") ||
 							args.path.startsWith("/") ||
@@ -293,14 +252,12 @@ export class AgentLoader {
 						) {
 							return;
 						}
-						// Force external for workspace scoped packages & explicit list
 						if (
 							ALWAYS_EXTERNAL_SCOPES.some((s) => args.path.startsWith(s)) ||
 							alwaysExternal.includes(args.path)
 						) {
 							return { path: args.path, external: true };
 						}
-						// Default: externalize other bare imports too
 						return { path: args.path, external: true };
 					});
 				},
@@ -308,7 +265,7 @@ export class AgentLoader {
 
 			const tsconfigPath = join(projectRoot, "tsconfig.json");
 			const pathMappingPlugin = this.createPathMappingPlugin(projectRoot);
-			const plugins = [pathMappingPlugin, plugin]; // Always include path mapping plugin first
+			const plugins = [pathMappingPlugin, plugin];
 
 			await build({
 				entryPoints: [filePath],
@@ -320,14 +277,11 @@ export class AgentLoader {
 				sourcemap: false,
 				logLevel: "silent",
 				plugins,
-				absWorkingDir: projectRoot, // This is the key fix - use the actual project root
+				absWorkingDir: projectRoot,
 				external: [...alwaysExternal],
-				// Use tsconfig if present for path aliases
 				...(existsSync(tsconfigPath) ? { tsconfig: tsconfigPath } : {}),
 			});
 
-			// Use Node's CJS require to avoid ESM loader caching oddities with file:// & query params.
-			// Avoid using import.meta (keeps compatibility with CommonJS transpilation target)
 			const dynamicRequire = createRequire(outFile);
 			let mod: Record<string, unknown>;
 			try {
@@ -358,21 +312,17 @@ export class AgentLoader {
 					v: unknown,
 				): v is null | undefined | string | number | boolean =>
 					v == null || ["string", "number", "boolean"].includes(typeof v);
-				if (isPrimitive(agentExport)) {
-					// Primitive named 'agent' export (e.g., a string) isn't a real agent; fall through to full-module scan
-					this.logger.log(
-						`Ignoring primitive 'agent' export in ${filePath}; scanning module for factory...`,
-					);
-				} else {
+				if (!isPrimitive(agentExport)) {
 					this.logger.log(`TS agent imported via esbuild: ${filePath} ✅`);
 					return { agent: agentExport as unknown };
 				}
+				this.logger.log(
+					`Ignoring primitive 'agent' export in ${filePath}; scanning module for factory...`,
+				);
 			}
-			// Fallback: return full module so downstream resolver can inspect named exports (e.g., getFooAgent)
 			return mod;
 		} catch (e) {
 			const msg = e instanceof Error ? e.message : String(e);
-			// Provide clearer guidance when a dependency is missing due to externalization.
 			if (/Cannot find module/.test(msg)) {
 				this.logger.error(
 					`Module resolution failed while loading agent file '${filePath}'.\n> ${msg}\nThis usually means the dependency is declared in a parent workspace package (e.g. @iqai/adk) and got externalized,\nbut is not installed in the agent project's own node_modules (common with PNPM isolated hoisting).\nFix: add it to the agent project's package.json or run: pnpm add <missing-pkg> -F <agent-workspace>.`,
