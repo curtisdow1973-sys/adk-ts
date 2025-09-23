@@ -1,4 +1,10 @@
-import { existsSync, mkdirSync, readFileSync, unlinkSync } from "node:fs";
+import {
+	existsSync,
+	mkdirSync,
+	readFileSync,
+	rmSync,
+	unlinkSync,
+} from "node:fs";
 import { createRequire } from "node:module";
 import { dirname, isAbsolute, join, resolve } from "node:path";
 import { pathToFileURL } from "node:url";
@@ -12,9 +18,110 @@ const ADK_CACHE_DIR = ".adk-cache";
 @Injectable()
 export class AgentLoader {
 	private logger: Logger;
+	private static cacheCleanupRegistered = false;
+	private static activeCacheFiles = new Set<string>();
+	private static projectRoots = new Set<string>();
 
 	constructor(private quiet = false) {
 		this.logger = new Logger("agent-loader");
+		this.registerCleanupHandlers();
+	}
+
+	/**
+	 * Register cleanup handlers for process exit
+	 */
+	private registerCleanupHandlers(): void {
+		if (AgentLoader.cacheCleanupRegistered) {
+			return;
+		}
+		AgentLoader.cacheCleanupRegistered = true;
+
+		const cleanup = () => {
+			if (!this.quiet) {
+				this.logger.log("Cleaning up cache files...");
+			}
+			this.cleanupAllCacheFiles();
+		};
+
+		// Handle various exit scenarios
+		process.on("exit", cleanup);
+		process.on("SIGINT", () => {
+			cleanup();
+			process.exit(0);
+		});
+		process.on("SIGTERM", () => {
+			cleanup();
+			process.exit(0);
+		});
+		process.on("SIGHUP", () => {
+			cleanup();
+			process.exit(0);
+		});
+
+		// Handle uncaught exceptions
+		process.on("uncaughtException", (error) => {
+			this.logger.error("Uncaught exception:", error);
+			cleanup();
+			process.exit(1);
+		});
+
+		process.on("unhandledRejection", (reason, promise) => {
+			this.logger.error("Unhandled rejection at:", promise, "reason:", reason);
+			cleanup();
+			process.exit(1);
+		});
+	}
+
+	/**
+	 * Clean up all cache files from all project roots
+	 */
+	private cleanupAllCacheFiles(): void {
+		try {
+			// Clean individual tracked files first
+			for (const filePath of AgentLoader.activeCacheFiles) {
+				try {
+					if (existsSync(filePath)) {
+						unlinkSync(filePath);
+					}
+				} catch (error) {
+					// Ignore individual file cleanup errors
+				}
+			}
+			AgentLoader.activeCacheFiles.clear();
+
+			// Clean entire cache directories
+			for (const projectRoot of AgentLoader.projectRoots) {
+				const cacheDir = join(projectRoot, ADK_CACHE_DIR);
+				try {
+					if (existsSync(cacheDir)) {
+						rmSync(cacheDir, { recursive: true, force: true });
+						if (!this.quiet) {
+							this.logger.log(`Cleaned cache directory: ${cacheDir}`);
+						}
+					}
+				} catch (error) {
+					if (!this.quiet) {
+						this.logger.warn(
+							`Failed to clean cache directory ${cacheDir}:`,
+							error,
+						);
+					}
+				}
+			}
+			AgentLoader.projectRoots.clear();
+		} catch (error) {
+			if (!this.quiet) {
+				this.logger.warn("Error during cache cleanup:", error);
+			}
+		}
+	}
+
+	/**
+	 * Track a cache file for cleanup
+	 */
+	private trackCacheFile(filePath: string, projectRoot: string): void {
+		AgentLoader.activeCacheFiles.add(filePath);
+		AgentLoader.projectRoots.add(projectRoot);
 	}
 
 	/**
@@ -173,6 +280,9 @@ export class AgentLoader {
 			// Use CJS so we can require() cleanly inside a CJS Nest runtime; keep unique filename for cache busting
 			const outFile = join(cacheDir, `agent-${Date.now()}.cjs`);
 
+			// Track this file for cleanup
+			this.trackCacheFile(outFile, projectRoot);
+
 			// Always externalize workspace-scoped packages so we don't inline their transitive deps.
 			// This avoids PNPM "strictness" issues where a transitive dep (e.g. @google/genai) of @iqai/adk
 			// would become a direct require() from the bundled cache file and thus not resolvable.
@@ -258,9 +368,12 @@ export class AgentLoader {
 				const defaultExport = (mod as any).default as Record<string, unknown>;
 				agentExport = (defaultExport as any)?.agent ?? defaultExport;
 			}
-			try {
-				unlinkSync(outFile); // cleanup after successful load
-			} catch {}
+
+			// NOTE: We no longer cleanup immediately - files will be cleaned on process exit
+			// try {
+			//   unlinkSync(outFile); // cleanup after successful load
+			// } catch {}
+
 			if (agentExport) {
 				const isPrimitive = (
 					v: unknown,
