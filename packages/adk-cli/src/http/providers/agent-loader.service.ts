@@ -5,6 +5,7 @@ import { pathToFileURL } from "node:url";
 import type { BaseAgent, BuiltAgent } from "@iqai/adk";
 import type { AgentBuilder } from "@iqai/adk";
 import { Injectable, Logger } from "@nestjs/common";
+import { findProjectRoot } from "../../common/find-project-root";
 
 const ADK_CACHE_DIR = ".adk-cache";
 
@@ -145,25 +146,20 @@ export class AgentLoader {
 
 	/**
 	 * Import a TypeScript file by compiling it on-demand
+	 * Now accepts an optional projectRoot parameter to avoid redundant project root discovery
 	 */
 	async importTypeScriptFile(
 		filePath: string,
+		providedProjectRoot?: string,
 	): Promise<Record<string, unknown>> {
-		// Determine project root (for tsconfig and resolving deps)
-		const startDir = dirname(filePath);
-		let projectRoot = startDir;
-		while (projectRoot !== "/" && projectRoot !== dirname(projectRoot)) {
-			if (
-				existsSync(join(projectRoot, "package.json")) ||
-				existsSync(join(projectRoot, ".env"))
-			) {
-				break;
-			}
-			projectRoot = dirname(projectRoot);
-		}
-		// If we reached root without finding markers, use the original start directory
-		if (projectRoot === "/") {
-			projectRoot = startDir;
+		// Use provided project root or discover it
+		const projectRoot =
+			providedProjectRoot ?? findProjectRoot(dirname(filePath));
+
+		if (!this.quiet) {
+			this.logger.log(
+				`Using project root: ${projectRoot} for agent: ${filePath}`,
+			);
 		}
 
 		// Transpile with esbuild and import (bundles local files, preserves tools)
@@ -230,7 +226,7 @@ export class AgentLoader {
 				sourcemap: false,
 				logLevel: "silent",
 				plugins,
-				absWorkingDir: projectRoot,
+				absWorkingDir: projectRoot, // This is the key fix - use the actual project root
 				external: [...alwaysExternal],
 				// Use tsconfig if present for path aliases
 				...(existsSync(tsconfigPath) ? { tsconfig: tsconfigPath } : {}),
@@ -296,16 +292,7 @@ export class AgentLoader {
 
 	loadEnvironmentVariables(agentFilePath: string): void {
 		// Load environment variables from the project directory before importing
-		let projectRoot = dirname(agentFilePath);
-		while (projectRoot !== "/" && projectRoot !== dirname(projectRoot)) {
-			if (
-				existsSync(join(projectRoot, "package.json")) ||
-				existsSync(join(projectRoot, ".env"))
-			) {
-				break;
-			}
-			projectRoot = dirname(projectRoot);
-		}
+		const projectRoot = findProjectRoot(dirname(agentFilePath));
 
 		// Check for multiple env files in priority order
 		const envFiles = [

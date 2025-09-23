@@ -1,7 +1,8 @@
 import { existsSync, readFileSync, readdirSync, statSync } from "node:fs";
-import { join, relative } from "node:path";
+import { dirname, join, relative, resolve } from "node:path";
 import { format } from "node:util";
 import { Injectable, Logger } from "@nestjs/common";
+import { findProjectRoot } from "../../common/find-project-root";
 import type { Agent, LoadedAgent } from "../../common/types";
 
 export const DIRECTORIES_TO_SKIP = [
@@ -27,6 +28,14 @@ export class AgentScanner {
 		this.logger = new Logger("agent-scanner");
 	}
 
+	/**
+	 * Find the project root by traversing up from the given directory
+	 * looking for package.json, tsconfig.json, or .env files
+	 */
+	private findProjectRoot(startDir: string) {
+		return findProjectRoot(startDir);
+	}
+
 	scanAgents(
 		agentsDir: string,
 		loadedAgents: Map<string, LoadedAgent>,
@@ -35,7 +44,15 @@ export class AgentScanner {
 
 		// Use current directory if agentsDir doesn't exist or is empty
 		const scanDir =
-			!agentsDir || !existsSync(agentsDir) ? process.cwd() : agentsDir;
+			!agentsDir || !existsSync(agentsDir) ? process.cwd() : resolve(agentsDir);
+
+		// Find the actual project root (where tsconfig.json, package.json live)
+		const projectRoot = this.findProjectRoot(scanDir);
+
+		if (!this.quiet) {
+			this.logger.log(`Scan directory: ${scanDir}`);
+			this.logger.log(`Project root: ${projectRoot}`);
+		}
 
 		const shouldSkipDirectory = (dirName: string): boolean => {
 			return DIRECTORIES_TO_SKIP.includes(
@@ -44,66 +61,102 @@ export class AgentScanner {
 		};
 
 		const scanDirectory = (dir: string): void => {
-			const items = readdirSync(dir);
-			for (const item of items) {
-				const fullPath = join(dir, item);
-				const stat = statSync(fullPath);
+			try {
+				const items = readdirSync(dir);
+				for (const item of items) {
+					const fullPath = join(dir, item);
+					const stat = statSync(fullPath);
 
-				if (stat.isDirectory()) {
-					// Skip common build/dependency directories
-					if (!shouldSkipDirectory(item)) {
-						scanDirectory(fullPath);
-					}
-				} else if (
-					AGENT_FILENAMES.includes(item as (typeof AGENT_FILENAMES)[number])
-				) {
-					let relativePath = relative(scanDir, dir);
+					if (stat.isDirectory()) {
+						// Skip common build/dependency directories
+						if (!shouldSkipDirectory(item)) {
+							scanDirectory(fullPath);
+						}
+					} else if (
+						AGENT_FILENAMES.includes(item as (typeof AGENT_FILENAMES)[number])
+					) {
+						// Calculate relative path from PROJECT ROOT to agent directory
+						// This ensures consistent agent keys regardless of scan directory
+						let relativePath = relative(projectRoot, dir);
 
-					// --- Normalize relativePath ---
-					// Remove leading/trailing slashes or backslashes (cross-platform)
-					relativePath = relativePath.replace(/^[\\/]+|[\\/]+$/g, "");
+						// Normalize path separators
+						relativePath = relativePath.replace(/\\/g, "/");
 
-					// Fallback if empty (happens when --dir points directly to agents folder)
-					if (!relativePath) {
-						// When scanning the agent directory directly, use its name as the relative path.
-						relativePath = dir.split(/[\\/]/).pop() || "agent";
-						this.logger.warn(
-							`Agent at ${dir} had empty relativePath, normalized to "${relativePath}"`,
-						);
-					}
+						// Handle case where agent is directly in the project root
+						if (!relativePath || relativePath === ".") {
+							const rootDirName = projectRoot.split(/[\\/]/).pop() || "root";
+							relativePath = rootDirName;
+						}
 
-					// Try to get the actual agent name if it's already loaded
-					const loadedAgent = loadedAgents.get(relativePath);
-					let agentName = relativePath.split(/[/\\]/).pop() || "unknown";
+						// Remove any leading "./" from the path
+						relativePath = relativePath.replace(/^\.\//, "");
 
-					if (loadedAgent?.agent?.name) {
-						agentName = loadedAgent.agent.name;
-					} else {
-						// Try to quickly extract name from agent file if not loaded
-						try {
-							const agentFilePath = join(dir, item);
-							agentName =
-								this.extractAgentNameFromFile(agentFilePath) || agentName;
-						} catch {
-							// ignore and fallback to directory name
+						// Try to get the actual agent name if it's already loaded
+						const loadedAgent = loadedAgents.get(relativePath);
+						let agentName = relativePath.split(/[/\\]/).pop() || "unknown";
+
+						if (loadedAgent?.agent?.name) {
+							agentName = loadedAgent.agent.name;
+						} else {
+							// Try to quickly extract name from agent file if not loaded
+							try {
+								const agentFilePath = join(dir, item);
+								agentName =
+									this.extractAgentNameFromFile(agentFilePath) || agentName;
+							} catch (error) {
+								if (!this.quiet) {
+									this.logger.warn(
+										`Failed to extract agent name from ${join(dir, item)}: ${
+											error instanceof Error ? error.message : String(error)
+										}`,
+									);
+								}
+							}
+						}
+
+						// Store the agent with consistent keys
+						if (relativePath) {
+							agents.set(relativePath, {
+								relativePath,
+								name: agentName,
+								absolutePath: resolve(dir),
+								projectRoot, // Add project root to the agent info
+								instance: loadedAgent?.agent,
+							});
+
+							if (!this.quiet) {
+								this.logger.log(`Found agent: ${relativePath} -> ${dir}`);
+							}
+						} else {
+							this.logger.warn(
+								`Skipping agent with invalid relativePath at ${dir}`,
+							);
 						}
 					}
-
-					// Store the agent
-					agents.set(relativePath, {
-						relativePath,
-						name: agentName,
-						absolutePath: dir,
-						instance: loadedAgent?.agent,
-					});
 				}
+			} catch (error) {
+				this.logger.warn(
+					`Error reading directory ${dir}: ${
+						error instanceof Error ? error.message : String(error)
+					}`,
+				);
 			}
 		};
 
+		if (!this.quiet) {
+			this.logger.log("Starting agent scan...");
+		}
+
 		scanDirectory(scanDir);
-		this.logger.log(
-			format(`Agent scan complete. Found ${agents.size} agents. ✨`),
-		);
+
+		this.logger.log(`Agent scan complete. Found ${agents.size} agents.`);
+
+		if (!this.quiet && agents.size > 0) {
+			this.logger.log("Found agents:");
+			for (const [key, agent] of agents.entries()) {
+				this.logger.log(`  ${key} -> ${agent.absolutePath}`);
+			}
+		}
 
 		return agents;
 	}
@@ -120,7 +173,8 @@ export class AgentScanner {
 			}
 
 			return null;
-		} catch {
+		} catch (error) {
+			// Return null instead of throwing to allow fallback to directory name
 			return null;
 		}
 	}
