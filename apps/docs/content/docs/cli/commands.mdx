@@ -110,9 +110,9 @@ adk web --web-url https://my-custom-adk-web.com
 
 - **Default (Production)**: Opens the hosted web interface at [adk-web.iqai.com](https://adk-web.iqai.com) which connects to your local API server
 - **Custom Web Interface (`--web-url`)**: Use any web interface (local or remote) by specifying its URL. The web interface will connect to your local API server to display your agents
-- **Local Development**: Use `adk serve` to start only the API server, then access any web interface manually
+- **Local Development**: Use `adk serve` to start only the API server, then access any web interface manually. The web interface will connect to the default API server address (http://localhost:8042)
 
-**Note:** All web interfaces connect to your local API server (default: http://localhost:8042) to display and interact with your agents, regardless of where the web interface itself is hosted.
+**Note:** All web interfaces connect to your local API server (default: http://localhost:8042) to display and interact with your agents, regardless of where the web interface itself is hosted. When using a non-default `--port`, the CLI automatically passes the port as a URL query parameter (e.g., `?port=8080`) so the web interface can discover and connect to your API server. This is particularly useful when developing custom web interfaces that need to connect to your local agents.
 
 ## `adk serve`
 
