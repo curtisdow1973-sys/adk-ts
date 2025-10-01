@@ -5,6 +5,7 @@ import { ServeCommand } from "./serve.command";
 import { WebCommand } from "./web.command";
 
 @Module({
+	imports: [],
 	providers: [ServeCommand, NewCommand, RunCommand, WebCommand],
 	exports: [],
 })
