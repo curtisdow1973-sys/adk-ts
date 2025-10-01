@@ -1,17 +1,23 @@
 #!/bin/sh
 . "$(dirname "$0")/_/husky.sh"
 
-echo "🔍 Detecting changed packages..."
+echo "🔍 Detecting changed packages against origin/main..."
 
-# Get changed packages using Turborepo
-CHANGED=$(pnpm turbo run build --filter=...[origin/main] --dry=json | jq -r '.tasks[].package')
+CHANGED=$(pnpm turbo run lint --filter=...[origin/main] --dry-run=json | \
+  grep -o '"package":"[^"]*"' | awk -F '"' '{print $4}' | sort -u)
 
-if echo "$CHANGED" | grep -qE '^(apps/docs|apps/examples|apps/adk-web)'; then
-  echo "📄 Docs/Examples changed → Running Biome only..."
-  pnpm format && pnpm lint
+if [ -z "$CHANGED" ]; then
+  echo "✅ No affected packages. Skipping checks."
+  exit 0
 fi
 
-if echo "$CHANGED" | grep -qE '^(packages/)'; then
-  echo "🧪 Packages or ADK-Web changed → Running Biome + Tests..."
+echo "📦 Changed packages:"
+echo "$CHANGED"
+
+if echo "$CHANGED" | grep -qE '^packages/'; then
+  echo "🧪 Packages changed → Running Biome + Tests..."
   pnpm format && pnpm lint && pnpm test
+else
+  echo "📄 Apps changed → Running Biome only..."
+  pnpm format && pnpm lint
 fi
