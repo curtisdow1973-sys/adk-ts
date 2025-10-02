@@ -29,8 +29,6 @@ export interface TelemetryConfig {
 	environment?: string;
 }
 
-// Testing git hooks to run on pre-commit
-
 /**
  * Telemetry service for the ADK
  * Handles OpenTelemetry initialization, tracing, and cleanup
