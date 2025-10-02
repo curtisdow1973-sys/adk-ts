@@ -1,5 +1,11 @@
 # @iqai/adk-cli
 
+## 0.3.11
+
+### Patch Changes
+
+- 0c139d9: Defer TypeScript cache cleanup to process exit for better debugging and reliable cleanup.
+
 ## 0.3.10
 
 ### Patch Changes
