@@ -29,6 +29,8 @@ export interface TelemetryConfig {
 	environment?: string;
 }
 
+// Another test
+
 /**
  * Telemetry service for the ADK
  * Handles OpenTelemetry initialization, tracing, and cleanup

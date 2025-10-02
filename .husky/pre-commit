@@ -1,23 +1,4 @@
 #!/bin/sh
-# 🚦 Pre-commit hook (temporary check)
+. "$(dirname "$0")/_/husky.sh"
 
-echo "🔍 Detecting changed packages against origin/main..."
-
-CHANGED=$(pnpm turbo run lint --filter=...[origin/main] --dry-run=json | \
-  grep -o '"package":"[^"]*"' | awk -F '"' '{print $4}' | sort -u)
-
-if [ -z "$CHANGED" ]; then
-  echo "✅ No affected packages. Skipping checks."
-  exit 0
-fi
-
-echo "📦 Changed packages:"
-echo "$CHANGED"
-
-if echo "$CHANGED" | grep -qE '^packages/'; then
-  echo "🧪 Packages changed → Running Biome + Tests..."
-  pnpm format && pnpm lint && pnpm test
-else
-  echo "📄 Apps changed → Running Biome only..."
-  pnpm format && pnpm lint
-fi
+pnpm lint-staged
